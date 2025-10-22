@@ -8,7 +8,7 @@ An educational conversational AI chatbot for medical clinics that demonstrates a
 ## Tech Stack (Educational-Friendly)
 - **Language**: Python 3.11+ (easy to learn, great AI/ML libraries)
 - **Framework**: FastAPI (modern, fast, excellent docs)
-- **LLM**: OpenAI GPT-4o-mini (affordable, powerful, simple API)
+- **LLM**: Google Gemini 2.0 Flash (free tier, powerful, simple API)
 - **Database**: SQLite (simple, no setup) → PostgreSQL (for scaling)
 - **Testing**: pytest (standard Python testing)
 - **Frontend**: Simple HTML/CSS/JavaScript chat widget
@@ -43,24 +43,24 @@ Response to User (+ create todo if needed)
 
 ## Development Guidelines
 
-### OpenAI Integration
-- Store API key in `.env` file: `OPENAI_API_KEY=sk-...`
-- Use `gpt-4o-mini` for cost-effective learning (or `gpt-4o` for best quality)
-- System prompt defines chatbot personality and capabilities
+### Google Gemini Integration
+- Store API key in `.env` file: `GOOGLE_API_KEY=your-key`
+- Use `gemini-2.0-flash-lite` for fast, free learning (generous free tier)
+- System instructions define chatbot personality and capabilities
 - Function calling for structured actions (appointments, todos)
 - Example:
 ```python
-from openai import OpenAI
-client = OpenAI()
+import google.generativeai as genai
 
-response = client.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=[
-        {"role": "system", "content": "You are a helpful medical clinic assistant."},
-        {"role": "user", "content": "I need an appointment"}
-    ],
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+model = genai.GenerativeModel(
+    model_name="gemini-2.0-flash-lite",
+    system_instruction="You are a helpful medical clinic assistant.",
     tools=[schedule_appointment_tool, create_todo_tool]
 )
+
+chat = model.start_chat()
+response = chat.send_message("I need an appointment")
 ```
 
 ### Todo Management
@@ -81,14 +81,14 @@ todo_manager.create_task(
 )
 ```
 
-### Conversation Patterns (GPT handles these naturally)
-- **System Prompt** guides behavior: friendly, helpful, ask clarifying questions
-- **Function Calling** for structured actions: GPT decides when to schedule appointment
-- **Context Tracking**: Pass conversation history in messages array
+### Conversation Patterns (Gemini handles these naturally)
+- **System Instructions** guide behavior: friendly, helpful, ask clarifying questions
+- **Function Calling** for structured actions: Gemini decides when to schedule appointment
+- **Context Tracking**: Maintained in chat session history
 - **Validation**: Python code validates extracted info (dates, times, etc.)
-- Example system prompt:
+- Example system instruction:
 ```python
-SYSTEM_PROMPT = """You are a helpful assistant for a medical clinic.
+SYSTEM_INSTRUCTION = """You are a helpful assistant for a medical clinic.
 You help patients with:
 - Scheduling appointments (ask for date, time, reason)
 - Answering common questions about the clinic
@@ -110,7 +110,7 @@ Ask clarifying questions if needed. Confirm appointments before finalizing."""
 ### Testing with pytest
 - **Unit Tests**: Test individual functions (`tests/test_todo_manager.py`)
 - **Integration Tests**: Test API endpoints (`tests/test_api.py`)
-- **Conversation Tests**: Test full dialog flows with mock OpenAI responses
+- **Conversation Tests**: Test full dialog flows with mock Gemini responses
 - Example test:
 ```python
 def test_create_appointment():
@@ -125,7 +125,7 @@ def test_create_appointment():
 ```
 
 ### Error Handling
-- Try/except blocks for OpenAI API calls (rate limits, network errors)
+- Try/except blocks for Gemini API calls (rate limits, network errors)
 - Graceful fallbacks: "Sorry, I'm having trouble. Can you try again?"
 - Validate user inputs (dates must be future, times during clinic hours)
 - Log errors for debugging without exposing to users
@@ -141,8 +141,8 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Create .env file with your OpenAI API key
-echo "OPENAI_API_KEY=sk-your-key-here" > .env
+# Create .env file with your Google API key
+echo "GOOGLE_API_KEY=your-key-here" > .env
 
 # Initialize database
 python src/init_db.py
@@ -185,20 +185,20 @@ frontend/
 
 ## Key Files to Understand
 - `src/main.py`: FastAPI routes (`/chat`, `/appointments`, `/todos`)
-- `src/chatbot.py`: OpenAI integration and function calling logic
+- `src/chatbot.py`: Google Gemini integration and function calling logic
 - `src/todo_manager.py`: Todo CRUD operations
 - `src/handlers/appointment.py`: Appointment scheduling with validation
 - `src/knowledge_base.py`: FAQ database, clinic info
-- `requirements.txt`: Python dependencies (openai, fastapi, sqlalchemy, pytest)
+- `requirements.txt`: Python dependencies (google-generativeai, fastapi, sqlalchemy, pytest)
 
 ## Learning Concepts Demonstrated
-1. **LLM Integration**: Using OpenAI API for natural conversations
+1. **LLM Integration**: Using Google Gemini API for natural conversations
 2. **Function Calling**: Let AI decide when to call Python functions
 3. **REST API**: FastAPI endpoints for chat, appointments, todos
 4. **Database**: SQLAlchemy ORM for data persistence
-5. **State Management**: Tracking conversation context across messages
+5. **State Management**: Tracking conversation context in chat sessions
 6. **Testing**: pytest for unit and integration tests
-7. **Prompt Engineering**: Crafting system prompts for desired behavior
+7. **Prompt Engineering**: Crafting system instructions for desired behavior
 
 ## Clinic Configuration (Simple)
 ```python
