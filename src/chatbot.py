@@ -417,20 +417,19 @@ class ChatBot:
         
         risk = analysis.get("risk_level", "moderate").lower()
         emoji = risk_emoji.get(risk, "⚪")
-        
         # Build response
         response = f"""📸 **Phân Tích Hình Ảnh**
 
-🔍 **Những gì tôi thấy:**
-{analysis.get('visual_description', 'Không xác định được')}
+                        🔍 **Những gì tôi thấy:**
+                        {analysis.get('visual_description', 'Không xác định được')}
 
-🩺 **Đánh giá y tế:**
-{analysis.get('medical_analysis', 'Cần thêm thông tin')}
+                        🩺 **Đánh giá y tế:**
+                        {analysis.get('medical_analysis', 'Cần thêm thông tin')}
 
-{emoji} **Mức độ rủi ro:** {risk.upper()}
+                        {emoji} **Mức độ rủi ro:** {risk.upper()}
 
-📋 **Khuyến nghị:**
-"""
+                        📋 **Khuyến nghị:**
+                        """
         
         # Add recommendations
         for i, rec in enumerate(analysis.get('recommendations', []), 1):

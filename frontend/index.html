@@ -772,7 +772,6 @@
       function handleImageSelect(event) {
          const file = event.target.files[0];
          if (!file) return;
-         
          // Validate file type
          if (!file.type.startsWith('image/')) {
             alert('Vui lòng chọn file ảnh (JPEG, PNG, etc.)');
@@ -789,7 +788,6 @@
          const reader = new FileReader();
          reader.onload = (e) => {
             selectedImageData = e.target.result;
-            
             // Show preview
             document.getElementById('previewImg').src = selectedImageData;
             document.getElementById('imagePreview').style.display = 'block';
@@ -811,7 +809,7 @@
       // Send image with message to API
       async function sendImageToAPI(message, imageData) {
          try {
-            const response = await fetch(`${API_BASE_URL}/chat/image`, {
+            const response = await fetch(`${API_BASE_URL}/ma/chat/image`, {
                method: 'POST',
                headers: {
                   'Content-Type': 'application/json',
@@ -844,8 +842,9 @@
          // Check if we have image or message
          if (!message && !selectedImageData) return;
 
-         // Determine which API to call
+         // Save image data BEFORE clearing (important!)
          const hasImage = selectedImageData !== null;
+         const imageDataToSend = selectedImageData; // Store before clearing
          
          // Add user message to chat
          if (hasImage) {
@@ -856,7 +855,7 @@
          
          input.value = '';
 
-         // Clear image preview
+         // Clear image preview AFTER saving the data
          if (hasImage) {
             removeImage();
          }
@@ -874,9 +873,9 @@
          try {
             let response;
             
-            // Call appropriate API
+            // Call appropriate API - use saved image data
             if (hasImage) {
-               response = await sendImageToAPI(message, selectedImageData);
+               response = await sendImageToAPI(message, imageDataToSend);
             } else {
                response = await sendMessageToAPI(message);
             }

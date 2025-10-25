@@ -5,7 +5,7 @@ import operator
 import os
 import logging
 import google.generativeai as genai
-from src.vision.gemini_vision_analyzer import GeminiVisionAnalyzer
+from vision.gemini_vision_analyzer import GeminiVisionAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -38,36 +38,35 @@ class MedicalAgentGraph:
     
     All agents work collaboratively, passing state through the graph.
     """
-    
-    def __init__(self, google_api_key: str, hf_token: str = None):
+
+    def __init__(self, google_api_key: str):
         """
         Initialize the multi-agent system.
         
         Args:
             google_api_key: Google API key for Gemini
-            hf_token: Not used anymore (kept for compatibility)
         """
         self.google_api_key = google_api_key
-        
+
         # Initialize vision analyzer (Gemini Vision)
         self.vision_analyzer = GeminiVisionAnalyzer(google_api_key)
-        
+
         # Initialize Gemini for text reasoning
         genai.configure(api_key=google_api_key)
         self.gemini_model = genai.GenerativeModel(
-            model_name="gemini-2.0-flash-lite",
+            model_name="gemini-2.5-flash-lite",
             generation_config={
                 "temperature": 0.3,  # Lower = more consistent
                 "top_p": 0.95,
                 "top_k": 40,
             }
         )
-        
+
         # Build the agent graph
         self.graph = self._build_graph()
-        
+
         logger.info("MedicalAgentGraph initialized with 4 agents")
-    
+
     def _build_graph(self) -> StateGraph:
         """
         Build the LangGraph workflow.
@@ -76,36 +75,36 @@ class MedicalAgentGraph:
         START → Vision Agent → Symptom Matcher → Risk Assessor → Recommender → END
         """
         workflow = StateGraph(MedicalAnalysisState)
-        
+
         # Create wrapper functions (LangGraph needs plain functions, not bound methods)
         def vision_wrapper(state):
             return self.vision_agent(state)
-        
+
         def symptom_matcher_wrapper(state):
             return self.symptom_matcher_agent(state)
-        
+
         def risk_assessor_wrapper(state):
             return self.risk_assessor_agent(state)
-        
+
         def recommender_wrapper(state):
             return self.recommender_agent(state)
-        
+
         # Add nodes (agents) - use wrapper functions
         workflow.add_node("vision_agent", vision_wrapper)
         workflow.add_node("symptom_matcher", symptom_matcher_wrapper)
         workflow.add_node("risk_assessor", risk_assessor_wrapper)
         workflow.add_node("recommender", recommender_wrapper)
-        
+
         # Define edges (workflow sequence)
         workflow.set_entry_point("vision_agent")
         workflow.add_edge("vision_agent", "symptom_matcher")
         workflow.add_edge("symptom_matcher", "risk_assessor")
         workflow.add_edge("risk_assessor", "recommender")
         workflow.add_edge("recommender", END)
-        
+
         # Compile the graph
         return workflow.compile()
-    
+
     def vision_agent(self, state: MedicalAnalysisState) -> MedicalAnalysisState:
         """
         Agent 1: Analyze image using Hugging Face vision models.
@@ -117,27 +116,27 @@ class MedicalAgentGraph:
         - Updates state with visual analysis results
         """
         logger.info("🔍 Vision Agent: Starting image analysis...")
-        
+
         try:
             # Analyze image with HF models (synchronous call)
             visual_analysis = self.vision_analyzer.analyze_image(
                 state["image_data"],
                 state.get("symptoms_text")
             )
-            
+
             # Update state
             state["visual_analysis"] = visual_analysis
             state["confidence_score"] = visual_analysis["confidence"]
-            
+
             # Log progress
             desc = visual_analysis["visual_description"][:80]
             state["messages"].append(
                 f"✅ Vision Agent: Analysis complete ({desc}...)"
             )
-            
+
             if visual_analysis.get("error"):
                 logger.warning(f"Vision analysis had errors: {visual_analysis['error']}")
-        
+
         except Exception as e:
             logger.error(f"Vision Agent error: {str(e)}")
             state["visual_analysis"] = {
@@ -147,9 +146,9 @@ class MedicalAgentGraph:
                 "error": str(e)
             }
             state["messages"].append(f"❌ Vision Agent: Error - {str(e)}")
-        
+
         return state
-    
+
     def symptom_matcher_agent(self, state: MedicalAnalysisState) -> MedicalAnalysisState:
         """
         Agent 2: Match visual findings with text symptoms using Gemini.
@@ -161,44 +160,44 @@ class MedicalAgentGraph:
         - Identifies patterns and correlations
         """
         logger.info("🩺 Symptom Matcher: Correlating visual + text symptoms...")
-        
+
         try:
             visual = state["visual_analysis"]
-            
+
             # Build prompt for Gemini
-            prompt = f"""Bạn là trợ lý y tế chuyên nghiệp. Nhiệm vụ của bạn là kết hợp thông tin hình ảnh với triệu chứng của bệnh nhân.
+            prompt = f"""Bạn là trợ lý y tế chuyên nghiệp. Nhiệm vụ của bạn là kết hợp thông tin hình ảnh với triệu chứng (nếu có) của bệnh nhân.
 
-            **Phân tích hình ảnh:**
-            - Mô tả: {visual.get('visual_description', 'Không có')}
-            - Kết quả Q&A: {visual.get('visual_qa_results', {})}
+                        **Phân tích hình ảnh:**
+                        - Mô tả: {visual.get('visual_description', 'Không có')}
+                        - Kết quả Q&A: {visual.get('visual_qa_results', {})}
 
-            **Triệu chứng của bệnh nhân:**
-            {state.get('symptoms_text', 'Không cung cấp')}
+                        **Triệu chứng của bệnh nhân:**
+                        {state.get('symptoms_text', 'Không cung cấp')}
 
-            **Nhiệm vụ:** Viết đánh giá sơ bộ kết hợp cả hai nguồn thông tin.
-            Tập trung vào:
-            1. Những gì hình ảnh cho thấy
-            2. Mối liên hệ với triệu chứng mô tả
-            3. Các dấu hiệu đáng lo ngại (nếu có)
+                        **Nhiệm vụ:** Viết đánh giá sơ bộ rồi đưa ra chẩn đoán lâm sàng từ kết hợp cả hai nguồn thông tin. Nếu không có triệu chứng văn bản, chỉ dựa vào phân tích hình ảnh.
+                        Tập trung vào:
+                        1. Những gì hình ảnh cho thấy
+                        2. Mối liên hệ với triệu chứng mô tả
+                        3. Các dấu hiệu đáng lo ngại (nếu có)
 
-            **Đánh giá (3-4 câu, tiếng Việt):**"""
+                        **Đánh giá (3-4 câu, tiếng Việt):**"""
 
             # Call Gemini (synchronously)
             response = self._call_gemini_sync(prompt)
-            
+
             # Update state
             state["medical_assessment"] = response
             state["messages"].append("✅ Symptom Matcher: Assessment complete")
-            
+
             logger.info(f"Assessment: {response[:100]}...")
-        
+
         except Exception as e:
             logger.error(f"Symptom Matcher error: {str(e)}")
             state["medical_assessment"] = f"Lỗi khi đánh giá: {str(e)}"
             state["messages"].append(f"❌ Symptom Matcher: Error - {str(e)}")
-        
+
         return state
-    
+
     def risk_assessor_agent(self, state: MedicalAnalysisState) -> MedicalAnalysisState:
         """
         Agent 3: Assess urgency/risk level using Gemini.
@@ -209,7 +208,7 @@ class MedicalAgentGraph:
         - Considers severity, symptoms, visual findings
         """
         logger.info("⚠️  Risk Assessor: Determining urgency level...")
-        
+
         try:
             # Build prompt
             prompt = f"""Bạn là chuyên gia đánh giá rủi ro y tế.
@@ -230,7 +229,7 @@ class MedicalAgentGraph:
             # Call Gemini (synchronously)
             response = self._call_gemini_sync(prompt)
             risk_level = response.strip().upper()
-            
+
             # Validate risk level
             valid_levels = ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
             if risk_level not in valid_levels:
@@ -241,20 +240,19 @@ class MedicalAgentGraph:
                         break
                 else:
                     risk_level = "MEDIUM"  # Default
-            
             # Update state
             state["risk_level"] = risk_level
             state["messages"].append(f"✅ Risk Assessor: Level = {risk_level}")
-            
+
             logger.info(f"Risk level: {risk_level}")
-        
+
         except Exception as e:
             logger.error(f"Risk Assessor error: {str(e)}")
             state["risk_level"] = "MEDIUM"  # Safe default
             state["messages"].append(f"❌ Risk Assessor: Error - {str(e)}")
-        
+
         return state
-    
+
     def recommender_agent(self, state: MedicalAnalysisState) -> MedicalAnalysisState:
         """
         Agent 4: Generate recommendations using Gemini.
@@ -266,7 +264,7 @@ class MedicalAgentGraph:
         - Suggests next steps
         """
         logger.info("💡 Recommender: Generating recommendations...")
-        
+
         try:
             # Build prompt based on risk level
             risk_context = {
@@ -275,7 +273,7 @@ class MedicalAgentGraph:
                 "HIGH": "Cần gặp bác sĩ trong 24 giờ. Nhấn mạnh tầm quan trọng của việc tìm kiếm chăm sóc.",
                 "CRITICAL": "KHẨN CẤP! Cần chăm sóc y tế ngay lập tức. Hướng dẫn đến cấp cứu."
             }
-            
+
             prompt = f"""Bạn là cố vấn y tế. Cung cấp khuyến nghị cho bệnh nhân.
 
             **Đánh giá:**
@@ -299,7 +297,6 @@ class MedicalAgentGraph:
 
             # Call Gemini (synchronously)
             response = self._call_gemini_sync(prompt)
-            
             # Parse recommendations (numbered list)
             recommendations = []
             for line in response.split('\n'):
@@ -311,19 +308,18 @@ class MedicalAgentGraph:
                         clean_line = line.lstrip('0123456789.-•) ').strip()
                         if clean_line:
                             recommendations.append(clean_line)
-            
+
             # Fallback if parsing failed
             if not recommendations:
                 recommendations = [response]
-            
             # Update state
             state["recommendations"] = recommendations
             state["messages"].append(
                 f"✅ Recommender: Generated {len(recommendations)} recommendations"
             )
-            
+
             logger.info(f"Generated {len(recommendations)} recommendations")
-        
+
         except Exception as e:
             logger.error(f"Recommender error: {str(e)}")
             state["recommendations"] = [
@@ -332,9 +328,9 @@ class MedicalAgentGraph:
                 "Nếu tình trạng xấu đi, hãy tìm kiếm chăm sóc y tế ngay lập tức."
             ]
             state["messages"].append(f"❌ Recommender: Error - {str(e)}")
-        
+
         return state
-    
+
     def _call_gemini_sync(self, prompt: str) -> str:
         """
         Synchronous helper method to call Gemini API.
@@ -351,7 +347,7 @@ class MedicalAgentGraph:
         except Exception as e:
             logger.error(f"Gemini API error: {str(e)}")
             raise
-    
+
     async def _call_gemini(self, prompt: str) -> str:
         """
         Helper method to call Gemini API.
@@ -368,11 +364,11 @@ class MedicalAgentGraph:
         except Exception as e:
             logger.error(f"Gemini API error: {str(e)}")
             raise
-    
+
     def analyze(
-        self, 
-        image_data: str, 
-        symptoms_text: str = ""
+            self,
+            image_data: str,
+            symptoms_text: str = ""
     ) -> Dict[str, Any]:
         """
         Run the complete multi-agent analysis pipeline.
@@ -393,7 +389,7 @@ class MedicalAgentGraph:
             }
         """
         logger.info("🚀 Starting multi-agent medical analysis...")
-        
+
         # Initialize state
         initial_state = MedicalAnalysisState(
             image_data=image_data,
@@ -405,22 +401,30 @@ class MedicalAgentGraph:
             confidence_score=0.0,
             messages=[]
         )
-        
+
         try:
             # Run the agent graph (synchronous)
             final_state = self.graph.invoke(initial_state)
-            
+
             logger.info("✅ Multi-agent analysis complete!")
-            
+
+            # Deduplicate workflow messages (LangGraph with operator.add can cause duplicates)
+            unique_messages = []
+            seen = set()
+            for msg in final_state["messages"]:
+                if msg not in seen:
+                    unique_messages.append(msg)
+                    seen.add(msg)
+            logger.info(f"---*---INFO {final_state['recommendations']}")
             return {
                 "visual_analysis": final_state["visual_analysis"],
                 "medical_assessment": final_state["medical_assessment"],
                 "risk_level": final_state["risk_level"],
                 "recommendations": final_state["recommendations"],
                 "confidence_score": final_state["confidence_score"],
-                "workflow_messages": final_state["messages"]
+                "workflow_messages": unique_messages  # Use deduplicated messages
             }
-        
+
         except Exception as e:
             logger.error(f"Multi-agent analysis failed: {str(e)}")
             raise
@@ -433,56 +437,55 @@ def test_agent_graph():
     from io import BytesIO
     from PIL import Image
     from dotenv import load_dotenv
-    
+
     load_dotenv()
-    
+
     print("🧪 Testing Medical Agent Graph...\n")
-    
+
     # Create test image
     print("📸 Creating test image...")
     img = Image.new('RGB', (300, 300), color='red')
     buffer = BytesIO()
     img.save(buffer, format='JPEG')
     image_data = f"data:image/jpeg;base64,{base64.b64encode(buffer.getvalue()).decode()}"
-    
+
     # Initialize agent graph
     print("🤖 Initializing agents...")
     agent_graph = MedicalAgentGraph(
         google_api_key=os.getenv("GOOGLE_API_KEY"),
-        hf_token=os.getenv("HUGGINGFACE_TOKEN")
     )
-    
+
     # Run analysis
     print("\n🔄 Running multi-agent analysis...\n")
     result = agent_graph.analyze(
         image_data=image_data,
         symptoms_text="Tôi có vết đỏ trên cánh tay và hơi ngứa"
     )
-    
+
     # Print results
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("📊 ANALYSIS RESULTS")
-    print("="*60)
-    
+    print("=" * 60)
+
     print(f"\n🔍 Visual Description:")
     print(f"  {result['visual_analysis']['visual_description']}")
-    
+
     print(f"\n🩺 Medical Assessment:")
     print(f"  {result['medical_assessment']}")
-    
+
     print(f"\n⚠️  Risk Level: {result['risk_level']}")
-    
+
     print(f"\n💡 Recommendations:")
     for i, rec in enumerate(result['recommendations'], 1):
         print(f"  {i}. {rec}")
-    
+
     print(f"\n📈 Confidence: {result['confidence_score']:.0%}")
-    
+
     print(f"\n📝 Workflow Log:")
     for msg in result['workflow_messages']:
         print(f"  {msg}")
-    
-    print("\n" + "="*60)
+
+    print("\n" + "=" * 60)
 
 
 if __name__ == "__main__":

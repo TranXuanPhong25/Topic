@@ -40,7 +40,7 @@ class GeminiVisionAnalyzer:
         
         # Initialize Gemini 2.0 Flash Lite model for vision
         self.model = genai.GenerativeModel(
-            model_name="gemini-2.0-flash-lite",
+            model_name="gemini-2.5-flash-lite",
             generation_config={
                 "temperature": 0.4,  # Balanced creativity and consistency
                 "top_p": 0.95,
@@ -156,21 +156,21 @@ class GeminiVisionAnalyzer:
         """
         prompt = """Bạn là chuyên gia phân tích hình ảnh y tế. Hãy mô tả chi tiết những gì bạn thấy trong hình ảnh này.
 
-**Nhiệm vụ:**
-Cung cấp mô tả khách quan, chi tiết về:
-1. Loại hình ảnh (da, vết thương, phần cơ thể, v.v.)
-2. Màu sắc và kết cấu quan sát được
-3. Kích thước và vị trí (nếu có thể xác định)
-4. Bất kỳ đặc điểm bất thường nào
-5. Các chi tiết có liên quan đến y tế
+                    **Nhiệm vụ:**
+                    Cung cấp mô tả khách quan, chi tiết về:
+                    1. Loại hình ảnh (da, vết thương, phần cơ thể, v.v.)
+                    2. Màu sắc và kết cấu quan sát được
+                    3. Kích thước và vị trí (nếu có thể xác định)
+                    4. Bất kỳ đặc điểm bất thường nào
+                    5. Các chi tiết có liên quan đến y tế
 
-**Lưu ý:**
-- Chỉ mô tả những gì bạn thấy, KHÔNG chẩn đoán
-- Sử dụng thuật ngữ y tế khi thích hợp
-- Viết bằng tiếng Việt, rõ ràng và chính xác
-- Khoảng 4-6 câu
+                    **Lưu ý:**
+                    - Chỉ mô tả những gì bạn thấy, KHÔNG chẩn đoán
+                    - Sử dụng thuật ngữ y tế khi thích hợp
+                    - Viết bằng tiếng Việt, rõ ràng và chính xác
+                    - Khoảng 4-6 câu
 
-**Mô tả hình ảnh:**"""
+                    **Mô tả hình ảnh:**"""
         
         try:
             # Generate content with image
@@ -207,18 +207,18 @@ Cung cấp mô tả khách quan, chi tiết về:
         for question in questions:
             prompt = f"""Bạn là chuyên gia phân tích hình ảnh y tế. 
 
-**Triệu chứng của bệnh nhân:** {symptoms_text}
+                        **Triệu chứng của bệnh nhân:** {symptoms_text}
 
-**Câu hỏi:** {question}
+                        **Câu hỏi:** {question}
 
-**Nhiệm vụ:**
-Trả lời câu hỏi dựa trên những gì bạn thấy trong hình ảnh.
-- Trả lời ngắn gọn, trực tiếp (1-2 câu)
-- Chỉ dựa trên hình ảnh, không đưa ra chẩn đoán
-- Viết bằng tiếng Việt
+                        **Nhiệm vụ:**
+                        Trả lời câu hỏi dựa trên những gì bạn thấy trong hình ảnh.
+                        - Trả lời ngắn gọn, trực tiếp (1-2 câu)
+                        - Chỉ dựa trên hình ảnh, không đưa ra chẩn đoán
+                        - Viết bằng tiếng Việt
 
-**Trả lời:**"""
-            
+                        **Trả lời:**"""
+                                    
             try:
                 response = self.model.generate_content([prompt, image])
                 answer = response.text.strip()
@@ -328,21 +328,21 @@ Trả lời câu hỏi dựa trên những gì bạn thấy trong hình ảnh.
             
             prompt = f"""Bạn là chuyên gia da liễu phân tích hình ảnh. Hãy phân tích tình trạng da trong hình ảnh{concern_text}.
 
-**Nhiệm vụ:** Cung cấp phân tích chi tiết về:
-1. **Loại tổn thương:** Mô tả loại tổn thương da (mụn, phát ban, nốt ruồi, v.v.)
-2. **Đặc điểm:** Màu sắc, kích thước, hình dạng, ranh giới
-3. **Phân bố:** Khu trú hoặc lan rộng, đối xứng hay không
-4. **Các dấu hiệu:** Sưng tấy, vảy, tiết dịch, v.v.
-5. **Mức độ nghiêm trọng:** Nhẹ/Trung bình/Nặng
+                        **Nhiệm vụ:** Cung cấp phân tích chi tiết về:
+                        1. **Loại tổn thương:** Mô tả loại tổn thương da (mụn, phát ban, nốt ruồi, v.v.)
+                        2. **Đặc điểm:** Màu sắc, kích thước, hình dạng, ranh giới
+                        3. **Phân bố:** Khu trú hoặc lan rộng, đối xứng hay không
+                        4. **Các dấu hiệu:** Sưng tấy, vảy, tiết dịch, v.v.
+                        5. **Mức độ nghiêm trọng:** Nhẹ/Trung bình/Nặng
 
-**Lưu ý:**
-- Mô tả khách quan, không chẩn đoán chính xác
-- Sử dụng thuật ngữ da liễu
-- Viết bằng tiếng Việt
-- Khoảng 5-7 câu
+                        **Lưu ý:**
+                        - Mô tả khách quan, không chẩn đoán chính xác
+                        - Sử dụng thuật ngữ da liễu
+                        - Viết bằng tiếng Việt
+                        - Khoảng 5-7 câu
 
-**Phân tích:**"""
-            
+                        **Phân tích:**"""
+                                    
             response = self.model.generate_content([prompt, image])
             analysis = response.text.strip()
             

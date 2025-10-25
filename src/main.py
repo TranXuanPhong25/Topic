@@ -11,6 +11,7 @@ import os
 
 from chatbot import ChatBot
 from config import CLINIC_CONFIG
+from agents.medical_agent_graph import MedicalAgentGraph
 from todo_manager import todo_manager
 from knowledge_base import knowledge_base
 from database import get_db, SessionLocal
@@ -200,6 +201,110 @@ async def chat_with_image(request: ImageChatRequest):
             detail=f"Error processing image: {str(e)}"
         )
 
+
+@app.post("/ma/chat/image", tags=["Chat"])
+def ma_chat_with_image(request: ImageChatRequest):
+    """
+    Multi-agent chat with image analysis.
+    
+    Uses the complete multi-agent workflow:
+    Vision Agent → Symptom Matcher → Risk Assessor → Recommender
+    
+    Returns comprehensive medical image analysis.
+    """
+    try:
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            raise HTTPException(
+                status_code=500,
+                detail="GOOGLE_API_KEY not configured on server"
+            )
+        
+        # Validate image data
+        if not request.image:
+            raise HTTPException(status_code=400, detail="Image data is required")
+        
+        # Generate session ID if not provided
+        session_id = request.session_id or str(uuid.uuid4())
+        
+        # Initialize multi-agent system
+        agent_graph = MedicalAgentGraph(google_api_key=api_key)
+        
+        print("\n" + "=" * 60)
+        print("🏥 Multi-Agent Medical Image Analysis")
+        print("=" * 60)
+        print(f"Session: {session_id}")
+        print(f"Symptoms: {request.message}")
+        print("\nRunning workflow: Vision → Symptom Matcher → Risk Assessor → Recommender\n")
+        
+        # Run analysis
+        result = agent_graph.analyze(request.image, request.message)
+        
+        # Log results to console
+        print("\n" + "=" * 60)
+        print("📊 Analysis Results")
+        print("=" * 60)
+        print("\n1. Visual Analysis:")
+        print(f"   {result['visual_analysis']['visual_description'][:200]}...")
+        
+        print("\n2. Medical Assessment:")
+        print(f"   {result['medical_assessment'][:200]}...")
+        
+        print(f"\n3. Risk Level: {result['risk_level']}")
+        
+        print("\n4. Recommendations:")
+        for i, rec in enumerate(result["recommendations"], 1):
+            print(f"   {i}. {rec[:100]}...")
+        
+        print(f"\n5. Confidence Score: {result['confidence_score']:.2f}")
+        
+        print("\n6. Workflow Messages:")
+        for msg in result["workflow_messages"]:
+            print(f"   {msg}")
+        
+        print("=" * 60 + "\n")
+        
+        # Format response for frontend
+        response_text = f"""**Phân tích hình ảnh y tế hoàn tất**
+
+**🔍 Mô tả hình ảnh:**
+{result['visual_analysis']['visual_description']}
+
+**🩺 Đánh giá y tế:**
+{result['medical_assessment']}
+
+**⚠️ Mức độ khẩn cấp:** {result['risk_level']}
+
+**💡 Khuyến nghị:**
+"""
+        for i, rec in enumerate(result['recommendations'], 1):
+            response_text += f"\n{i}. {rec}"
+        
+        response_text += f"\n\n**📊 Độ tin cậy:** {result['confidence_score']:.0%}"
+        
+        # Add workflow messages
+        response_text += "\n\n**🔄 Quy trình phân tích:**"
+        for msg in result['workflow_messages']:
+            response_text += f"\n• {msg}"
+        
+        return {
+            "session_id": session_id,
+            "response": response_text,
+            "analysis": result,
+            "type": "multi-agent",
+            "timestamp": datetime.now().isoformat()
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"\n❌ Error in multi-agent analysis: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Multi-agent analysis failed: {str(e)}"
+        )
 
 @app.get("/chat/history/{session_id}", response_model=HistoryResponse)
 async def get_history(session_id: str):
