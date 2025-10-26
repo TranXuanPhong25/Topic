@@ -11,6 +11,7 @@ from typing import Dict, Any, Optional
 import google.generativeai as genai
 from PIL import Image
 import io
+from ..config import VISION_CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -38,24 +39,14 @@ class GeminiVisionAnalyzer:
         # Configure Gemini
         genai.configure(api_key=google_api_key)
         
-        # Initialize Gemini 2.0 Flash Lite model for vision
+        # Initialize Gemini model for vision using centralized config
         self.model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash-lite",
-            generation_config={
-                "temperature": 0.4,  # Balanced creativity and consistency
-                "top_p": 0.95,
-                "top_k": 40,
-                "max_output_tokens": 2048,
-            },
-            safety_settings={
-                "HARM_CATEGORY_HARASSMENT": "BLOCK_NONE",
-                "HARM_CATEGORY_HATE_SPEECH": "BLOCK_NONE",
-                "HARM_CATEGORY_SEXUALLY_EXPLICIT": "BLOCK_NONE",
-                "HARM_CATEGORY_DANGEROUS_CONTENT": "BLOCK_NONE",
-            }
+            model_name=VISION_CONFIG["model_name"],
+            generation_config=VISION_CONFIG["generation_config"],
+            safety_settings=VISION_CONFIG["safety_settings"]
         )
         
-        logger.info("GeminiVisionAnalyzer initialized with gemini-2.0-flash-lite")
+        logger.info(f"GeminiVisionAnalyzer initialized with {VISION_CONFIG['model_name']}")
     
     def analyze_image(
         self, 

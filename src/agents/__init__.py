@@ -1,4 +1,5 @@
-"""__init__.py for agents package"""
-from .medical_agent_graph import MedicalAgentGraph
+"""Agents package for medical diagnostic system"""
+from .medical_diagnostic_graph import MedicalDiagnosticGraph
+from . import config
 
-__all__ = ['MedicalAgentGraph']
+__all__ = ['MedicalDiagnosticGraph', 'config']
