@@ -11,7 +11,7 @@ import os
 
 from chatbot import ChatBot
 from config import CLINIC_CONFIG
-from agents.medical_agent_graph import MedicalAgentGraph
+from agents.medical_diagnostic_graph import MedicalDiagnosticGraph
 from todo_manager import todo_manager
 from knowledge_base import knowledge_base
 from database import get_db, SessionLocal
@@ -105,6 +105,51 @@ async def health_check():
         model="gemini-2.0-flash-lite",
         clinic=CLINIC_CONFIG["name"]
     )
+
+
+@app.post("/ma/chat", response_model=ChatResponse)
+async def ma_chat(request: ChatRequest):
+    """
+    Main chat endpoint - send a message and get a response.
+    
+    Args:
+        request: ChatRequest with message and optional session_id
+        
+    Returns:
+        ChatResponse with bot's reply, session_id, and timestamp
+    """
+    try:
+
+        # Generate session ID if not provided
+        session_id = request.session_id or str(uuid.uuid4())
+        
+        # Initialize multi-agent system
+        agent_graph = MedicalDiagnosticGraph()
+
+        # Run analysis
+        result = agent_graph.analyze(user_input=request.message)
+    
+        return {
+            "session_id": session_id,
+            "response": result['final_response'],
+            "analysis": result.get("detailed_analysis"),
+            "diagnosis": result.get("diagnosis"),
+            "risk_assessment": result.get("risk_assessment"),
+            "investigation_plan": result.get("investigation_plan"),
+            "recommendation": result.get("recommendation"),
+            "timestamp": datetime.now().isoformat()
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"\n❌ Error in multi-agent analysis: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Multi-agent analysis failed: {str(e)}"
+        )
 
 
 @app.post("/chat", response_model=ChatResponse)
@@ -213,13 +258,6 @@ def ma_chat_with_image(request: ImageChatRequest):
     Returns comprehensive medical image analysis.
     """
     try:
-        api_key = os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            raise HTTPException(
-                status_code=500,
-                detail="GOOGLE_API_KEY not configured on server"
-            )
-        
         # Validate image data
         if not request.image:
             raise HTTPException(status_code=400, detail="Image data is required")
@@ -228,70 +266,19 @@ def ma_chat_with_image(request: ImageChatRequest):
         session_id = request.session_id or str(uuid.uuid4())
         
         # Initialize multi-agent system
-        agent_graph = MedicalAgentGraph(google_api_key=api_key)
-        
-        print("\n" + "=" * 60)
-        print("🏥 Multi-Agent Medical Image Analysis")
-        print("=" * 60)
-        print(f"Session: {session_id}")
-        print(f"Symptoms: {request.message}")
-        print("\nRunning workflow: Vision → Symptom Matcher → Risk Assessor → Recommender\n")
-        
+        agent_graph = MedicalDiagnosticGraph()
+
         # Run analysis
         result = agent_graph.analyze(request.image, request.message)
-        
-        # Log results to console
-        print("\n" + "=" * 60)
-        print("📊 Analysis Results")
-        print("=" * 60)
-        print("\n1. Visual Analysis:")
-        print(f"   {result['visual_analysis']['visual_description'][:200]}...")
-        
-        print("\n2. Medical Assessment:")
-        print(f"   {result['medical_assessment'][:200]}...")
-        
-        print(f"\n3. Risk Level: {result['risk_level']}")
-        
-        print("\n4. Recommendations:")
-        for i, rec in enumerate(result["recommendations"], 1):
-            print(f"   {i}. {rec[:100]}...")
-        
-        print(f"\n5. Confidence Score: {result['confidence_score']:.2f}")
-        
-        print("\n6. Workflow Messages:")
-        for msg in result["workflow_messages"]:
-            print(f"   {msg}")
-        
-        print("=" * 60 + "\n")
-        
-        # Format response for frontend
-        response_text = f"""**Phân tích hình ảnh y tế hoàn tất**
-
-**🔍 Mô tả hình ảnh:**
-{result['visual_analysis']['visual_description']}
-
-**🩺 Đánh giá y tế:**
-{result['medical_assessment']}
-
-**⚠️ Mức độ khẩn cấp:** {result['risk_level']}
-
-**💡 Khuyến nghị:**
-"""
-        for i, rec in enumerate(result['recommendations'], 1):
-            response_text += f"\n{i}. {rec}"
-        
-        response_text += f"\n\n**📊 Độ tin cậy:** {result['confidence_score']:.0%}"
-        
-        # Add workflow messages
-        response_text += "\n\n**🔄 Quy trình phân tích:**"
-        for msg in result['workflow_messages']:
-            response_text += f"\n• {msg}"
-        
+    
         return {
             "session_id": session_id,
-            "response": response_text,
-            "analysis": result,
-            "type": "multi-agent",
+            "response": result['final_response'],
+            "analysis": result.get("detailed_analysis"),
+            "diagnosis": result.get("diagnosis"),
+            "risk_assessment": result.get("risk_assessment"),
+            "investigation_plan": result.get("investigation_plan"),
+            "recommendation": result.get("recommendation"),
             "timestamp": datetime.now().isoformat()
         }
     

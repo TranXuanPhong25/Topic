@@ -3,12 +3,9 @@ Routing logic for the Medical Diagnostic Graph.
 Handles conditional edges and graph structure.
 """
 import logging
-from typing import Literal, TYPE_CHECKING
+from typing import Literal
+from agents.state import GraphState
 from langgraph.graph import END
-
-if TYPE_CHECKING:
-    from ..medical_diagnostic_graph import GraphState
-
 logger = logging.getLogger(__name__)
 
 
@@ -18,9 +15,9 @@ class IntentRouter:
     """
     
     @staticmethod
-    def route_based_on_intent(state: "GraphState") -> Literal["normal_conversation", "needs_examiner", "image_and_symptoms", "symptoms_only"]:
+    def route_based_on_intent(state: GraphState) -> Literal["normal_conversation", "needs_examiner", "image_and_symptoms", "symptoms_only"]:
         """
-        Route to appropriate node based on classified intent.
+        Route to appropriate node based on classiwfied intent.
         
         Args:
             state: Current graph state

@@ -9,7 +9,7 @@ from handlers.appointment import (
     schedule_appointment_function,
     SCHEDULE_APPOINTMENT_DECLARATION
 )
-from vision.gemini_vision_analyzer import GeminiVisionAnalyzer
+from agents.vision.gemini_vision_analyzer import GeminiVisionAnalyzer
 from todo_manager import create_todo_function, CREATE_TODO_DECLARATION
 from knowledge_base import (
     search_knowledge_base_function,

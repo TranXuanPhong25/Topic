@@ -5,11 +5,11 @@ Implements the complete diagnostic flow with routing, diagnosis, risk assessment
 Refactored into modular structure with separate nodes and edges.
 """
 from langgraph.graph import StateGraph
-from typing import TypedDict, Annotated, List, Dict, Any, Optional
-import operator
+from typing import  Dict, Any, Optional
 import logging
 import google.generativeai as genai
 
+from agents.state import GraphState
 # Import agent configuration
 from .config import (
     DIAGNOSIS_CONFIG,
@@ -40,51 +40,6 @@ from .edges import build_graph_edges
 logger = logging.getLogger(__name__)
 
 
-# ============================================================================
-# GRAPH STATE DEFINITION (As specified in requirements)
-# ============================================================================
-
-class GraphState(TypedDict):
-    """
-    Comprehensive state for the medical AI system graph.
-    All data flows through this shared state according to the diagram.
-    """
-    # Input and routing
-    input: str  # Initial user query
-    intent: str  # normal_conversation, needs_examiner, symptoms_only, image_and_symptoms
-    
-    # Image and symptoms
-    image: Optional[str]  # Base64 encoded image
-    symptoms: str  # Extracted symptoms from input
-    
-    # Vision analysis
-    image_analysis_result: Dict[str, Any]  # Output from ImageAnalyzer
-    
-    # Combined analysis
-    combined_analysis: str  # Merged symptoms and image analysis
-    
-    # Diagnosis and risk
-    diagnosis: Dict[str, Any]  # Output from DiagnosisEngine
-    risk_assessment: Dict[str, Any]  # Output from RiskAssessor
-    
-    # Investigation and retrieval
-    investigation_plan: List[Dict[str, Any]]  # Generated list of investigations
-    retrieved_documents: List[Dict[str, Any]]  # Context from Vector DB and KG
-    
-    # Recommendations
-    recommendation: str  # Final actionable advice
-    
-    # Conversation and appointment
-    conversation_output: str  # Result from ConversationAgent
-    appointment_details: Dict[str, Any]  # Result from AppointmentScheduler
-    
-    # Final output
-    final_response: str  # Message to be sent to user
-    
-    # Logging and metadata
-    messages: Annotated[List[str], operator.add]  # Append-only log
-    metadata: Dict[str, Any]  # Additional context
-
 
 # ============================================================================
 # MEDICAL DIAGNOSTIC GRAPH - Main Implementation
@@ -106,22 +61,23 @@ class MedicalDiagnosticGraph:
     5. Recommender (joins both paths) → END
     """
     
-    def __init__(self, google_api_key: str):
+    def __init__(self):
         """
         Initialize the medical diagnostic system.
         
         Args:
             google_api_key: Google API key for Gemini
         """
-        self.google_api_key = google_api_key
+        
+        self.google_api_key = get_api_key()
         
         # Initialize components
-        self.vision_analyzer = GeminiVisionAnalyzer(google_api_key)
+        self.vision_analyzer = GeminiVisionAnalyzer(self.google_api_key)
         self.knowledge_base = FAQKnowledgeBase()
         self.appointment_handler = AppointmentHandler()
         
         # Initialize Gemini for text reasoning using centralized config
-        genai.configure(api_key=google_api_key)
+        genai.configure(api_key=self.google_api_key)
         self.gemini_model = genai.GenerativeModel(
             model_name=DIAGNOSIS_CONFIG["model_name"],
             generation_config=DIAGNOSIS_CONFIG["generation_config"],
