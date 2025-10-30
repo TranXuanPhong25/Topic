@@ -1,6 +1,3 @@
-"""
-CombineAnalysis Node: Merges text symptoms and image analysis results.
-"""
 import logging
 import json
 from typing import TYPE_CHECKING
@@ -16,16 +13,7 @@ class CombineAnalysisNode:
     CombineAnalysis Node: Merges text symptoms and image analysis.
     """
     
-    def __call__(self, state: "GraphState") -> "GraphState":
-        """
-        Execute the combine analysis logic.
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Updated graph state with combined analysis
-        """
+    def __call__(self, state: GraphState) -> GraphState:
         logger.info("🔗 CombineAnalysis: Merging symptoms and image analysis...")
         
         symptoms = state.get("symptoms", "")

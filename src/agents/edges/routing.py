@@ -5,7 +5,7 @@ Handles conditional edges and graph structure.
 import logging
 from typing import Literal
 from models.state import GraphState
-from langgraph.graph import END
+from langgraph.graph import END, StateGraph
 logger = logging.getLogger(__name__)
 
 
@@ -16,21 +16,11 @@ class IntentRouter:
     
     @staticmethod
     def route_based_on_intent(state: GraphState) -> Literal["normal_conversation", "needs_examiner", "image_and_symptoms", "symptoms_only"]:
-        """
-        Route to appropriate node based on classiwfied intent.
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Next node name based on intent
-        """
         intent = state.get("intent", "normal_conversation")
-        logger.info(f"Routing to: {intent}")
         return intent
 
 
-def build_graph_edges(workflow):
+def build_graph_edges(workflow: StateGraph) -> StateGraph:
     """
     Build all edges for the medical diagnostic graph.
     

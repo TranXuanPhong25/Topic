@@ -1,5 +1,5 @@
 import operator
-from typing import Optional, Dict, TypedDict, Any, List, Annotated
+from typing import Literal, Optional, Dict, TypedDict, Any, List, Annotated
 # ============================================================================
 # GRAPH STATE DEFINITION (As specified in requirements)
 # ============================================================================
@@ -11,7 +11,7 @@ class GraphState(TypedDict):
     """
     # Input and routing
     input: str  # Initial user query
-    intent: str  # normal_conversation, needs_examiner, symptoms_only, image_and_symptoms
+    intent: Literal["normal_conversation", "needs_examiner", "image_and_symptoms", "symptoms_only"]  # normal_conversation, needs_examiner, symptoms_only, image_and_symptoms
     
     # Image and symptoms
     image: Optional[str]  # Base64 encoded image
