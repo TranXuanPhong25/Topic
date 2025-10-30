@@ -64,18 +64,18 @@ def benchmark_singleton_pattern():
     print("\nSingleton Pattern (Current Implementation):")
     print("  - Graph initialized once at module load")
     print("  - Subsequent requests reuse the same instance")
-    print("  - ~90% reduction in initialization overhead")
+    print("  - Significant reduction in initialization overhead")
     
     print("\nOld Pattern (Multiple Instances):")
     print("  ❌ Each request: MedicalDiagnosticGraph()")
     print("  ❌ Rebuilds entire LangGraph workflow")
     print("  ❌ Reinitializes all nodes and edges")
-    print("  ❌ ~500-1000ms overhead per request")
+    print("  ❌ Substantial overhead per request")
     
     print("\nNew Pattern (Singleton):")
-    print("  ✅ First request: Initialize graph (~500ms)")
-    print("  ✅ Subsequent requests: Reuse instance (~0ms)")
-    print("  ✅ Saves ~500-1000ms per request after first")
+    print("  ✅ First request: Initialize graph (one-time cost)")
+    print("  ✅ Subsequent requests: Reuse instance (minimal overhead)")
+    print("  ✅ Eliminates redundant initialization")
     
     print("\n✓ Singleton pattern: Eliminates redundant initialization")
 
@@ -98,9 +98,9 @@ def benchmark_db_sorting():
     print("  3. ORDER BY priority_case, due_date")
     print("  4. Much faster for large datasets")
     
-    print("\nEstimated improvement:")
-    print("  - Small datasets (< 100): ~20% faster")
-    print("  - Large datasets (> 1000): ~50% faster")
+    print("\nExpected improvement:")
+    print("  - More efficient for all dataset sizes")
+    print("  - Scales better with data growth")
     print("  - Benefits from database query optimization")
     
     print("\n✓ Database sorting: Leverages DB engine efficiency")
@@ -116,19 +116,19 @@ def benchmark_vision_api_calls():
     print("  1. Call API for image description")
     print("  2. Generate 5 questions based on symptoms")
     print("  3. Call API 5 more times for Q&A")
-    print("  Total: 6 API calls (~3-6 seconds)")
+    print("  Total: 6 API calls (multiple seconds)")
     print("  Cost: 6x API quota usage")
     
     print("\nNew Approach (Batched Call):")
     print("  1. Generate questions upfront")
     print("  2. Single API call with description + all Q&A")
     print("  3. Parse structured response")
-    print("  Total: 1 API call (~0.5-1 second)")
+    print("  Total: 1 API call (much faster)")
     print("  Cost: 1x API quota usage")
     
     print("\nImprovement:")
-    print("  - Latency: ~83% reduction (6 calls → 1 call)")
-    print("  - Cost: ~83% reduction in API usage")
+    print("  - Latency: Significant reduction (6 calls → 1 call)")
+    print("  - Cost: 6x reduction in API usage")
     print("  - Reliability: Fewer network round-trips")
     
     print("\n✓ Batched API calls: 6x reduction in calls and latency")
@@ -143,22 +143,22 @@ def print_summary():
     optimizations = [
         {
             "name": "1. Singleton Pattern (Medical Graph)",
-            "improvement": "~90% faster after first request",
+            "improvement": "Significant reduction after first request",
             "benefit": "Eliminates redundant graph initialization"
         },
         {
             "name": "2. LRU Cache (FAQ Search)",
-            "improvement": "~100x faster for repeated queries",
+            "improvement": "Much faster for repeated queries",
             "benefit": "Instant retrieval from memory cache"
         },
         {
             "name": "3. Batched API Calls (Vision Analysis)",
-            "improvement": "~83% reduction in latency & cost",
+            "improvement": "Major reduction in latency & cost",
             "benefit": "1 API call instead of 6"
         },
         {
             "name": "4. Database Sorting (Todos)",
-            "improvement": "~50% faster for large datasets",
+            "improvement": "More efficient for all dataset sizes",
             "benefit": "Leverages database query optimization"
         },
         {
