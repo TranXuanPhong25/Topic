@@ -114,8 +114,8 @@ const ChatWidget = ({ sessionId }, ref) => {
     }
   };
 
-  const sendMessageInternal = async () => {
-    const message = inputValue.trim();
+  const sendMessageInternal = async (messageToSend) => {
+    const message = messageToSend ? messageToSend.trim() : inputValue.trim();
 
     // Check if we have image or message
     if (!message && !selectedImage) return;
@@ -168,26 +168,26 @@ const ChatWidget = ({ sessionId }, ref) => {
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     // Validate file type
     if (!file.type.startsWith('image/')) {
       alert('Vui lòng chọn file ảnh (JPEG, PNG, etc.)');
       return;
     }
-    
+
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       alert('Ảnh quá lớn! Vui lòng chọn ảnh dưới 5MB.');
       return;
     }
-    
+
     // Convert to base64
     const reader = new FileReader();
     reader.onload = (e) => {
       const imageData = e.target.result;
       setSelectedImage(imageData);
       setImagePreview(imageData);
-      
+
       // Update placeholder
       if (textareaRef.current) {
         textareaRef.current.placeholder = '📸 Image selected. Describe your symptoms...';
@@ -273,17 +273,17 @@ const ChatWidget = ({ sessionId }, ref) => {
           )}
 
           <div className="chat-input-container">
-            <input 
-              type="file" 
-              id="imageInput" 
-              accept="image/*" 
-              style={{ display: 'none' }} 
+            <input
+              type="file"
+              id="imageInput"
+              accept="image/*"
+              style={{ display: 'none' }}
               onChange={handleImageSelect}
             />
-            <button 
-              className="upload-btn" 
-              onClick={() => document.getElementById('imageInput').click()} 
-              title="Upload image" 
+            <button
+              className="upload-btn"
+              onClick={() => document.getElementById('imageInput').click()}
+              title="Upload image"
               aria-label="Upload image"
             >
               📷
@@ -296,10 +296,10 @@ const ChatWidget = ({ sessionId }, ref) => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onInput={handleInput}
-              onKeyPress={handleKeyPress}
+              onKeyUp={handleKeyPress}
               rows="1"
             />
-            <button className="send-btn" onClick={sendMessageInternal} aria-label="Send message" disabled={isTyping}>
+            <button className="send-btn" onClick={() => sendMessageInternal()} aria-label="Send message" disabled={isTyping}>
               <span className="send-icon">➤</span>
             </button>
           </div>
