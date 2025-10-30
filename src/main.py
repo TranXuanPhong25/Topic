@@ -29,27 +29,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount static files (frontend)
-frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
-if os.path.exists(frontend_path):
-    app.mount("/static", StaticFiles(directory=frontend_path), name="static")
-
-@app.get("/")
-async def root():
-    """Root endpoint - Serve frontend or API info"""
-    # Check if frontend exists
-    frontend_index = os.path.join(frontend_path, "index.html")
-    if os.path.exists(frontend_index):
-        return FileResponse(frontend_index)
-    else:
-        return {
-            "message": "Welcome to Medical Clinic Chatbot API",
-            "docs": "/docs",
-            "health": "/health",
-            "chat": "/chat (POST)",
-        }
-    
-
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
     """Health check endpoint to verify API is running"""
