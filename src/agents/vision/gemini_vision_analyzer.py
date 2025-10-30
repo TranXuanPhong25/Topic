@@ -73,13 +73,16 @@ class GeminiVisionAnalyzer:
             # Decode base64 image
             image = self._decode_base64_image(image_data)
             
-            # Generate visual description
-            visual_description = self._generate_visual_description(image)
-            
-            # Perform visual Q&A if symptoms provided
-            visual_qa_results = {}
+            # Generate comprehensive analysis in a single API call for performance
             if symptoms_text and symptoms_text.strip():
-                visual_qa_results = self._perform_visual_qa(image, symptoms_text)
+                # Combined analysis with Q&A in one call
+                result = self._generate_comprehensive_analysis(image, symptoms_text)
+                visual_description = result["description"]
+                visual_qa_results = result["qa_results"]
+            else:
+                # Just description if no symptoms
+                visual_description = self._generate_visual_description(image)
+                visual_qa_results = {}
             
             # Calculate confidence based on response quality
             confidence = self._calculate_confidence(visual_description, visual_qa_results)
@@ -174,6 +177,93 @@ class GeminiVisionAnalyzer:
         except Exception as e:
             logger.error(f"Error generating visual description: {str(e)}")
             return f"Không thể phân tích hình ảnh: {str(e)}"
+    
+    def _generate_comprehensive_analysis(
+        self,
+        image: Image.Image,
+        symptoms_text: str
+    ) -> Dict[str, Any]:
+        """
+        Generate comprehensive analysis with description and Q&A in a single API call.
+        This is a performance optimization to reduce API calls.
+        
+        Args:
+            image: PIL Image object
+            symptoms_text: Patient's symptom description
+        
+        Returns:
+            Dictionary with description and qa_results
+        """
+        # Generate relevant questions based on symptoms
+        questions = self._generate_questions(symptoms_text)
+        questions_text = "\n".join([f"{i+1}. {q}" for i, q in enumerate(questions)])
+        
+        prompt = f"""Bạn là chuyên gia phân tích hình ảnh y tế. Hãy phân tích hình ảnh và trả lời các câu hỏi.
+
+**Triệu chứng của bệnh nhân:** {symptoms_text}
+
+**Nhiệm vụ 1 - Mô tả hình ảnh:**
+Cung cấp mô tả khách quan, chi tiết về:
+- Loại hình ảnh (da, vết thương, phần cơ thể, v.v.)
+- Màu sắc, kết cấu, kích thước, vị trí
+- Các đặc điểm bất thường và chi tiết y tế
+(Khoảng 4-6 câu)
+
+**Nhiệm vụ 2 - Trả lời các câu hỏi:**
+{questions_text}
+
+**Định dạng trả lời:**
+MÔ TẢ: [Mô tả chi tiết của bạn]
+
+CÂU TRẢ LỜI:
+1. [Câu trả lời 1]
+2. [Câu trả lời 2]
+...
+
+**Lưu ý:**
+- Chỉ dựa trên hình ảnh, không đưa ra chẩn đoán chính xác
+- Trả lời ngắn gọn, trực tiếp
+- Viết bằng tiếng Việt"""
+        
+        try:
+            response = self.model.generate_content([prompt, image])
+            result_text = response.text.strip()
+            
+            # Parse the response
+            description = ""
+            qa_results = {}
+            
+            if "MÔ TẢ:" in result_text:
+                parts = result_text.split("CÂU TRẢ LỜI:")
+                description = parts[0].replace("MÔ TẢ:", "").strip()
+                
+                if len(parts) > 1:
+                    answers_text = parts[1].strip()
+                    # Parse numbered answers
+                    for i, question in enumerate(questions, 1):
+                        # Look for answer pattern like "1. answer text"
+                        import re
+                        pattern = rf"{i}\.\s*([^\n]+(?:\n(?!\d+\.).*)*)"
+                        match = re.search(pattern, answers_text)
+                        if match:
+                            qa_results[question] = match.group(1).strip()
+            else:
+                # Fallback if format not followed
+                description = result_text
+            
+            logger.info(f"Generated comprehensive analysis in single call")
+            return {
+                "description": description,
+                "qa_results": qa_results
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in comprehensive analysis: {str(e)}")
+            # Fallback to description only
+            return {
+                "description": self._generate_visual_description(image),
+                "qa_results": {}
+            }
     
     def _perform_visual_qa(
         self, 

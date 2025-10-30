@@ -1,7 +1,7 @@
 """Todo Management System for Medical Clinic"""
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, case
 from knowledges.database import get_db_context
 from models.todo import Todo
 
@@ -164,24 +164,17 @@ class TodoManager:
             if due_before:
                 query = query.filter(Todo.due_date <= due_before)
             
-            # Order by priority and due date
-            priority_order = {
-                self.PRIORITY_URGENT: 0,
-                self.PRIORITY_HIGH: 1,
-                self.PRIORITY_MEDIUM: 2,
-                self.PRIORITY_LOW: 3,
-            }
+            # Order by priority (using database) then due date for better performance
+            priority_case = case(
+                (Todo.priority == self.PRIORITY_URGENT, 0),
+                (Todo.priority == self.PRIORITY_HIGH, 1),
+                (Todo.priority == self.PRIORITY_MEDIUM, 2),
+                (Todo.priority == self.PRIORITY_LOW, 3),
+                else_=99
+            )
+            query = query.order_by(priority_case, Todo.due_date.asc().nullslast())
             
             todos = query.all()
-            
-            # Sort by priority then due date
-            todos.sort(
-                key=lambda t: (
-                    priority_order.get(t.priority, 99),
-                    t.due_date if t.due_date else datetime.max,
-                )
-            )
-            
             return [todo.to_dict() for todo in todos]
     
     def get_task_by_id(self, todo_id: int) -> Optional[Dict[str, Any]]:
@@ -227,6 +220,9 @@ class TodoManager:
                         "error": f"Todo {todo_id} not found",
                     }
                 
+                # Get current time once for performance
+                now = datetime.now()
+                
                 # Update fields if provided
                 if title is not None:
                     todo.title = title
@@ -242,11 +238,11 @@ class TodoManager:
                     todo.status = status
                     # Update completion time if completed
                     if status == self.STATUS_COMPLETED:
-                        todo.completed_at = datetime.now()
+                        todo.completed_at = now
                 if due_date is not None:
                     todo.due_date = due_date
                 
-                todo.updated_at = datetime.now()
+                todo.updated_at = now
                 
                 db.commit()
                 db.refresh(todo)

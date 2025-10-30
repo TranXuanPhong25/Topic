@@ -10,8 +10,16 @@ from models.chat import ChatRequest, ImageChatRequest, ChatResponse
 
 
 # API Endpoints
-graph = MedicalDiagnosticGraph()._build_graph()
-print(graph.get_graph().draw_ascii())
+# Initialize the graph once at module load (singleton pattern for performance)
+_agent_graph = None
+
+def get_agent_graph() -> MedicalDiagnosticGraph:
+    """Get or create the singleton medical diagnostic graph."""
+    global _agent_graph
+    if _agent_graph is None:
+        _agent_graph = MedicalDiagnosticGraph()
+        print(_agent_graph.graph.get_graph().draw_ascii())
+    return _agent_graph
 
 
 
@@ -32,8 +40,8 @@ async def ma_chat(request: ChatRequest):
         # Generate session ID if not provided
         session_id = request.session_id or str(uuid.uuid4())
         
-        # Initialize multi-agent system
-        agent_graph = MedicalDiagnosticGraph()
+        # Get the singleton multi-agent system (performance optimization)
+        agent_graph = get_agent_graph()
 
         # Run analysis
         result = agent_graph.analyze(user_input=request.message)
@@ -79,8 +87,8 @@ def ma_chat_with_image(request: ImageChatRequest):
         # Generate session ID if not provided
         session_id = request.session_id or str(uuid.uuid4())
         
-        # Initialize multi-agent system
-        agent_graph = MedicalDiagnosticGraph()
+        # Get the singleton multi-agent system (performance optimization)
+        agent_graph = get_agent_graph()
 
         # Run analysis
         result = agent_graph.analyze(request.image, request.message)

@@ -1,5 +1,6 @@
 """FAQ Knowledge Base for Medical Clinic"""
 from typing import List, Dict, Any, Optional
+from functools import lru_cache
 from configs.config import CLINIC_CONFIG
 
 
@@ -178,9 +179,51 @@ class FAQKnowledgeBase:
                 faq["category"] = category
                 self.all_faqs.append(faq)
     
+    @lru_cache(maxsize=128)
+    def _search_faqs_cached(self, query: str, limit: int = 5) -> tuple:
+        """
+        Cached version of FAQ search for performance.
+        Returns tuple instead of list for hashability (required by lru_cache).
+        
+        Args:
+            query: Search query from user (must be lowercase)
+            limit: Maximum number of results to return
+            
+        Returns:
+            Tuple of matching FAQ indices and scores
+        """
+        results = []
+        
+        for idx, faq in enumerate(self.all_faqs):
+            score = 0
+            
+            # Check if query matches keywords
+            for keyword in faq["keywords"]:
+                if keyword in query:
+                    score += 10
+            
+            # Check if query words appear in question
+            question_lower = faq["question"].lower()
+            for word in query.split():
+                if len(word) > 3 and word in question_lower:
+                    score += 5
+            
+            # Check if query words appear in answer
+            answer_lower = faq["answer"].lower()
+            for word in query.split():
+                if len(word) > 3 and word in answer_lower:
+                    score += 2
+            
+            if score > 0:
+                results.append((idx, score))
+        
+        # Sort by score (highest first) and return top results
+        results.sort(key=lambda x: x[1], reverse=True)
+        return tuple(results[:limit])
+    
     def search_faqs(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
         """
-        Search FAQs by keyword matching.
+        Search FAQs by keyword matching with caching for performance.
         
         Args:
             query: Search query from user
@@ -190,37 +233,12 @@ class FAQKnowledgeBase:
             List of matching FAQ dictionaries with relevance scores
         """
         query_lower = query.lower()
-        results = []
         
-        for faq in self.all_faqs:
-            score = 0
-            
-            # Check if query matches keywords
-            for keyword in faq["keywords"]:
-                if keyword in query_lower:
-                    score += 10
-            
-            # Check if query words appear in question
-            question_lower = faq["question"].lower()
-            for word in query_lower.split():
-                if len(word) > 3 and word in question_lower:
-                    score += 5
-            
-            # Check if query words appear in answer
-            answer_lower = faq["answer"].lower()
-            for word in query_lower.split():
-                if len(word) > 3 and word in answer_lower:
-                    score += 2
-            
-            if score > 0:
-                results.append({
-                    "faq": faq,
-                    "score": score,
-                })
+        # Use cached search for better performance
+        cached_results = self._search_faqs_cached(query_lower, limit)
         
-        # Sort by score (highest first) and return top results
-        results.sort(key=lambda x: x["score"], reverse=True)
-        return [r["faq"] for r in results[:limit]]
+        # Convert indices back to FAQ dictionaries
+        return [self.all_faqs[idx] for idx, _ in cached_results]
     
     def get_faq_by_category(self, category: str) -> List[Dict[str, str]]:
         """
