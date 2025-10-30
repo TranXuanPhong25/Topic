@@ -1,5 +1,5 @@
 """Agents package for medical diagnostic system"""
 from .medical_diagnostic_graph import MedicalDiagnosticGraph
-from . import config
+from configs import agent_config
 
-__all__ = ['MedicalDiagnosticGraph', 'config']
+__all__ = ['MedicalDiagnosticGraph', 'agent_config']

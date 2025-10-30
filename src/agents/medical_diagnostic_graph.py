@@ -4,7 +4,7 @@ import logging
 import google.generativeai as genai
 
 from models.state import GraphState
-from .config import (
+from configs.agent_config import (
     DIAGNOSIS_CONFIG,
     get_api_key,
 )

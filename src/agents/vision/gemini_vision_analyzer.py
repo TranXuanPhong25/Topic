@@ -11,7 +11,7 @@ from typing import Dict, Any, Optional
 import google.generativeai as genai
 from PIL import Image
 import io
-from ..config import VISION_CONFIG
+from configs.agent_config import VISION_CONFIG
 
 logger = logging.getLogger(__name__)
 
