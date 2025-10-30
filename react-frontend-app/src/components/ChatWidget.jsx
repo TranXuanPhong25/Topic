@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { MemoizedMarkdown } from './MemoizedMarkdown';
 
 const ChatWidget = ({ sessionId }, ref) => {
   const [isOpen, setIsOpen] = useState(true);
@@ -128,13 +129,13 @@ const ChatWidget = ({ sessionId }, ref) => {
     } else {
       addMessage(message, 'user');
     }
-    if (message === null) {
+    if (message != null) {
       setInputValue('');
     }
     setImagePreview(null);
     setSelectedImage(null);
 
-    // Show typing indicator
+    // Show typing indicatorr
     setTypingIndicator(true);
 
     try {
@@ -245,7 +246,7 @@ const ChatWidget = ({ sessionId }, ref) => {
               <div key={message.id} className={`message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}>
                 <div className="message-avatar">{message.sender === 'user' ? '👤' : '🤖'}</div>
                 <div className="message-content">
-                  <p>{message.content}</p>
+                  <MemoizedMarkdown content={message.content} id={`msg-${message.id}`} />
                   <span className="message-time">{message.time}</span>
                 </div>
               </div>

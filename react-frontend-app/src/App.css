@@ -253,6 +253,8 @@ body {
 }
 
 .message-content {
+  /* padding: 6px; */
+  
   flex: 1;
 }
 

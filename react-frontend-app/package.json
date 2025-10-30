@@ -10,14 +10,21 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "marked": "^16.4.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-markdown": "^10.1.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",
     "vite": "^4.4.0"
   },
-  "keywords": ["react", "frontend", "medical", "chatbot"],
+  "keywords": [
+    "react",
+    "frontend",
+    "medical",
+    "chatbot"
+  ],
   "author": "",
   "license": "ISC"
 }
