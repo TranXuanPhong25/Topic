@@ -4,7 +4,7 @@ Handles conditional edges and graph structure.
 """
 import logging
 from typing import Literal
-from agents.state import GraphState
+from models.state import GraphState
 from langgraph.graph import END
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 """FAQ Knowledge Base for Medical Clinic"""
 from typing import List, Dict, Any, Optional
-from config import CLINIC_CONFIG
+from configs.config import CLINIC_CONFIG
 
 
 class FAQKnowledgeBase:

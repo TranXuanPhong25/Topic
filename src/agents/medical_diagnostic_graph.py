@@ -1,27 +1,18 @@
-"""
-LangGraph-based Medical Diagnostic System
-Implements the complete diagnostic flow with routing, diagnosis, risk assessment, and recommendations.
-
-Refactored into modular structure with separate nodes and edges.
-"""
 from langgraph.graph import StateGraph
 from typing import  Dict, Any, Optional
 import logging
 import google.generativeai as genai
 
-from agents.state import GraphState
-# Import agent configuration
+from models.state import GraphState
 from .config import (
     DIAGNOSIS_CONFIG,
     get_api_key,
 )
 
-# Import supporting modules (absolute imports from src package)
 from .vision.gemini_vision_analyzer import GeminiVisionAnalyzer
-from knowledge_base import FAQKnowledgeBase
+from knowledges.knowledge_base import FAQKnowledgeBase
 from handlers.appointment import AppointmentHandler
 
-# Import node implementations
 from .nodes import (
     RouterNode,
     ConversationAgentNode,
@@ -34,33 +25,12 @@ from .nodes import (
     RecommenderNode,
 )
 
-# Import edge routing logic
 from .edges import build_graph_edges
 
 logger = logging.getLogger(__name__)
 
 
-
-# ============================================================================
-# MEDICAL DIAGNOSTIC GRAPH - Main Implementation
-# ============================================================================
-
 class MedicalDiagnosticGraph:
-    """
-    Comprehensive medical diagnostic system using LangGraph.
-    
-    Flow:
-    1. Router: Classifies intent and extracts symptoms/image
-    2. Conditional branching:
-       - normal_conversation → ConversationAgent → END
-       - needs_examiner → AppointmentScheduler → END
-       - image_and_symptoms → ImageAnalyzer → CombineAnalysis → DiagnosisEngine
-       - symptoms_only → DiagnosisEngine
-    3. DiagnosisEngine (includes internal RiskAssessor)
-    4. Parallel: InvestigationGenerator + DocumentRetriever
-    5. Recommender (joins both paths) → END
-    """
-    
     def __init__(self):
         """
         Initialize the medical diagnostic system.

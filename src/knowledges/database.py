@@ -4,9 +4,9 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool
 from contextlib import contextmanager
 from typing import Generator
-
+from configs.config import DATABASE_URL
 from models import Base
-from config import DATABASE_URL
+from models.clinic_setting import ClinicSettings
 
 
 # Create engine
@@ -118,7 +118,6 @@ def init_database():
     
     # Add default clinic settings (optional)
     with get_db_context() as db:
-        from models import ClinicSettings
         
         # Check if settings already exist
         existing = db.query(ClinicSettings).first()
