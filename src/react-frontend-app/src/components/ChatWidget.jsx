@@ -100,7 +100,6 @@ const ChatWidget = ({ sessionId }, ref) => {
           session_id: sessionId
         })
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
@@ -114,15 +113,14 @@ const ChatWidget = ({ sessionId }, ref) => {
     }
   };
 
-  const sendMessageInternal = async (messageToSend = null) => {
-    const message = messageToSend !== null ? messageToSend : inputValue.trim();
+  const sendMessageInternal = async () => {
+    const message = inputValue.trim();
 
     // Check if we have image or message
     if (!message && !selectedImage) return;
 
     // Save image data BEFORE clearing
     const hasImage = selectedImage !== null;
-    const imageDataToSend = selectedImage;
 
     // Add user message to chat
     if (hasImage) {
@@ -130,8 +128,7 @@ const ChatWidget = ({ sessionId }, ref) => {
     } else {
       addMessage(message, 'user');
     }
-
-    if (messageToSend === null) {
+    if (message === null) {
       setInputValue('');
     }
     setImagePreview(null);
@@ -142,10 +139,9 @@ const ChatWidget = ({ sessionId }, ref) => {
 
     try {
       let response;
-
       // Call appropriate API - use saved image data
       if (hasImage) {
-        response = await sendImageToAPI(message, imageDataToSend);
+        response = await sendImageToAPI(message, selectedImage);
       } else {
         response = await sendMessageToAPI(message);
       }
