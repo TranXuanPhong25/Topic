@@ -13,9 +13,9 @@ const App = () => {
   
   const chatWidgetRef = useRef();
 
-  const handleQuickMessage = (message) => {
+  const handleQuickMessage = (message, imageData = null) => {
     if (chatWidgetRef.current && chatWidgetRef.current.sendMessage) {
-      chatWidgetRef.current.sendMessage(message);
+      chatWidgetRef.current.sendMessage(message, imageData);
     }
   };
 

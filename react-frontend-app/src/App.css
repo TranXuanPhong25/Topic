@@ -132,6 +132,34 @@ body {
   box-shadow: var(--shadow);
 }
 
+.quick-btn-image {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border-color: #10b981;
+  font-weight: 600;
+}
+
+.quick-btn-image:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  border-color: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+}
+
+.quick-btn-symptom {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  border-color: #f59e0b;
+  font-weight: 600;
+}
+
+.quick-btn-symptom:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  border-color: #d97706;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(245, 158, 11, 0.3);
+}
+
 /* Chat Widget */
 .chat-widget {
   position: fixed;

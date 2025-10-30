@@ -22,8 +22,8 @@ const ChatWidget = ({ sessionId }, ref) => {
 
   // Expose sendMessage function to parent component
   useImperativeHandle(ref, () => ({
-    sendMessage: (message) => {
-      sendMessageInternal(message);
+    sendMessage: (message, imageData = null) => {
+      sendMessageInternal(message, imageData);
     }
   }));
 
@@ -114,14 +114,17 @@ const ChatWidget = ({ sessionId }, ref) => {
     }
   };
 
-  const sendMessageInternal = async (messageToSend) => {
+  const sendMessageInternal = async (messageToSend, externalImageData = null) => {
     const message = messageToSend ? messageToSend.trim() : inputValue.trim();
 
+    // Determine image source: external (from quick action) or selected (from file input)
+    const imageToSend = externalImageData || selectedImage;
+
     // Check if we have image or message
-    if (!message && !selectedImage) return;
+    if (!message && !imageToSend) return;
 
     // Save image data BEFORE clearing
-    const hasImage = selectedImage !== null;
+    const hasImage = imageToSend !== null;
 
     // Add user message to chat
     if (hasImage) {
@@ -142,7 +145,7 @@ const ChatWidget = ({ sessionId }, ref) => {
       let response;
       // Call appropriate API - use saved image data
       if (hasImage) {
-        response = await sendImageToAPI(message, selectedImage);
+        response = await sendImageToAPI(message, imageToSend);
       } else {
         response = await sendMessageToAPI(message);
       }
