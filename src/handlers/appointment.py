@@ -5,7 +5,7 @@ import re
 
 from database import get_db_context
 from models import Appointment
-from config import CLINIC_CONFIG
+from configs.config import CLINIC_CONFIG
 from todo_manager import todo_manager
 
 

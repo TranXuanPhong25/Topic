@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from typing import Generator
 
 from models import Base
-from config import DATABASE_URL
+from configs.config import DATABASE_URL
 
 
 # Create engine

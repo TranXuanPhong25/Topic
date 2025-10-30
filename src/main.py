@@ -10,7 +10,7 @@ from datetime import datetime
 import os
 
 from chatbot import ChatBot
-from config import CLINIC_CONFIG
+from configs.config import CLINIC_CONFIG, MODEL_NAME
 from agents.medical_diagnostic_graph import MedicalDiagnosticGraph
 from todo_manager import todo_manager
 from knowledge_base import knowledge_base
@@ -566,7 +566,7 @@ async def startup_event():
     print("Medical Clinic Chatbot API Starting...")
     print("=" * 60)
     print(f"Clinic: {CLINIC_CONFIG['name']}")
-    print(f"Model: gemini-2.0-flash-lite")
+    print(f"Model: {MODEL_NAME}")
     print("API Documentation: http://localhost:8000/docs")
     print("=" * 60)
     

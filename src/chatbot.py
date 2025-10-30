@@ -4,7 +4,7 @@ import google.generativeai as genai
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 from sqlalchemy.orm import Session
-from config import GOOGLE_API_KEY, MODEL_NAME, SYSTEM_INSTRUCTION
+from configs.config import GOOGLE_API_KEY, MODEL_NAME, SYSTEM_INSTRUCTION
 from handlers.appointment import (
     schedule_appointment_function,
     SCHEDULE_APPOINTMENT_DECLARATION
