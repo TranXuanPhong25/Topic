@@ -83,7 +83,7 @@ def ma_chat_with_image(request: ImageChatRequest):
         agent_graph = MedicalDiagnosticGraph()
 
         # Run analysis
-        result = agent_graph.analyze(request.image, request.message)
+        result = agent_graph.analyze(request.message, request.image)
     
         return {
             "session_id": session_id,
