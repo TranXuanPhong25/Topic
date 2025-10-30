@@ -9,7 +9,7 @@ from typing import  Dict, Any, Optional
 import logging
 import google.generativeai as genai
 
-from agents.state import GraphState
+from models.state import GraphState
 # Import agent configuration
 from .config import (
     DIAGNOSIS_CONFIG,
@@ -18,7 +18,7 @@ from .config import (
 
 # Import supporting modules (absolute imports from src package)
 from .vision.gemini_vision_analyzer import GeminiVisionAnalyzer
-from knowledge_base import FAQKnowledgeBase
+from knowledges.knowledge_base import FAQKnowledgeBase
 from handlers.appointment import AppointmentHandler
 
 # Import node implementations

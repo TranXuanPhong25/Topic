@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from configs.config import CLINIC_CONFIG
 from routes.chat import  chat_router
 from routes import faq_router, todo_router
-from src.models.health import HealthResponse
+from models.health import HealthResponse
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -50,7 +50,7 @@ async def root():
         }
     
 
-@chat_router.get("/health", response_model=HealthResponse)
+@app.get("/health", response_model=HealthResponse)
 async def health_check():
     """Health check endpoint to verify API is running"""
     return HealthResponse(

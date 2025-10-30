@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
 import re
 
-from database import get_db_context
+from knowledges.database import get_db_context
 from models.appointment import Appointment
 from configs.config import CLINIC_CONFIG
 from todo_manager import todo_manager
