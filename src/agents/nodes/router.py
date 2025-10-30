@@ -1,16 +1,12 @@
 """
 Router Node: Classifies user intent and extracts symptoms/image information.
 """
-import logging
 import json
 import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
-
-logger = logging.getLogger(__name__)
-
 
 class RouterNode:
     """
@@ -43,11 +39,11 @@ class RouterNode:
             Updated graph state with intent and symptoms
         """
         # Check if router has already run (avoid duplicate executions)
-        if state.get("intent") and state.get("intent") != "":
-            logger.info("🔀 Router: Already classified, skipping...")
+        if state.get("intent") and state.get("intent") != "not_classified":
+            print("🔀 Router: Already classified, skipping...")
             return state
         
-        logger.info("🔀 Router: Classifying user intent...")
+        print("🔀 Router: Classifying user intent...")
         
         user_input = state.get("input", "")
         image = state.get("image")
@@ -99,10 +95,10 @@ Chỉ trả về JSON, không có văn bản bổ sung:
             if symptoms:
                 state["messages"].append(f"✅ Router: Extracted symptoms: {symptoms[:100]}...")
             
-            logger.info(f"Intent: {intent}, Symptoms: {symptoms[:50]}...")
+            print(f"Intent: {intent}, Symptoms: {symptoms[:50]}...")
             
         except Exception as e:
-            logger.error(f"Router error: {str(e)}")
+            print(f"Router error: {str(e)}")
             state["intent"] = "normal_conversation"
             state["messages"].append(f"❌ Router: Error - {str(e)}, defaulting to conversation")
         

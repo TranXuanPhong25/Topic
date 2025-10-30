@@ -2,35 +2,19 @@
 Routing logic for the Medical Diagnostic Graph.
 Handles conditional edges and graph structure.
 """
-import logging
-from typing import Literal
-from models.state import GraphState
+from models.state import GraphState, Intention
 from langgraph.graph import END, StateGraph
-logger = logging.getLogger(__name__)
-
-
 class IntentRouter:
     """
     Router for conditional edges based on classified intent.
     """
     
     @staticmethod
-    def route_based_on_intent(state: GraphState) -> Literal["normal_conversation", "needs_examiner", "image_and_symptoms", "symptoms_only"]:
-        intent = state.get("intent", "normal_conversation")
+    def route_based_on_intent(state: GraphState) -> Intention:
+        intent = state.get("intent", "not_classified")
         return intent
 
-
 def build_graph_edges(workflow: StateGraph) -> StateGraph:
-    """
-    Build all edges for the medical diagnostic graph.
-    
-    Args:
-        workflow: StateGraph instance to add edges to
-        
-    Returns:
-        StateGraph with all edges configured
-    """
-    # Set entry point
     workflow.set_entry_point("router")
     
     # Conditional edges from Router
@@ -42,6 +26,7 @@ def build_graph_edges(workflow: StateGraph) -> StateGraph:
             "needs_examiner": "appointment_scheduler",
             "image_and_symptoms": "image_analyzer",
             "symptoms_only": "diagnosis_engine",
+            "not_classified": END
         }
     )
     

@@ -1,16 +1,12 @@
 """
 DiagnosisEngine Node: Runs core diagnostic logic with risk assessment.
 """
-import logging
 import json
 import re
 from typing import Dict, Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
-
-logger = logging.getLogger(__name__)
-
 
 class DiagnosisEngineNode:
     """
@@ -39,7 +35,7 @@ class DiagnosisEngineNode:
         Returns:
             Updated graph state with diagnosis and risk assessment
         """
-        logger.info("🩺 DiagnosisEngine: Running diagnostic analysis...")
+        print("🩺 DiagnosisEngine: Running diagnostic analysis...")
         
         # Get input - use combined_analysis if available, otherwise symptoms
         analysis_input = state.get("combined_analysis") or state.get("symptoms", "")
@@ -80,10 +76,10 @@ Chỉ trả về JSON:"""
             state["risk_assessment"] = risk_level
             state["messages"].append(f"✅ DiagnosisEngine: Diagnosis complete (severity: {severity})")
             
-            logger.info(f"Diagnosis: {diagnosis.get('primary_diagnosis', 'Unknown')}")
+            print(f"Diagnosis: {diagnosis.get('primary_diagnosis', 'Unknown')}")
             
         except Exception as e:
-            logger.error(f"DiagnosisEngine error: {str(e)}")
+            print(f"DiagnosisEngine error: {str(e)}")
             state["diagnosis"] = {
                 "primary_diagnosis": "Không thể xác định",
                 "differential_diagnoses": [],

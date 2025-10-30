@@ -1,14 +1,10 @@
 """
 DocumentRetriever Node: Performs information augmentation from knowledge sources.
 """
-import logging
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
-
-logger = logging.getLogger(__name__)
-
 
 class DocumentRetrieverNode:
     """
@@ -36,7 +32,7 @@ class DocumentRetrieverNode:
         Returns:
             Updated graph state with retrieved documents
         """
-        logger.info("📚 DocumentRetriever: Retrieving relevant medical documents...")
+        print("📚 DocumentRetriever: Retrieving relevant medical documents...")
         
         diagnosis = state.get("diagnosis", {})
         primary_diagnosis = diagnosis.get("primary_diagnosis", "")
@@ -66,10 +62,10 @@ class DocumentRetrieverNode:
             state["retrieved_documents"] = documents
             state["messages"].append(f"✅ DocumentRetriever: Retrieved {len(documents)} documents")
             
-            logger.info(f"Retrieved {len(documents)} relevant documents")
+            print(f"Retrieved {len(documents)} relevant documents")
             
         except Exception as e:
-            logger.error(f"DocumentRetriever error: {str(e)}")
+            print(f"DocumentRetriever error: {str(e)}")
             state["retrieved_documents"] = []
             state["messages"].append(f"❌ DocumentRetriever: Error - {str(e)}")
         

@@ -1,15 +1,11 @@
 """
 Recommender Node: Synthesizes investigations and retrieved context to generate final recommendations.
 """
-import logging
 import json
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
-
-logger = logging.getLogger(__name__)
-
 
 class RecommenderNode:
     """
@@ -37,7 +33,7 @@ class RecommenderNode:
         Returns:
             Updated graph state with final recommendations
         """
-        logger.info("💡 Recommender: Generating final recommendations...")
+        print("💡 Recommender: Generating final recommendations...")
         
         diagnosis = state.get("diagnosis", {})
         risk_assessment = state.get("risk_assessment", {})
@@ -80,10 +76,9 @@ Bao gồm:
             state["final_response"] = self._format_final_response(state)
             state["messages"].append("✅ Recommender: Final recommendations generated")
             
-            logger.info(f"Recommendation length: {len(recommendation)} characters")
             
         except Exception as e:
-            logger.error(f"Recommender error: {str(e)}")
+            print(f"Recommender error: {str(e)}")
             state["recommendation"] = "Vui lòng gặp bác sĩ để được tư vấn chi tiết."
             state["final_response"] = state["recommendation"]
             state["messages"].append(f"❌ Recommender: Error - {str(e)}")

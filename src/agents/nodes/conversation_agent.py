@@ -1,14 +1,10 @@
 """
 ConversationAgent Node: Handles normal conversations using clinic information and FAQs.
 """
-import logging
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
-
-logger = logging.getLogger(__name__)
-
 
 class ConversationAgentNode:
     """
@@ -38,7 +34,7 @@ class ConversationAgentNode:
         Returns:
             Updated graph state with conversation output
         """
-        logger.info("💬 ConversationAgent: Handling conversation...")
+        print("💬 ConversationAgent: Handling conversation...")
         
         user_input = state.get("input", "")
         
@@ -74,10 +70,10 @@ Trả lời ngắn gọn, hữu ích, chuyên nghiệp (2-3 câu):"""
             state["final_response"] = conversation_output
             state["messages"].append("✅ ConversationAgent: Response generated")
             
-            logger.info(f"Conversation response: {conversation_output[:100]}...")
+            print(f"Conversation response: {conversation_output[:100]}...")
             
         except Exception as e:
-            logger.error(f"ConversationAgent error: {str(e)}")
+            print(f"ConversationAgent error: {str(e)}")
             state["conversation_output"] = "Xin lỗi, tôi đang gặp sự cố. Vui lòng gọi phòng khám để được hỗ trợ."
             state["final_response"] = state["conversation_output"]
             state["messages"].append(f"❌ ConversationAgent: Error - {str(e)}")

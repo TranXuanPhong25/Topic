@@ -1,9 +1,15 @@
 import operator
-from typing import Literal, Optional, Dict, TypedDict, Any, List, Annotated
+from typing import Literal, Optional, Dict, TypedDict, Any, List, Annotated, TypeAlias
 # ============================================================================
 # GRAPH STATE DEFINITION (As specified in requirements)
 # ============================================================================
-
+Intention: TypeAlias = Literal[
+    "normal_conversation",
+    "needs_examiner",
+    "image_and_symptoms",
+    "symptoms_only",
+    "not_classified",
+]
 class GraphState(TypedDict):
     """
     Comprehensive state for the medical AI system graph.
@@ -11,7 +17,7 @@ class GraphState(TypedDict):
     """
     # Input and routing
     input: str  # Initial user query
-    intent: Literal["normal_conversation", "needs_examiner", "image_and_symptoms", "symptoms_only"]  # normal_conversation, needs_examiner, symptoms_only, image_and_symptoms
+    intent: Intention # normal_conversation, needs_examiner, symptoms_only, image_and_symptoms
     
     # Image and symptoms
     image: Optional[str]  # Base64 encoded image

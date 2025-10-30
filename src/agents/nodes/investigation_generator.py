@@ -1,16 +1,12 @@
 """
 InvestigationGenerator Node: Generates potential follow-up tests and investigations.
 """
-import logging
 import json
 import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
-
-logger = logging.getLogger(__name__)
-
 
 class InvestigationGeneratorNode:
     """
@@ -36,7 +32,7 @@ class InvestigationGeneratorNode:
         Returns:
             Updated graph state with investigation plan
         """
-        logger.info("🔬 InvestigationGenerator: Generating investigation plan...")
+        print("🔬 InvestigationGenerator: Generating investigation plan...")
         
         diagnosis = state.get("diagnosis", {})
         
@@ -65,10 +61,10 @@ Chỉ trả về JSON:"""
             state["investigation_plan"] = investigations
             state["messages"].append(f"✅ InvestigationGenerator: {len(investigations)} tests suggested")
             
-            logger.info(f"Generated {len(investigations)} investigation items")
+            print(f"Generated {len(investigations)} investigation items")
             
         except Exception as e:
-            logger.error(f"InvestigationGenerator error: {str(e)}")
+            print(f"InvestigationGenerator error: {str(e)}")
             state["investigation_plan"] = []
             state["messages"].append(f"❌ InvestigationGenerator: Error - {str(e)}")
         

@@ -6,15 +6,11 @@ which supports multimodal input (text + images) for analyzing medical images.
 """
 
 import base64
-import logging
 from typing import Dict, Any, Optional
 import google.generativeai as genai
 from PIL import Image
 import io
 from configs.agent_config import VISION_CONFIG
-
-logger = logging.getLogger(__name__)
-
 
 class GeminiVisionAnalyzer:
     """
@@ -46,7 +42,7 @@ class GeminiVisionAnalyzer:
             safety_settings=VISION_CONFIG["safety_settings"]
         )
         
-        logger.info(f"GeminiVisionAnalyzer initialized with {VISION_CONFIG['model_name']}")
+        print(f"GeminiVisionAnalyzer initialized with {VISION_CONFIG['model_name']}")
     
     def analyze_image(
         self, 
@@ -67,7 +63,7 @@ class GeminiVisionAnalyzer:
             - confidence: Confidence score (0-1)
             - error: Error message if any
         """
-        logger.info("Starting Gemini vision analysis...")
+        print("Starting Gemini vision analysis...")
         
         try:
             # Decode base64 image
@@ -91,11 +87,11 @@ class GeminiVisionAnalyzer:
                 "error": None
             }
             
-            logger.info(f"Vision analysis complete. Confidence: {confidence:.2f}")
+            print(f"Vision analysis complete. Confidence: {confidence:.2f}")
             return result
             
         except Exception as e:
-            logger.error(f"Vision analysis error: {str(e)}")
+            print(f"Vision analysis error: {str(e)}")
             return {
                 "visual_description": "",
                 "visual_qa_results": {},
@@ -128,11 +124,11 @@ class GeminiVisionAnalyzer:
             if image.mode != 'RGB':
                 image = image.convert('RGB')
             
-            logger.info(f"Decoded image: {image.size}, mode: {image.mode}")
+            print(f"Decoded image: {image.size}, mode: {image.mode}")
             return image
             
         except Exception as e:
-            logger.error(f"Error decoding image: {str(e)}")
+            print(f"Error decoding image: {str(e)}")
             raise ValueError(f"Invalid image data: {str(e)}")
     
     def _generate_visual_description(self, image: Image.Image) -> str:
@@ -168,11 +164,11 @@ class GeminiVisionAnalyzer:
             response = self.model.generate_content([prompt, image])
             description = response.text.strip()
             
-            logger.info(f"Generated visual description: {description[:100]}...")
+            print(f"Generated visual description: {description[:100]}...")
             return description
             
         except Exception as e:
-            logger.error(f"Error generating visual description: {str(e)}")
+            print(f"Error generating visual description: {str(e)}")
             return f"Không thể phân tích hình ảnh: {str(e)}"
     
     def _perform_visual_qa(
@@ -214,10 +210,10 @@ class GeminiVisionAnalyzer:
                 response = self.model.generate_content([prompt, image])
                 answer = response.text.strip()
                 qa_results[question] = answer
-                logger.info(f"Q: {question[:50]}... A: {answer[:50]}...")
+                print(f"Q: {question[:50]}... A: {answer[:50]}...")
                 
             except Exception as e:
-                logger.error(f"Error in visual QA: {str(e)}")
+                print(f"Error in visual QA: {str(e)}")
                 qa_results[question] = f"Không thể trả lời: {str(e)}"
         
         return qa_results
@@ -345,7 +341,7 @@ class GeminiVisionAnalyzer:
             }
             
         except Exception as e:
-            logger.error(f"Skin analysis error: {str(e)}")
+            print(f"Skin analysis error: {str(e)}")
             return {
                 "analysis": "",
                 "type": "skin_condition",
@@ -398,7 +394,7 @@ class GeminiVisionAnalyzer:
             }
             
         except Exception as e:
-            logger.error(f"Wound analysis error: {str(e)}")
+            print(f"Wound analysis error: {str(e)}")
             return {
                 "analysis": "",
                 "type": "wound",

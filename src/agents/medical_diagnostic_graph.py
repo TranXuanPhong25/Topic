@@ -1,8 +1,6 @@
 from langgraph.graph import StateGraph
 from typing import  Dict, Any, Optional
-import logging
 import google.generativeai as genai
-
 from models.state import GraphState
 from configs.agent_config import (
     DIAGNOSIS_CONFIG,
@@ -26,9 +24,6 @@ from .nodes import (
 )
 
 from .edges import build_graph_edges
-
-logger = logging.getLogger(__name__)
-
 
 class MedicalDiagnosticGraph:
     def __init__(self):
@@ -68,7 +63,7 @@ class MedicalDiagnosticGraph:
         # Build the graph
         self.graph = self._build_graph()
         
-        logger.info("MedicalDiagnosticGraph initialized successfully")
+        print("MedicalDiagnosticGraph initialized successfully")
     
     def _build_graph(self):
         """
@@ -96,7 +91,6 @@ class MedicalDiagnosticGraph:
         
         # Build edges using the edge module
         workflow = build_graph_edges(workflow)
-        
         # Compile the graph
         return workflow.compile()
     
@@ -121,13 +115,13 @@ class MedicalDiagnosticGraph:
         Returns:
             Dictionary containing final_response and full state
         """
-        logger.info(f"Starting analysis for input: {user_input[:100]}...")
+        print(f"Starting analysis for input: {user_input[:100]}...")
         
         # Initialize state
         initial_state: GraphState = {
             "input": user_input,
             "image": image,
-            "intent": "",
+            "intent": "not_classified",  # Default intent
             "symptoms": "",
             "image_analysis_result": {},
             "combined_analysis": "",
@@ -176,7 +170,7 @@ class MedicalDiagnosticGraph:
             }
             
         except Exception as e:
-            logger.error(f"Graph execution error: {str(e)}")
+            print(f"Graph execution error: {str(e)}")
             return {
                 "success": False,
                 "final_response": "Xin lỗi, đã xảy ra lỗi khi xử lý yêu cầu của bạn. Vui lòng thử lại hoặc liên hệ phòng khám.",

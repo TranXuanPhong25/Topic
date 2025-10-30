@@ -1,11 +1,7 @@
-import logging
 import json
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from ..medical_diagnostic_graph import GraphState
-
-logger = logging.getLogger(__name__)
+from agents.medical_diagnostic_graph import GraphState
 
 
 class CombineAnalysisNode:
@@ -14,7 +10,7 @@ class CombineAnalysisNode:
     """
     
     def __call__(self, state: GraphState) -> GraphState:
-        logger.info("🔗 CombineAnalysis: Merging symptoms and image analysis...")
+        print("🔗 CombineAnalysis: Merging symptoms and image analysis...")
         
         symptoms = state.get("symptoms", "")
         image_analysis = state.get("image_analysis_result", {})
@@ -36,10 +32,10 @@ Mô tả: {visual_desc}
             state["combined_analysis"] = combined
             state["messages"].append("✅ CombineAnalysis: Merged successfully")
             
-            logger.info(f"Combined analysis length: {len(combined)} characters")
+            print(f"Combined analysis length: {len(combined)} characters")
             
         except Exception as e:
-            logger.error(f"CombineAnalysis error: {str(e)}")
+            print(f"CombineAnalysis error: {str(e)}")
             state["combined_analysis"] = symptoms  # Fallback to symptoms only
             state["messages"].append(f"❌ CombineAnalysis: Error - {str(e)}")
         

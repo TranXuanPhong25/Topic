@@ -1,16 +1,12 @@
 """
 AppointmentScheduler Node: Handles appointment booking requests.
 """
-import logging
 import json
 import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
-
-logger = logging.getLogger(__name__)
-
 
 class AppointmentSchedulerNode:
     """
@@ -38,7 +34,7 @@ class AppointmentSchedulerNode:
         Returns:
             Updated graph state with appointment details
         """
-        logger.info("📅 AppointmentScheduler: Handling booking...")
+        print("📅 AppointmentScheduler: Handling booking...")
         
         user_input = state.get("input", "")
         
@@ -88,10 +84,10 @@ Chúng tôi sẽ gửi xác nhận qua tin nhắn. Cảm ơn!"""
             state["final_response"] = response_text
             state["messages"].append("✅ AppointmentScheduler: Processed")
             
-            logger.info(f"Appointment: {appointment_data}")
+            print(f"Appointment: {appointment_data}")
             
         except Exception as e:
-            logger.error(f"AppointmentScheduler error: {str(e)}")
+            print(f"AppointmentScheduler error: {str(e)}")
             state["appointment_details"] = {}
             state["final_response"] = "Để đặt lịch, vui lòng cung cấp: tên, ngày, giờ, và lý do khám."
             state["messages"].append(f"❌ AppointmentScheduler: Error - {str(e)}")
