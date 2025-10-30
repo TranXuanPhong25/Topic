@@ -105,7 +105,6 @@ Bao gồm:
 
 **Mức độ rủi ro:** {risk_assessment.get('risk_level', 'MEDIUM')}
 
-**💡 Khuyến nghị:**
 {recommendation}
 
 ---
