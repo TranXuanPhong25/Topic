@@ -6,10 +6,10 @@ from fastapi.responses import FileResponse
 import os
 
 from pydantic import BaseModel
-from configs.config import CLINIC_CONFIG
-from routes.chat import  chat_router
-from routes import faq_router, todo_router
-from models.health import HealthResponse
+from src.configs.config import CLINIC_CONFIG
+from src.routes.chat import  chat_router
+from src.routes import faq_router, todo_router
+from src.models.health import HealthResponse
 
 # Initialize FastAPI app
 app = FastAPI(

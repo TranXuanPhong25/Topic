@@ -1,7 +1,7 @@
 import json
 from typing import TYPE_CHECKING
 
-from agents.medical_diagnostic_graph import GraphState
+from src.models.state import GraphState
 
 
 class CombineAnalysisNode:

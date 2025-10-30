@@ -1,11 +1,11 @@
 from . import chat_router
-from agents.medical_diagnostic_graph import MedicalDiagnosticGraph
+from src.agents.medical_diagnostic_graph import MedicalDiagnosticGraph
 import uuid
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
 from datetime import datetime
 from fastapi import HTTPException
-from models.chat import ChatRequest, ImageChatRequest, ChatResponse
+from src.models.chat import ChatRequest, ImageChatRequest, ChatResponse
 
 
 

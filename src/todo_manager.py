@@ -2,8 +2,8 @@
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 from sqlalchemy import and_, or_
-from knowledges.database import get_db_context
-from models.todo import Todo
+from src.knowledges.database import get_db_context
+from src.models.todo import Todo
 
 
 class TodoManager:

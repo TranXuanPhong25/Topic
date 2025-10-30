@@ -2,7 +2,7 @@
 Routing logic for the Medical Diagnostic Graph.
 Handles conditional edges and graph structure.
 """
-from models.state import GraphState, Intention
+from src.models.state import GraphState, Intention
 from langgraph.graph import END, StateGraph
 class IntentRouter:
     """

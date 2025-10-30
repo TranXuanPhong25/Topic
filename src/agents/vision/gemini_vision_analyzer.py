@@ -10,7 +10,7 @@ from typing import Dict, Any, Optional
 import google.generativeai as genai
 from PIL import Image
 import io
-from configs.agent_config import VISION_CONFIG
+from src.configs.agent_config import VISION_CONFIG
 
 class GeminiVisionAnalyzer:
     """

@@ -1,15 +1,17 @@
 from langgraph.graph import StateGraph
 from typing import  Dict, Any, Optional
 import google.generativeai as genai
-from models.state import GraphState
-from configs.agent_config import (
+from src.models.state import GraphState
+from src.configs.agent_config import (
     DIAGNOSIS_CONFIG,
     get_api_key,
 )
+from src.agents.nodes.supervisor import SupervisorNode
+from .nodes.models.supervisor import SupervisorAgentModel
 
 from .vision.gemini_vision_analyzer import GeminiVisionAnalyzer
-from knowledges.knowledge_base import FAQKnowledgeBase
-from handlers.appointment import AppointmentHandler
+from src.knowledges.knowledge_base import FAQKnowledgeBase
+from src.handlers.appointment import AppointmentHandler
 
 from .nodes import (
     RouterNode,
@@ -23,7 +25,6 @@ from .nodes import (
     RecommenderNode,
 )
 
-from .edges import build_graph_edges
 
 class MedicalDiagnosticGraph:
     def __init__(self):
@@ -59,7 +60,7 @@ class MedicalDiagnosticGraph:
         self.investigation_generator_node = InvestigationGeneratorNode(self.gemini_model)
         self.document_retriever_node = DocumentRetrieverNode(self.knowledge_base)
         self.recommender_node = RecommenderNode(self.gemini_model)
-        
+        self.supervisor_node = SupervisorNode(SupervisorAgentModel())
         # Build the graph
         self.graph = self._build_graph()
         
@@ -77,7 +78,7 @@ class MedicalDiagnosticGraph:
           - DiagnosisEngine → [InvestigationGenerator, DocumentRetriever] → Recommender → END
         """
         workflow = StateGraph(GraphState)
-        
+
         # Add all nodes (using node instances)
         workflow.add_node("router", self.router_node)
         workflow.add_node("conversation_agent", self.conversation_agent_node)
@@ -88,9 +89,10 @@ class MedicalDiagnosticGraph:
         workflow.add_node("investigation_generator", self.investigation_generator_node)
         workflow.add_node("document_retriever", self.document_retriever_node)
         workflow.add_node("recommender", self.recommender_node)
-        
+        workflow.add_node("supervisor", self.supervisor_node)
         # Build edges using the edge module
-        workflow = build_graph_edges(workflow)
+        # workflow = build_graph_edges(workflow)
+        workflow.set_entry_point("supervisor")
         # Compile the graph
         return workflow.compile()
     
@@ -134,7 +136,10 @@ class MedicalDiagnosticGraph:
             "appointment_details": {},
             "final_response": "",
             "messages": [],
-            "metadata": metadata or {}
+            "metadata": metadata or {},
+            "plan": [],
+            "current_step": 0,
+            "next_step": None,
         }
         
         try:

@@ -50,3 +50,7 @@ class GraphState(TypedDict):
     # Logging and metadata
     messages: Annotated[List[str], operator.add]  # Append-only log
     metadata: Dict[str, Any]  # Additional context
+
+    plan: List[Dict[str, Any]]  # Added for plan storage
+    current_step: int  # Added for tracking current step in the plan
+    next_step: Optional[str]  # Added for next step identification
