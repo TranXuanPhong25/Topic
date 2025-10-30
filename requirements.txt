@@ -38,3 +38,6 @@ transformers>=4.36.0     # Hugging Face Transformers
 torch>=2.1.0             # PyTorch for model inference
 accelerate>=0.25.0       # Fast model loading
 sentencepiece>=0.1.99    # Tokenizer for Gemma models
+
+#graph visualization
+grandalf>=0.8

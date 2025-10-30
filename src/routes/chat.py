@@ -10,6 +10,9 @@ from models.chat import ChatRequest, ImageChatRequest, ChatResponse
 
 
 # API Endpoints
+graph = MedicalDiagnosticGraph()._build_graph()
+print(graph.get_graph().draw_ascii())
+
 
 
 
