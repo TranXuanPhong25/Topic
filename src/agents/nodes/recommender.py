@@ -61,17 +61,17 @@ class RecommenderNode:
             # Generate recommendations using Gemini
             recommendation_prompt = f"""Dựa trên phân tích, đưa ra khuyến nghị cuối cùng cho bệnh nhân.
 
-                                        {context}
+{context}
 
-                                        **Nhiệm vụ:** Viết khuyến nghị hành động rõ ràng, dễ hiểu (3-5 câu).
+**Nhiệm vụ:** Viết khuyến nghị hành động rõ ràng, dễ hiểu (3-5 câu).
 
-                                        Bao gồm:
-                                        1. Hành động ngay lập tức (nếu cần)
-                                        2. Khi nào cần gặp bác sĩ
-                                        3. Xét nghiệm cần làm
-                                        4. Chăm sóc tại nhà (nếu phù hợp)
+Bao gồm:
+1. Hành động ngay lập tức (nếu cần)
+2. Khi nào cần gặp bác sĩ
+3. Xét nghiệm cần làm
+4. Chăm sóc tại nhà (nếu phù hợp)
 
-                                        **Khuyến nghị (tiếng Việt, thân thiện):**"""
+**Khuyến nghị (tiếng Việt, thân thiện):**"""
 
             response = self.gemini_model.generate_content(recommendation_prompt)
             recommendation = response.text.strip()
@@ -106,14 +106,14 @@ class RecommenderNode:
         
         response = f"""**🩺 Phân tích y tế:**
 
-                        **Chẩn đoán sơ bộ:** {diagnosis.get('primary_diagnosis', 'Không xác định')}
+**Chẩn đoán sơ bộ:** {diagnosis.get('primary_diagnosis', 'Không xác định')}
 
-                        **Mức độ rủi ro:** {risk_assessment.get('risk_level', 'MEDIUM')}
+**Mức độ rủi ro:** {risk_assessment.get('risk_level', 'MEDIUM')}
 
-                        **💡 Khuyến nghị:**
-                        {recommendation}
+**💡 Khuyến nghị:**
+{recommendation}
 
-                        ---
-                        *Lưu ý: Đây là phân tích sơ bộ. Vui lòng tham khảo ý kiến bác sĩ chuyên khoa để chẩn đoán chính xác.*"""
-                                
+---
+*Lưu ý: Đây là phân tích sơ bộ. Vui lòng tham khảo ý kiến bác sĩ chuyên khoa để chẩn đoán chính xác.*"""
+        
         return response
