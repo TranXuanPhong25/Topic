@@ -4,7 +4,7 @@ from typing import Optional, Dict, Any, List
 import re
 
 from database import get_db_context
-from models import Appointment
+from models.appointment import Appointment
 from configs.config import CLINIC_CONFIG
 from todo_manager import todo_manager
 
@@ -185,10 +185,10 @@ class AppointmentHandler:
                 db.add(appointment)
                 db.commit()
                 db.refresh(appointment)
-                
+
                 # Auto-create reminder todo for receptionist
                 reminder_result = todo_manager.create_appointment_reminder(
-                    appointment_id=appointment.id,
+                    appointment_id=appointment.id, # type: ignore
                     appointment_date=date,
                     appointment_time=time,
                     patient_name=patient_name,
@@ -254,10 +254,10 @@ class AppointmentHandler:
                 if not appointment:
                     return {"success": False, "error": "Appointment not found"}
                 
-                if appointment.status == "cancelled":
+                if appointment.status == "cancelled": # type: ignore
                     return {"success": False, "error": "Appointment already cancelled"}
                 
-                appointment.status = "cancelled"
+                appointment.status = "cancelled" # pyright: ignore[reportAttributeAccessIssue]
                 db.commit()
                 
                 return {
@@ -348,7 +348,7 @@ SCHEDULE_APPOINTMENT_DECLARATION = {
 
 
 def schedule_appointment_function(patient_name: str, date: str, time: str, reason: str,
-                                  phone: str = None, provider: str = None) -> str:
+                                  phone: str = "", provider: str = "") -> str:
     """
     Function that Gemini can call to schedule appointments.
     Returns a string response to be shown to the user.
