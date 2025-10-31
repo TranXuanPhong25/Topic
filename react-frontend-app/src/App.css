@@ -1,4 +1,3 @@
-/* Medical Clinic Chat Interface Styles */
 :root {
   --primary-color: #2563eb;
   --primary-dark: #1e40af;
@@ -283,9 +282,10 @@ body {
 }
 
 .message-content {
-  /* padding: 6px; */
-  
   flex: 1;
+  max-width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .bot-message .message-content {
@@ -303,15 +303,178 @@ body {
   color: var(--user-message-text);
   padding: 0.75rem 1rem;
   border-radius: 12px 12px 4px 12px;
-  /* text-align: right; */
 }
 
+/* Markdown Content Styling */
 .message-content p {
   margin-bottom: 0.5rem;
+  line-height: 1.6;
 }
 
 .message-content p:last-child {
   margin-bottom: 0;
+}
+
+/* Headings in markdown */
+.message-content h1,
+.message-content h2,
+.message-content h3,
+.message-content h4,
+.message-content h5,
+.message-content h6 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.message-content h1 { font-size: 1.5rem; }
+.message-content h2 { font-size: 1.3rem; }
+.message-content h3 { font-size: 1.1rem; }
+.message-content h4 { font-size: 1rem; }
+.message-content h5 { font-size: 0.95rem; }
+.message-content h6 { font-size: 0.9rem; }
+
+.message-content h1:first-child,
+.message-content h2:first-child,
+.message-content h3:first-child,
+.message-content h4:first-child,
+.message-content h5:first-child,
+.message-content h6:first-child {
+  margin-top: 0;
+}
+
+/* Lists in markdown */
+.message-content ul,
+.message-content ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.message-content li {
+  margin-bottom: 0.25rem;
+  line-height: 1.5;
+}
+
+.message-content ul li {
+  list-style-type: disc;
+}
+
+.message-content ol li {
+  list-style-type: decimal;
+}
+
+/* Nested lists */
+.message-content ul ul,
+.message-content ol ul {
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+
+/* Inline code */
+.message-content code {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+}
+
+.user-message .message-content code {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Code blocks */
+.message-content pre {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 0.75rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+
+.user-message .message-content pre {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.message-content pre code {
+  background: transparent;
+  padding: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* Blockquotes */
+.message-content blockquote {
+  border-left: 3px solid var(--primary-color);
+  padding-left: 1rem;
+  margin: 0.5rem 0;
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.user-message .message-content blockquote {
+  border-left-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Links */
+.message-content a {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+.user-message .message-content a {
+  color: white;
+  text-decoration: underline;
+}
+
+/* Strong and emphasis */
+.message-content strong {
+  font-weight: 600;
+}
+
+.message-content em {
+  font-style: italic;
+}
+
+/* Horizontal rule */
+.message-content hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 1rem 0;
+}
+
+.user-message .message-content hr {
+  border-top-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Tables in markdown */
+.message-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.message-content th,
+.message-content td {
+  border: 1px solid var(--border-color);
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.message-content th {
+  background: rgba(0, 0, 0, 0.05);
+  font-weight: 600;
+}
+
+.user-message .message-content th,
+.user-message .message-content td {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.user-message .message-content th {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .message-time {
