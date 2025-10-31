@@ -17,7 +17,7 @@ class SupervisorNode:
         self.model = model
     
     def __call__(self, state: "GraphState") -> "GraphState":
-        print("🎯 Supervisor: Coordinating workflow...")
+        print("================== SUPERVISOR TURN ======================")
         
         try:
             # Build optimized prompt with full context
@@ -27,8 +27,7 @@ class SupervisorNode:
             response = self.model.generate_content(supervisor_prompt)
             response_text = response.text.strip()
             
-            print(f"📋 Supervisor Response: {response_text[:200]}...")
-            
+
             # Extract JSON from response (handle markdown code blocks)
             json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response_text, re.DOTALL)
             if json_match:
@@ -69,7 +68,10 @@ class SupervisorNode:
             print(f"✅ Decision: {next_step}")
             print(f"💭 Reasoning: {reasoning}")
             print(f"📝 Updated plan: {len(updated_plan)} steps")
-            
+            print("========================================================= CURRENT PLAN =========================================================")
+            for i, step in enumerate(updated_plan, 1):
+                print(f"  {i}. {step.get('step', 'unknown')} - {step.get('description', '')} [{step.get('status', 'pending')}]")
+            print("===================================================================================================================================")
             return state
             
         except json.JSONDecodeError as e:
@@ -132,7 +134,7 @@ class SupervisorNode:
         has_image = bool(state.get("image"))
         diagnosis = state.get("diagnosis", {})
         messages = state.get("messages", [])
-
+        current_step = state.get("current_step", 0)
         # Build context summary
         context_parts = []
         context_parts.append(f"**User Input**: {user_input}")
@@ -154,7 +156,7 @@ class SupervisorNode:
 
         # Format current plan
         if current_plan:
-            plan_str = "**Current Plan**:\n"
+            plan_str = f"**Current Plan** (current at step {current_step}):\n"
             for i, step in enumerate(current_plan, 1):
                 status = step.get("status", "pending")
                 plan_str += f"  {i}. {step.get('step', 'unknown')} - {step.get('description', '')} [{status}]\n"

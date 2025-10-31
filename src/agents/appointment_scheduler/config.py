@@ -3,6 +3,7 @@ Appointment Scheduler Agent Configuration
 """
 from typing import Optional
 from src.configs.agent_config import GOOGLE_API_KEY, GEMINI_MODEL_NAME
+import google.generativeai as genai
 import os
 from typing import Any
 

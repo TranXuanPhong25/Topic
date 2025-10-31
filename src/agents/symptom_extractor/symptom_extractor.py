@@ -58,10 +58,8 @@ class SymptomExtractorNode:
             # Build extraction prompt
             prompt = build_symptom_extraction_prompt(user_input, conversation_history)
             
-            print(f"📝 Extracting symptoms")
             # Generate symptom extraction
             response = self.llm.generate_content(prompt)
-            print(response.text)
             # Parse JSON response
             symptom_data = self._parse_response(response.text)
             
@@ -86,7 +84,6 @@ class SymptomExtractorNode:
                 "raw_input": user_input
             }
         
-        print("🩺 === SYMPTOM EXTRACTION ENDED ===\n")
         return state
     
     def _build_conversation_history(self, state: GraphState) -> str:

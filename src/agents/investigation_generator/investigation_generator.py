@@ -13,7 +13,7 @@ class InvestigationGeneratorNode:
         self.gemini_model = gemini_model
     
     def __call__(self, state: "GraphState") -> "GraphState":
-        print("🔬 InvestigationGenerator: Generating investigation plan...")
+        print("==================== InvestigationGenerator ====================")
         
         diagnosis = state.get("diagnosis", {})
         
@@ -40,9 +40,10 @@ Chỉ trả về JSON:"""
             
             state["investigation_plan"] = investigations
             state["messages"].append(f"✅ InvestigationGenerator: {len(investigations)} tests suggested")
-            
-            print(f"Generated {len(investigations)} investigation items")
-            
+            state["current_step"] += 1
+            print(f"Generated {len(investigations)} investigation items:")
+            for test_name in investigations:
+                print(test_name)
         except Exception as e:
             print(f"InvestigationGenerator error: {str(e)}")
             state["investigation_plan"] = []

@@ -3,7 +3,8 @@ Combine Analysis Agent Configuration
 """
 from typing import Any, Optional
 from src.configs.agent_config import GOOGLE_API_KEY, GEMINI_MODEL_NAME
-import os
+import google.generativeai as genai
+
 
 
 class CombineAnalysisModelSingleton:

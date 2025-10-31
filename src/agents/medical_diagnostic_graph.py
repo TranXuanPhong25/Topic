@@ -14,26 +14,20 @@ from src.knowledges.knowledge_base import FAQKnowledgeBase
 from src.handlers.appointment import AppointmentHandler
 
 from src.agents.router import RouterNode
-from src.agents.conversation_agent import ConversationAgentNode
-from src.agents.appointment_scheduler import AppointmentSchedulerNode
-from src.agents.image_analyzer import ImageAnalyzerNode
+from src.agents.conversation_agent import ConversationAgentNode, new_conversation_agent_node
+from src.agents.appointment_scheduler import AppointmentSchedulerNode, new_appointment_scheduler_node
+from src.agents.image_analyzer import ImageAnalyzerNode, new_image_analyzer_node
 from src.agents.symptom_extractor import SymptomExtractorNode, new_symptom_extractor_node
 from src.agents.combine_analysis import CombineAnalysisNode
-from src.agents.diagnosis_engine import DiagnosisEngineNode
-from src.agents.investigation_generator import InvestigationGeneratorNode
-from src.agents.document_retriever import DocumentRetrieverNode
-from src.agents.recommender import RecommenderNode
+from src.agents.diagnosis_engine import DiagnosisEngineNode, new_diagnosis_engine_node
+from src.agents.investigation_generator import InvestigationGeneratorNode, new_investigation_generator_node
+from src.agents.document_retriever import DocumentRetrieverNode, new_document_retriever_node
+from src.agents.recommender import RecommenderNode, new_recommender_node
+from src.agents.synthesis import SynthesisNode, new_synthesis_node
 
 
 class MedicalDiagnosticGraph:
     def __init__(self):
-        """
-        Initialize the medical diagnostic system.
-        
-        Args:
-            google_api_key: Google API key for Gemini
-        """
-        
         self.google_api_key = get_api_key()
         
         # Initialize components
@@ -50,16 +44,17 @@ class MedicalDiagnosticGraph:
         )
 
         # Initialize node instances
-        self.router_node = RouterNode(self.gemini_model)
-        self.conversation_agent_node = ConversationAgentNode(self.gemini_model, self.knowledge_base)
-        self.appointment_scheduler_node = AppointmentSchedulerNode(self.gemini_model, self.appointment_handler)
-        self.image_analyzer_node = ImageAnalyzerNode(self.vision_analyzer)
+        # self.router_node = RouterNode(self.gemini_model)
+        self.conversation_agent_node = new_conversation_agent_node(self.knowledge_base)
+        self.appointment_scheduler_node = new_appointment_scheduler_node(self.appointment_handler)
+        self.image_analyzer_node = new_image_analyzer_node()
         self.symptom_extractor_node = new_symptom_extractor_node()
-        self.combine_analysis_node = CombineAnalysisNode()
-        self.diagnosis_engine_node = DiagnosisEngineNode(self.gemini_model)
-        self.investigation_generator_node = InvestigationGeneratorNode(self.gemini_model)
-        self.document_retriever_node = DocumentRetrieverNode(self.knowledge_base)
-        self.recommender_node = RecommenderNode(self.gemini_model)
+        # self.combine_analysis_node = CombineAnalysisNode()
+        self.diagnosis_engine_node = new_diagnosis_engine_node()
+        self.investigation_generator_node = new_investigation_generator_node()
+        self.document_retriever_node = new_document_retriever_node()
+        self.recommender_node = new_recommender_node()
+        self.synthesis_node = new_synthesis_node()
 
         self.supervisor_node = new_supervisor_node()
         # Build the graph
@@ -68,17 +63,6 @@ class MedicalDiagnosticGraph:
         print("MedicalDiagnosticGraph initialized successfully")
     
     def _build_graph(self):
-        """
-        Build the LangGraph workflow according to the diagram.
-        
-        Graph structure:
-        Router (entry) → Conditional branching:
-          - ConversationAgent → END
-          - AppointmentScheduler → END
-          - ImageAnalyzer → CombineAnalysis → DiagnosisEngine → [InvestigationGenerator, DocumentRetriever] → Recommender → END
-          - DiagnosisEngine → [InvestigationGenerator, DocumentRetriever] → Recommender → END
-          - SymptomExtractor → DiagnosisEngine (for symptoms_only path)
-        """
         workflow = StateGraph(GraphState)
 
         # Add all nodes (using node instances)
@@ -92,6 +76,7 @@ class MedicalDiagnosticGraph:
         workflow.add_node("investigation_generator", self.investigation_generator_node)
         workflow.add_node("document_retriever", self.document_retriever_node)
         workflow.add_node("recommender", self.recommender_node)
+        workflow.add_node("synthesis", self.synthesis_node)
         workflow.add_node("supervisor", self.supervisor_node)
         # Build edges using the edge module
         # workflow = build_graph_edges(workflow)
@@ -108,6 +93,7 @@ class MedicalDiagnosticGraph:
                 "investigation_generator": "investigation_generator",
                 "document_retriever": "document_retriever",
                 "recommender": "recommender",
+                "synthesis": "synthesis",
                 "END" : END,
 
             }
@@ -120,6 +106,7 @@ class MedicalDiagnosticGraph:
         workflow.add_edge("investigation_generator", "supervisor")
         workflow.add_edge("document_retriever", "supervisor")
         workflow.add_edge("recommender", "supervisor")
+        workflow.add_edge("synthesis", "supervisor")  # Synthesis is final step
         # Compile the graph
         return workflow.compile()
     
@@ -171,7 +158,7 @@ class MedicalDiagnosticGraph:
         
         try:
             # Execute the graph (returns final state only, not streaming)
-            final_state = self.graph.invoke(initial_state)
+            final_state = self.graph.invoke(initial_state, config={"recursion_limit":20})
             
             # Extract only the unique execution steps (final state messages)
             # LangGraph invoke() returns final state, but messages list accumulates all intermediate states
