@@ -6,24 +6,21 @@ from src.configs.agent_config import (
     DIAGNOSIS_CONFIG,
     get_api_key,
 )
-from src.agents.nodes.supervisor import SupervisorNode
-from .nodes.models.supervisor import SupervisorAgentModel
+from src.agents.supervisor import SupervisorNode
 
 from .vision.gemini_vision_analyzer import GeminiVisionAnalyzer
 from src.knowledges.knowledge_base import FAQKnowledgeBase
 from src.handlers.appointment import AppointmentHandler
 
-from .nodes import (
-    RouterNode,
-    ConversationAgentNode,
-    AppointmentSchedulerNode,
-    ImageAnalyzerNode,
-    CombineAnalysisNode,
-    DiagnosisEngineNode,
-    InvestigationGeneratorNode,
-    DocumentRetrieverNode,
-    RecommenderNode,
-)
+from src.agents.router import RouterNode
+from src.agents.conversation_agent import ConversationAgentNode
+from src.agents.appointment_scheduler import AppointmentSchedulerNode
+from src.agents.image_analyzer import ImageAnalyzerNode
+from src.agents.combine_analysis import CombineAnalysisNode
+from src.agents.diagnosis_engine import DiagnosisEngineNode
+from src.agents.investigation_generator import InvestigationGeneratorNode
+from src.agents.document_retriever import DocumentRetrieverNode
+from src.agents.recommender import RecommenderNode
 
 
 class MedicalDiagnosticGraph:
@@ -60,7 +57,7 @@ class MedicalDiagnosticGraph:
         self.investigation_generator_node = InvestigationGeneratorNode(self.gemini_model)
         self.document_retriever_node = DocumentRetrieverNode(self.knowledge_base)
         self.recommender_node = RecommenderNode(self.gemini_model)
-        self.supervisor_node = SupervisorNode(SupervisorAgentModel())
+        self.supervisor_node = SupervisorNode(self.gemini_model)
         # Build the graph
         self.graph = self._build_graph()
         

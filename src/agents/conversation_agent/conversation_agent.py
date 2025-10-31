@@ -2,6 +2,7 @@
 ConversationAgent Node: Handles normal conversations using clinic information and FAQs.
 """
 from typing import TYPE_CHECKING
+from .prompts import build_conversation_prompt
 
 if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
@@ -42,27 +43,26 @@ class ConversationAgentNode:
             # Search knowledge base for relevant FAQ
             faq_results = self.knowledge_base.search_faqs(user_input, limit=3)
             
-            # Build context from FAQ
-            context = "\n\n".join([
-                f"Q: {faq['question']}\nA: {faq['answer']}"
-                for faq in faq_results
-            ])
+            # Build knowledge base context
+            kb_info_parts = [
+                f"Clinic: {self.knowledge_base.clinic_info['name']}",
+                f"Hours: {self.knowledge_base.clinic_info['hours']}",
+                f"Phone: {self.knowledge_base.clinic_info['phone']}"
+            ]
+            
+            # Add relevant FAQs
+            for faq in faq_results:
+                kb_info_parts.append(f"Q: {faq['question']}\nA: {faq['answer']}")
+            
+            knowledge_base_info = "\n\n".join(kb_info_parts)
+            
+            # Build prompt using optimized template
+            conversation_prompt = build_conversation_prompt(
+                user_input=user_input,
+                knowledge_base_info=knowledge_base_info
+            )
             
             # Use Gemini to generate response
-            conversation_prompt = f"""Bạn là trợ lý y tế thân thiện cho phòng khám. Trả lời câu hỏi của bệnh nhân.
-
-Thông tin phòng khám:
-- Tên: {self.knowledge_base.clinic_info['name']}
-- Giờ làm việc: {self.knowledge_base.clinic_info['hours']}
-- Điện thoại: {self.knowledge_base.clinic_info['phone']}
-
-Câu hỏi thường gặp liên quan:
-{context}
-
-Câu hỏi của bệnh nhân: "{user_input}"
-
-Trả lời ngắn gọn, hữu ích, chuyên nghiệp (2-3 câu):"""
-
             response = self.gemini_model.generate_content(conversation_prompt)
             conversation_output = response.text.strip()
             

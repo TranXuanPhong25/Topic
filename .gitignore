@@ -58,3 +58,5 @@ htmlcov/
 
 # Project specific
 clinic.db
+
+.venv/*

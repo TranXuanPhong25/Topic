@@ -33,11 +33,7 @@ langchain-core>=1.0.0    # Core abstractions
 huggingface-hub>=0.20.0  # HF Inference API (FREE)
 Pillow>=10.0.0           # Image processing
 
-# Transformers for MedGemma (local inference, no API quota)
-transformers>=4.36.0     # Hugging Face Transformers
-torch>=2.1.0             # PyTorch for model inference
-accelerate>=0.25.0       # Fast model loading
-sentencepiece>=0.1.99    # Tokenizer for Gemma models
-
 #graph visualization
 grandalf>=0.8
+
+jsonschema>=4.25.0
