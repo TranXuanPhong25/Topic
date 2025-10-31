@@ -5,11 +5,12 @@ from typing import Optional, Any
 import google.generativeai as genai
 from src.configs.agent_config import GOOGLE_API_KEY, GEMINI_MODEL_NAME
 from .prompts import INVESTIGATION_SYSTEM_PROMPT
+from google.generativeai.generative_models import GenerativeModel
 
 
 class InvestigationModelSingleton:
     """Singleton for Investigation Generator's LLM model"""
-    _instance: Optional[Any] = None
+    _instance: Optional[GenerativeModel] = None
     
     @classmethod
     def get_instance(cls):

@@ -89,4 +89,4 @@ Confidence: {diagnosis.get('confidence', 0.0)}
 
 Suggest appropriate investigations to confirm diagnosis:
 """
-    return INVESTIGATION_SYSTEM_PROMPT + context
+    return context

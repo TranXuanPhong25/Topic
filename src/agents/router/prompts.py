@@ -130,4 +130,4 @@ Image Provided: {"Yes (likely medical image)" if has_image else "No"}
 Classify the intent and respond with JSON only:
 """
     
-    return ROUTER_SYSTEM_PROMPT + context
+    return context

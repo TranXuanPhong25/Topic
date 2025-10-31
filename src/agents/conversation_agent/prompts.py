@@ -108,4 +108,4 @@ User: "{user_input}"
 Respond in a helpful, friendly manner:
 """
     
-    return CONVERSATION_SYSTEM_PROMPT + context
+    return context

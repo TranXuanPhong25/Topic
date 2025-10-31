@@ -153,4 +153,4 @@ def build_diagnosis_prompt(symptoms: str, image_analysis: str = "") -> str:
 Perform diagnostic analysis and respond with JSON only:
 """
     
-    return DIAGNOSIS_SYSTEM_PROMPT + context
+    return context

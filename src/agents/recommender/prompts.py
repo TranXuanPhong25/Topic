@@ -190,4 +190,4 @@ Red Flags: {', '.join(risk_assessment.get('red_flags', [])) or 'None identified'
 Based on this diagnosis and risk level, provide comprehensive treatment recommendations:
 """
     
-    return RECOMMENDER_SYSTEM_PROMPT + context
+    return context
