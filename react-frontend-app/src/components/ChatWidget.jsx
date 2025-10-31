@@ -255,10 +255,14 @@ const ChatWidget = ({ sessionId }, ref) => {
               </div>
             ))}
             {isTyping && (
-              <div className="typing-indicator">
-                <div className="typing-dot"></div>
-                <div className="typing-dot"></div>
-                <div className="typing-dot"></div>
+              <div className="message bot-message typing-message">
+                <div className="message-avatar">🤖</div>
+
+                <div className="typing-indicator">
+                  <div className="typing-dot"></div>
+                  <div className="typing-dot"></div>
+                  <div className="typing-dot"></div>
+                </div>
               </div>
             )}
             <div ref={messagesEndRef} />
