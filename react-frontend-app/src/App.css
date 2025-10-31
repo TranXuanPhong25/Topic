@@ -164,7 +164,7 @@ body {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 400px;
+  width: 430px;
   max-width: calc(100vw - 40px);
   height: 600px;
   max-height: calc(100vh - 100px);
@@ -282,6 +282,7 @@ body {
 }
 
 .message-content {
+  margin-top:1rem;
   flex: 1;
   max-width: 100%;
   word-wrap: break-word;
@@ -291,7 +292,7 @@ body {
 .bot-message .message-content {
   background: var(--bot-message-bg);
   padding: 0.75rem 1rem;
-  border-radius: 12px 12px 12px 4px;
+  border-radius: 4px 12px 12px 12px;
 }
 
 .user-message {
@@ -302,7 +303,7 @@ body {
   background: var(--user-message-bg);
   color: var(--user-message-text);
   padding: 0.75rem 1rem;
-  border-radius: 12px 12px 4px 12px;
+  border-radius: 12px 4px 12px 12px;
 }
 
 /* Markdown Content Styling */
