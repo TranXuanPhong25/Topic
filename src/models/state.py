@@ -32,6 +32,7 @@ class GraphState(TypedDict):
     # Diagnosis and risk
     diagnosis: Dict[str, Any]  # Output from DiagnosisEngine
     risk_assessment: Dict[str, Any]  # Output from RiskAssessor
+    information_needed: Optional[Dict[str, Any]]  # Missing info for accurate diagnosis
     
     # Investigation and retrieval
     investigation_plan: List[Dict[str, Any]]  # Generated list of investigations
@@ -55,4 +56,4 @@ class GraphState(TypedDict):
     current_step: int  # Added for tracking current step in the plan
     next_step: Optional[str]  # Added for next step identification
 
-    
+

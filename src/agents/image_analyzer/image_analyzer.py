@@ -1,53 +1,33 @@
 """
 ImageAnalyzer Node: Analyzes medical images using Gemini Vision.
 """
-from typing import TYPE_CHECKING
+from src.models.state import GraphState
 
-if TYPE_CHECKING:
-    from ..medical_diagnostic_graph import GraphState
 
 class ImageAnalyzerNode:
-    """
-    ImageAnalyzer Node: Analyzes image in context of symptoms.
-    """
-    
+
     def __init__(self, vision_analyzer):
-        """
-        Initialize the ImageAnalyzer node.
-        
-        Args:
-            vision_analyzer: Gemini Vision analyzer for medical images
-        """
         self.vision_analyzer = vision_analyzer
-    
+
     def __call__(self, state: "GraphState") -> "GraphState":
-        """
-        Execute the image analyzer logic.
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Updated graph state with image analysis results
-        """
-        print("🔍 ImageAnalyzer: Analyzing medical image...")
-        
+        print("=============== ImageAnalyzer ===============")
+
         image = state.get("image")
         symptoms = state.get("symptoms", "")
-        
+
         try:
             if not image:
                 raise ValueError("No image provided")
-            
+
             # Analyze image using GeminiVisionAnalyzer
             analysis_result = self.vision_analyzer.analyze_image(image, symptoms)
-            
+
             state["image_analysis_result"] = analysis_result
             state["messages"].append("✅ ImageAnalyzer: Image analyzed successfully")
-            state["current_step"] +=1
+            state["current_step"] += 1
 
             print(f"Image analysis confidence: {analysis_result.get('confidence', 0)}")
-            
+
         except Exception as e:
             print(f"ImageAnalyzer error: {str(e)}")
             state["image_analysis_result"] = {
@@ -57,5 +37,5 @@ class ImageAnalyzerNode:
                 "error": str(e)
             }
             state["messages"].append(f"❌ ImageAnalyzer: Error - {str(e)}")
-        
+
         return state

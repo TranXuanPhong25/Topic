@@ -4,6 +4,7 @@ DiagnosisEngine Node: Runs core diagnostic logic with risk assessment.
 import json
 import re
 from typing import Dict, Any, TYPE_CHECKING
+from .prompts import build_diagnosis_prompt
 
 if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
@@ -41,53 +42,71 @@ class DiagnosisEngineNode:
         analysis_input = state.get("combined_analysis") or state.get("symptoms", "")
         
         try:
-            # Generate diagnosis using Gemini
-            diagnosis_prompt = f"""Bạn là bác sĩ AI chuyên nghiệp. Phân tích thông tin bệnh nhân và đưa ra chẩn đoán sơ bộ.
-
-**Thông tin bệnh nhân:**
-{analysis_input}
-
-**Nhiệm vụ:**
-1. Đưa ra các chẩn đoán khả năng cao (top 2-3)
-2. Mức độ nghiêm trọng
-3. Các triệu chứng đáng lo ngại
-
-Trả về JSON:
-{{
-    "primary_diagnosis": "Chẩn đoán chính",
-    "differential_diagnoses": ["Chẩn đoán khác 1", "Chẩn đoán khác 2"],
-    "severity": "mild/moderate/severe/critical",
-    "concerning_symptoms": ["Triệu chứng 1", "Triệu chứng 2"],
-    "explanation": "Giải thích ngắn gọn"
-}}
-
-Chỉ trả về JSON:"""
-
-            response = self.gemini_model.generate_content(diagnosis_prompt)
+            # Build diagnosis prompt using the system prompt from prompts.py
+            image_analysis = state.get("image_analysis", "")
+            # Convert analysis_input to string if it's a dict
+            symptoms_str = str(analysis_input) if isinstance(analysis_input, dict) else analysis_input
+            diagnosis_context = build_diagnosis_prompt(symptoms_str, image_analysis)
+            
+            # Generate diagnosis using Gemini with system instruction
+            response = self.gemini_model.generate_content(diagnosis_context)
             result_text = response.text.strip()
             result_text = re.sub(r'```json\s*|\s*```', '', result_text)
             diagnosis = json.loads(result_text)
             
-            # Internal risk assessment
-            severity = diagnosis.get("severity", "moderate")
-            risk_level = self._assess_risk_internal(severity, diagnosis)
+            # Extract risk assessment from diagnosis
+            risk_assessment = diagnosis.get("risk_assessment", {})
+            severity = risk_assessment.get("severity", "MODERATE")
             
+            # Store diagnosis and risk assessment in state
             state["diagnosis"] = diagnosis
-            state["risk_assessment"] = risk_level
+            state["risk_assessment"] = {
+                "risk_level": severity,
+                "explanation": f"Based on diagnosis: {diagnosis.get('primary_diagnosis', {}).get('condition', 'Unknown')}",
+                "red_flags": risk_assessment.get("red_flags", []),
+                "complications": risk_assessment.get("complications", []),
+                "requires_immediate_attention": severity in ["HIGH", "EMERGENCY"]
+            }
+            
+            # Handle information_needed - store in state for later use
+            information_needed = diagnosis.get("information_needed", {})
+            if information_needed:
+                state["information_needed"] = information_needed
+            
+            # Store final_response if provided
+            if "final_response" in diagnosis:
+                state["final_response"] = diagnosis["final_response"]
+            
             state["messages"].append(f"✅ DiagnosisEngine: Diagnosis complete (severity: {severity})")
             
-            print(f"Diagnosis: {diagnosis.get('primary_diagnosis', 'Unknown')}")
+            print(f"Diagnosis: {diagnosis.get('primary_diagnosis', {}).get('condition', 'Unknown')}")
+            if information_needed.get("clarifying_questions"):
+                print(f"Additional info needed: {len(information_needed.get('clarifying_questions', []))} questions")
             
         except Exception as e:
             print(f"DiagnosisEngine error: {str(e)}")
             state["diagnosis"] = {
-                "primary_diagnosis": "Không thể xác định",
+                "primary_diagnosis": {
+                    "condition": "Unable to determine",
+                    "probability": 0.0,
+                    "reasoning": f"Error: {str(e)}"
+                },
                 "differential_diagnoses": [],
-                "severity": "moderate",
-                "concerning_symptoms": [],
-                "explanation": f"Lỗi: {str(e)}"
+                "risk_assessment": {
+                    "severity": "MODERATE",
+                    "red_flags": [],
+                    "complications": []
+                },
+                "confidence": 0.0,
+                "information_needed": {},
+                "final_response": "Sorry, I encountered an error analyzing your symptoms. Please try again or contact the clinic directly.",
+                "recommendation": "Please consult a healthcare professional."
             }
-            state["risk_assessment"] = {"risk_level": "MEDIUM", "explanation": "Mặc định do lỗi"}
+            state["risk_assessment"] = {
+                "risk_level": "MEDIUM", 
+                "explanation": "Default due to error",
+                "requires_immediate_attention": False
+            }
             state["messages"].append(f"❌ DiagnosisEngine: Error - {str(e)}")
         
         return state

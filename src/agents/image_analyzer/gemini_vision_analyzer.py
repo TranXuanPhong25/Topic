@@ -7,10 +7,8 @@ which supports multimodal input (text + images) for analyzing medical images.
 
 import base64
 from typing import Dict, Any, Optional
-import google.generativeai as genai
 from PIL import Image
 import io
-from src.configs.agent_config import VISION_CONFIG
 
 class GeminiVisionAnalyzer:
     """
@@ -44,9 +42,7 @@ class GeminiVisionAnalyzer:
             - visual_qa_results: Answers to symptom-specific questions
             - confidence: Confidence score (0-1)
             - error: Error message if any
-        """
-        print("Starting Gemini vision analysis...")
-        
+        """        
         try:
             # Decode base64 image
             image = self._decode_base64_image(image_data)

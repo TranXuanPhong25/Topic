@@ -82,7 +82,7 @@ Priority order for medical cases:
 3. If structured symptoms available → diagnosis_engine
 4. If diagnosis needs validation → investigation_generator
 5. If diagnosis complete → recommender
-6. If recommendations complete → synthesis (FINAL REPORT)
+6. If recommendations complete → synthesis (FINAL SYNTHESIS)
 7. For general questions → conversation_agent
 8. For appointments → appointment_scheduler
 
