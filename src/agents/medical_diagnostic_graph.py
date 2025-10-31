@@ -8,7 +8,7 @@ from src.configs.agent_config import (
 )
 from src.agents.supervisor import SupervisorNode
 
-from .vision.gemini_vision_analyzer import GeminiVisionAnalyzer
+from src.agents.image_analyzer.gemini_vision_analyzer import GeminiVisionAnalyzer
 from src.knowledges.knowledge_base import FAQKnowledgeBase
 from src.handlers.appointment import AppointmentHandler
 
