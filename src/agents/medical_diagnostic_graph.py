@@ -1,3 +1,4 @@
+from langgraph.constants import END
 from langgraph.graph import StateGraph
 from typing import  Dict, Any, Optional
 import google.generativeai as genai
@@ -6,7 +7,7 @@ from src.configs.agent_config import (
     DIAGNOSIS_CONFIG,
     get_api_key,
 )
-from src.agents.supervisor import SupervisorNode
+from src.agents.supervisor import SupervisorNode, new_supervisor_node
 
 from src.agents.image_analyzer.gemini_vision_analyzer import GeminiVisionAnalyzer
 from src.knowledges.knowledge_base import FAQKnowledgeBase
@@ -16,6 +17,7 @@ from src.agents.router import RouterNode
 from src.agents.conversation_agent import ConversationAgentNode
 from src.agents.appointment_scheduler import AppointmentSchedulerNode
 from src.agents.image_analyzer import ImageAnalyzerNode
+from src.agents.symptom_extractor import SymptomExtractorNode, new_symptom_extractor_node
 from src.agents.combine_analysis import CombineAnalysisNode
 from src.agents.diagnosis_engine import DiagnosisEngineNode
 from src.agents.investigation_generator import InvestigationGeneratorNode
@@ -46,18 +48,20 @@ class MedicalDiagnosticGraph:
             generation_config=DIAGNOSIS_CONFIG["generation_config"],
             safety_settings=DIAGNOSIS_CONFIG["safety_settings"]
         )
-        
+
         # Initialize node instances
         self.router_node = RouterNode(self.gemini_model)
         self.conversation_agent_node = ConversationAgentNode(self.gemini_model, self.knowledge_base)
         self.appointment_scheduler_node = AppointmentSchedulerNode(self.gemini_model, self.appointment_handler)
         self.image_analyzer_node = ImageAnalyzerNode(self.vision_analyzer)
+        self.symptom_extractor_node = new_symptom_extractor_node()
         self.combine_analysis_node = CombineAnalysisNode()
         self.diagnosis_engine_node = DiagnosisEngineNode(self.gemini_model)
         self.investigation_generator_node = InvestigationGeneratorNode(self.gemini_model)
         self.document_retriever_node = DocumentRetrieverNode(self.knowledge_base)
         self.recommender_node = RecommenderNode(self.gemini_model)
-        self.supervisor_node = SupervisorNode(self.gemini_model)
+
+        self.supervisor_node = new_supervisor_node()
         # Build the graph
         self.graph = self._build_graph()
         
@@ -73,15 +77,17 @@ class MedicalDiagnosticGraph:
           - AppointmentScheduler → END
           - ImageAnalyzer → CombineAnalysis → DiagnosisEngine → [InvestigationGenerator, DocumentRetriever] → Recommender → END
           - DiagnosisEngine → [InvestigationGenerator, DocumentRetriever] → Recommender → END
+          - SymptomExtractor → DiagnosisEngine (for symptoms_only path)
         """
         workflow = StateGraph(GraphState)
 
         # Add all nodes (using node instances)
-        workflow.add_node("router", self.router_node)
+        # workflow.add_node("router", self.router_node)
         workflow.add_node("conversation_agent", self.conversation_agent_node)
         workflow.add_node("appointment_scheduler", self.appointment_scheduler_node)
         workflow.add_node("image_analyzer", self.image_analyzer_node)
-        workflow.add_node("combine_analysis", self.combine_analysis_node)
+        workflow.add_node("symptom_extractor", self.symptom_extractor_node)
+        # workflow.add_node("combine_analysis", self.combine_analysis_node)
         workflow.add_node("diagnosis_engine", self.diagnosis_engine_node)
         workflow.add_node("investigation_generator", self.investigation_generator_node)
         workflow.add_node("document_retriever", self.document_retriever_node)
@@ -89,7 +95,31 @@ class MedicalDiagnosticGraph:
         workflow.add_node("supervisor", self.supervisor_node)
         # Build edges using the edge module
         # workflow = build_graph_edges(workflow)
-        workflow.set_entry_point("supervisor")
+        workflow.set_entry_point("symptom_extractor")
+        workflow.add_conditional_edges(
+            "supervisor",
+            lambda s: s["next_step"],
+            {
+                "conversation_agent": "conversation_agent",
+                "appointment_scheduler": "appointment_scheduler",
+                "image_analyzer": "image_analyzer",
+                "symptom_extractor": "symptom_extractor",
+                "diagnosis_engine": "diagnosis_engine",
+                "investigation_generator": "investigation_generator",
+                "document_retriever": "document_retriever",
+                "recommender": "recommender",
+                "END" : END,
+
+            }
+        )
+        workflow.add_edge("symptom_extractor","supervisor")
+        workflow.add_edge("conversation_agent", "supervisor")
+        workflow.add_edge("image_analyzer", "supervisor")
+        workflow.add_edge("appointment_scheduler", "supervisor")
+        workflow.add_edge("diagnosis_engine", "supervisor")
+        workflow.add_edge("investigation_generator", "supervisor")
+        workflow.add_edge("document_retriever", "supervisor")
+        workflow.add_edge("recommender", "supervisor")
         # Compile the graph
         return workflow.compile()
     
@@ -121,7 +151,7 @@ class MedicalDiagnosticGraph:
             "input": user_input,
             "image": image,
             "intent": "not_classified",  # Default intent
-            "symptoms": "",
+            "symptoms": {},
             "image_analysis_result": {},
             "combined_analysis": "",
             "diagnosis": {},

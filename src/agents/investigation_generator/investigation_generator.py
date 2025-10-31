@@ -9,35 +9,15 @@ if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
 
 class InvestigationGeneratorNode:
-    """
-    InvestigationGenerator Node: Generates potential follow-up tests.
-    """
-    
     def __init__(self, gemini_model):
-        """
-        Initialize the InvestigationGenerator node.
-        
-        Args:
-            gemini_model: Configured Gemini model for text generation
-        """
         self.gemini_model = gemini_model
     
     def __call__(self, state: "GraphState") -> "GraphState":
-        """
-        Execute the investigation generator logic.
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Updated graph state with investigation plan
-        """
         print("🔬 InvestigationGenerator: Generating investigation plan...")
         
         diagnosis = state.get("diagnosis", {})
         
         try:
-            # Generate investigation plan using Gemini
             investigation_prompt = f"""Dựa trên chẩn đoán, đề xuất các xét nghiệm/kiểm tra cần thiết.
 
 **Chẩn đoán:**

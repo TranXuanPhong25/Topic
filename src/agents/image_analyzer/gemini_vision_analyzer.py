@@ -23,26 +23,8 @@ class GeminiVisionAnalyzer:
     - Confidence scoring
     """
     
-    def __init__(self, google_api_key: str):
-        """
-        Initialize the Gemini Vision Analyzer.
-        
-        Args:
-            google_api_key: Google API key for Gemini
-        """
-        self.google_api_key = google_api_key
-        
-        # Configure Gemini
-        genai.configure(api_key=google_api_key)
-        
-        # Initialize Gemini model for vision using centralized config
-        self.model = genai.GenerativeModel(
-            model_name=VISION_CONFIG["model_name"],
-            generation_config=VISION_CONFIG["generation_config"],
-            safety_settings=VISION_CONFIG["safety_settings"]
-        )
-        
-        print(f"GeminiVisionAnalyzer initialized with {VISION_CONFIG['model_name']}")
+    def __init__(self, model):
+       self.model = model
     
     def analyze_image(
         self, 

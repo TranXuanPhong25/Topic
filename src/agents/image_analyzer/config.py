@@ -3,8 +3,8 @@ Image Analyzer Agent Configuration
 """
 from typing import Optional
 
-from google.generativeai.generative_models import GenerativeModel
 
+from src.agents.image_analyzer.gemini_vision_analyzer import GeminiVisionAnalyzer
 from src.configs.agent_config import GOOGLE_API_KEY, GEMINI_MODEL_NAME
 import os
 import google.generativeai as genai
@@ -12,7 +12,7 @@ import google.generativeai as genai
 
 class ImageAnalyzerModelSingleton:
     """Singleton for Image Analyzer's LLM model"""
-    _instance: Optional[GenerativeModel] = None
+    _instance: Optional[GeminiVisionAnalyzer] = None
     
     @classmethod
     def get_instance(cls):
@@ -27,16 +27,17 @@ class ImageAnalyzerModelSingleton:
                 max_output_tokens=1536,
             )
             
-            cls._instance = genai.GenerativeModel(
+            model = genai.GenerativeModel(
                 model_name=GEMINI_MODEL_NAME,
                 generation_config=generation_config,
             )
+            cls._instance = GeminiVisionAnalyzer(model)
         return cls._instance
     @classmethod
     def reset(cls):
         cls._instance = None
 
 
-def get_image_analyzer_model() -> ChatGoogleGenerativeAI:
+def get_image_analyzer_model() -> GeminiVisionAnalyzer:
     """Get singleton Image Analyzer LLM instance"""
     return ImageAnalyzerModelSingleton.get_instance()

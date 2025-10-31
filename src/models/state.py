@@ -21,10 +21,10 @@ class GraphState(TypedDict):
     
     # Image and symptoms
     image: Optional[str]  # Base64 encoded image
-    symptoms: str  # Extracted symptoms from input
+    symptoms: Dict[str, Any]  # Extracted symptoms from input
     
     # Vision analysis
-    image_analysis_result: Dict[str, Any]  # Output from ImageAnalyzer
+    image_analysis_result: Dict[str, Any]  # Output from ImageAnalyzerF
     
     # Combined analysis
     combined_analysis: str  # Merged symptoms and image analysis

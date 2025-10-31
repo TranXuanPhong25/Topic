@@ -1,10 +1,11 @@
 import json
 import re
 from src.models.state import GraphState
-from .system_prompts.supervisor_prompt import (
+from src.agents.supervisor.prompts import (
     SUPERVISOR_RESPONSE_SCHEMA
 )
 from jsonschema import validate, ValidationError
+from google.generativeai.generative_models import GenerativeModel
 
 class SupervisorNode:
     """
@@ -12,7 +13,7 @@ class SupervisorNode:
     Uses optimized prompts and proper error handling.
     """
     
-    def __init__(self, model):
+    def __init__(self, model: GenerativeModel ):
         self.model = model
     
     def __call__(self, state: "GraphState") -> "GraphState":
@@ -23,7 +24,7 @@ class SupervisorNode:
             supervisor_prompt = self.build_supervisor_prompt(state)
             
             # Generate response from Gemini
-            response = self.model.invoke(supervisor_prompt)
+            response = self.model.generate_content(supervisor_prompt)
             response_text = response.text.strip()
             
             print(f"📋 Supervisor Response: {response_text[:200]}...")
