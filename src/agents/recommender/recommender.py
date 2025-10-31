@@ -30,7 +30,8 @@ class RecommenderNode:
             print(recommendation)
             state["recommendation"] = recommendation
             state["messages"].append("✅ Recommender: Final recommendations generated")
-            
+            state["current_step"] +=1
+
             
         except Exception as e:
             print(f"Recommender error: {str(e)}")

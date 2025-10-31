@@ -1,6 +1,3 @@
-"""
-AppointmentScheduler Node: Handles appointment booking requests.
-"""
 import json
 import re
 from typing import TYPE_CHECKING
@@ -9,31 +6,11 @@ if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
 
 class AppointmentSchedulerNode:
-    """
-    AppointmentScheduler Node: Handles appointment booking.
-    """
-    
     def __init__(self, gemini_model, appointment_handler):
-        """
-        Initialize the AppointmentScheduler node.
-        
-        Args:
-            gemini_model: Configured Gemini model for text generation
-            appointment_handler: Handler for appointment operations
-        """
         self.gemini_model = gemini_model
         self.appointment_handler = appointment_handler
     
     def __call__(self, state: "GraphState") -> "GraphState":
-        """
-        Execute the appointment scheduler logic.
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Updated graph state with appointment details
-        """
         print("📅 AppointmentScheduler: Handling booking...")
         
         user_input = state.get("input", "")
@@ -79,11 +56,12 @@ Nếu thiếu thông tin, đặt null. Chỉ trả về JSON:
 - Lý do: {appointment_data['reason']}
 
 Chúng tôi sẽ gửi xác nhận qua tin nhắn. Cảm ơn!"""
-            
+
             state["appointment_details"] = appointment_data
             state["final_response"] = response_text
             state["messages"].append("✅ AppointmentScheduler: Processed")
-            
+            state["current_step"] +=1
+
             print(f"Appointment: {appointment_data}")
             
         except Exception as e:

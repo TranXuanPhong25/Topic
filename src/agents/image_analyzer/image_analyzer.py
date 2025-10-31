@@ -44,7 +44,8 @@ class ImageAnalyzerNode:
             
             state["image_analysis_result"] = analysis_result
             state["messages"].append("✅ ImageAnalyzer: Image analyzed successfully")
-            
+            state["current_step"] +=1
+
             print(f"Image analysis confidence: {analysis_result.get('confidence', 0)}")
             
         except Exception as e:

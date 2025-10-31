@@ -61,7 +61,8 @@ class DocumentRetrieverNode:
             
             state["retrieved_documents"] = documents
             state["messages"].append(f"✅ DocumentRetriever: Retrieved {len(documents)} documents")
-            
+            state["current_step"] +=1
+
             print(f"Retrieved {len(documents)} relevant documents")
             
         except Exception as e:

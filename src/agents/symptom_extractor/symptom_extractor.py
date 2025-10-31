@@ -72,7 +72,7 @@ class SymptomExtractorNode:
                 print(f"   Reason: {symptom_data.get('emergency_reason', 'Unknown')}")
             # Store in state as JSON string for consistency
             state["symptoms"] = symptom_data
-            
+            state["current_step"] +=1
             print("✅ Symptom extraction completed successfully")
             
         except Exception as e:

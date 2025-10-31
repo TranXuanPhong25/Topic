@@ -15,26 +15,10 @@ class ConversationAgentNode:
     """
     
     def __init__(self, gemini_model, knowledge_base):
-        """
-        Initialize the ConversationAgent node.
-        
-        Args:
-            gemini_model: Configured Gemini model for text generation
-            knowledge_base: FAQ knowledge base for clinic information
-        """
         self.gemini_model = gemini_model
         self.knowledge_base = knowledge_base
     
     def __call__(self, state: "GraphState") -> "GraphState":
-        """
-        Execute the conversation agent logic.
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Updated graph state with conversation output
-        """
         print("💬 ConversationAgent: Handling conversation...")
         
         user_input = state.get("input", "")
@@ -69,7 +53,8 @@ class ConversationAgentNode:
             state["conversation_output"] = conversation_output
             state["final_response"] = conversation_output
             state["messages"].append("✅ ConversationAgent: Response generated")
-            
+            state["current_step"] +=1
+
             print(f"Conversation response: {conversation_output[:100]}...")
             
         except Exception as e:
