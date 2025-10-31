@@ -13,12 +13,10 @@ from src.agents.image_analyzer.gemini_vision_analyzer import GeminiVisionAnalyze
 from src.knowledges.knowledge_base import FAQKnowledgeBase
 from src.handlers.appointment import AppointmentHandler
 
-from src.agents.router import RouterNode
 from src.agents.conversation_agent import ConversationAgentNode, new_conversation_agent_node
 from src.agents.appointment_scheduler import AppointmentSchedulerNode, new_appointment_scheduler_node
 from src.agents.image_analyzer import ImageAnalyzerNode, new_image_analyzer_node
 from src.agents.symptom_extractor import SymptomExtractorNode, new_symptom_extractor_node
-from src.agents.combine_analysis import CombineAnalysisNode
 from src.agents.diagnosis_engine import DiagnosisEngineNode, new_diagnosis_engine_node
 from src.agents.investigation_generator import InvestigationGeneratorNode, new_investigation_generator_node
 from src.agents.document_retriever import DocumentRetrieverNode, new_document_retriever_node
@@ -65,8 +63,6 @@ class MedicalDiagnosticGraph:
     def _build_graph(self):
         workflow = StateGraph(GraphState)
 
-        # Add all nodes (using node instances)
-        # workflow.add_node("router", self.router_node)
         workflow.add_node("conversation_agent", self.conversation_agent_node)
         workflow.add_node("appointment_scheduler", self.appointment_scheduler_node)
         workflow.add_node("image_analyzer", self.image_analyzer_node)
@@ -78,8 +74,7 @@ class MedicalDiagnosticGraph:
         workflow.add_node("recommender", self.recommender_node)
         workflow.add_node("synthesis", self.synthesis_node)
         workflow.add_node("supervisor", self.supervisor_node)
-        # Build edges using the edge module
-        # workflow = build_graph_edges(workflow)
+
         workflow.set_entry_point("symptom_extractor")
         workflow.add_conditional_edges(
             "supervisor",
@@ -98,6 +93,7 @@ class MedicalDiagnosticGraph:
 
             }
         )
+
         workflow.add_edge("symptom_extractor","supervisor")
         workflow.add_edge("conversation_agent", "supervisor")
         workflow.add_edge("image_analyzer", "supervisor")
@@ -106,10 +102,10 @@ class MedicalDiagnosticGraph:
         workflow.add_edge("investigation_generator", "supervisor")
         workflow.add_edge("document_retriever", "supervisor")
         workflow.add_edge("recommender", "supervisor")
-        workflow.add_edge("synthesis", "supervisor")  # Synthesis is final step
+        workflow.add_edge("synthesis", "supervisor")
         # Compile the graph
         return workflow.compile()
-    
+
     # ========================================================================
     # PUBLIC API
     # ========================================================================
