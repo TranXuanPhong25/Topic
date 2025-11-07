@@ -198,7 +198,6 @@ A 2-3 sentence executive summary of the patient's condition and key recommendati
 - Maintain professional medical tone
 - Ensure actionable advice appropriate to information available
 - End with appropriate medical disclaimer
-- Write in Vietnamese unless otherwise specified
 - Do NOT include empty sections or placeholders
 """
 
@@ -230,7 +229,7 @@ def build_synthesis_prompt(state_data: dict) -> str:
     symptoms = state_data.get("symptoms", "")
     
     # Build dynamic context based on available information
-    context = """Please synthesize the following medical information into a comprehensive Vietnamese final report.
+    context = """Please synthesize the following medical information into a comprehensive final report.
 
 **IMPORTANT**: Only include sections for which data is provided below. Do NOT create empty sections or use placeholders.
 
@@ -285,7 +284,7 @@ def build_synthesis_prompt(state_data: dict) -> str:
     context += """
 ---
 
-Based on the information provided above, create a comprehensive, patient-friendly final report in Vietnamese.
+Based on the information provided above, create a comprehensive, patient-friendly final report.
 
 **KEY INSTRUCTIONS**:
 - Include ONLY sections for which data was provided above
@@ -297,5 +296,4 @@ Based on the information provided above, create a comprehensive, patient-friendl
 - Include appropriate urgency indicators if applicable
 - End with brief medical disclaimer
 """
-    print(context)
     return context

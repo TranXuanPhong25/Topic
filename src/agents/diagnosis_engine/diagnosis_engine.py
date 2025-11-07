@@ -31,8 +31,10 @@ class DiagnosisEngineNode:
         print("🩺 DiagnosisEngine: Running diagnostic analysis...")
 
         # Get input - use combined_analysis if available, otherwise symptoms
-        analysis_input = state.get("symptoms", state.get("input","No symptom Extracted"))
-
+        analysis_input = state.get("symptoms", {})
+        if analysis_input == {}:
+            analysis_input = state.get("input", {})
+        print(analysis_input)
         try:
             # Build diagnosis prompt using the system prompt from prompts.py
             image_analysis = json.dumps(state.get("image_analysis_result", ""))
@@ -42,7 +44,7 @@ class DiagnosisEngineNode:
             symptoms_str = str(analysis_input) if isinstance(analysis_input, dict) else analysis_input
             diagnosis_context = build_diagnosis_prompt(symptoms_str, image_analysis, revision_requirements,
                                                        detailed_review)
-
+            print(diagnosis_context)
             response = self.gemini_model.generate_content(diagnosis_context)
             result_text = response.text.strip()
             result_text = re.sub(r'```json\s*|\s*```', '', result_text)
