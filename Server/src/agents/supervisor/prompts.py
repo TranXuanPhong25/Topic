@@ -88,7 +88,7 @@ Priority order for medical cases:
 4. **CRITICAL**: If diagnosis_engine completed AND state has `information_needed` AND `final_response` → END (waiting for user input)
 5. If diagnosis needs validation → investigation_generator (optional)
 6. If user explicitly asks for treatment/recommendations → recommender
-7. If multiple steps completed (diagnosis + investigation/recommender) → synthesis (FINAL STEP)
+7. If multiple steps completed (e.g: diagnosis + investigation/recommender) → synthesis (FINAL STEP)
 8. If only diagnosis completed (no investigation, no recommender) → END (no synthesis needed)
 9. For general questions → conversation_agent
 10. For appointments → appointment_scheduler
