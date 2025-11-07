@@ -1,8 +1,6 @@
 from . import chat_router
 from src.agents.medical_diagnostic_graph import MedicalDiagnosticGraph
 import uuid
-from pydantic import BaseModel, Field
-from typing import Optional, List, Dict
 from datetime import datetime
 from fastapi import HTTPException
 from src.models.chat import ChatRequest, ImageChatRequest, ChatResponse
@@ -11,20 +9,8 @@ from src.models.chat import ChatRequest, ImageChatRequest, ChatResponse
 graph = MedicalDiagnosticGraph()._build_graph()
 print(graph.get_graph().draw_ascii())
 
-
-
-
 @chat_router.post("/ma/chat", response_model=ChatResponse)
 async def ma_chat(request: ChatRequest):
-    """
-    Main chat endpoint - send a message and get a response.
-    
-    Args:
-        request: ChatRequest with message and optional session_id
-        
-    Returns:
-        ChatResponse with bot's reply, session_id, and timestamp
-    """
     try:
 
         # Generate session ID if not provided
@@ -39,11 +25,6 @@ async def ma_chat(request: ChatRequest):
         return {
             "session_id": session_id,
             "response": result['final_response'],
-            "analysis": result.get("detailed_analysis"),
-            "diagnosis": result.get("diagnosis"),
-            "risk_assessment": result.get("risk_assessment"),
-            "investigation_plan": result.get("investigation_plan"),
-            "recommendation": result.get("recommendation"),
             "timestamp": datetime.now().isoformat()
         }
     
@@ -61,14 +42,6 @@ async def ma_chat(request: ChatRequest):
 
 @chat_router.post("/ma/chat/image", tags=["Chat"])
 def ma_chat_with_image(request: ImageChatRequest):
-    """
-    Multi-agent chat with image analysis.
-    
-    Uses the complete multi-agent workflow:
-    Vision Agent → Symptom Matcher → Risk Assessor → Recommender
-    
-    Returns comprehensive medical image analysis.
-    """
     try:
         # Validate image data
         if not request.image:
@@ -86,11 +59,6 @@ def ma_chat_with_image(request: ImageChatRequest):
         return {
             "session_id": session_id,
             "response": result['final_response'],
-            "analysis": result.get("detailed_analysis"),
-            "diagnosis": result.get("diagnosis"),
-            "risk_assessment": result.get("risk_assessment"),
-            "investigation_plan": result.get("investigation_plan"),
-            "recommendation": result.get("recommendation"),
             "timestamp": datetime.now().isoformat()
         }
     

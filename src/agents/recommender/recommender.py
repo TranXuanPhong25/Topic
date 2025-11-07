@@ -29,7 +29,6 @@ class RecommenderNode:
             recommendation = response.text.strip()
             print(recommendation)
             state["recommendation"] = recommendation
-            state["messages"].append("✅ Recommender: Final recommendations generated")
             state["current_step"] +=1
 
             
@@ -37,7 +36,6 @@ class RecommenderNode:
             print(f"Recommender error: {str(e)}")
             state["recommendation"] = "Vui lòng gặp bác sĩ để được tư vấn chi tiết."
             state["final_response"] = state["recommendation"]
-            state["messages"].append(f"❌ Recommender: Error - {str(e)}")
         
         return state
     

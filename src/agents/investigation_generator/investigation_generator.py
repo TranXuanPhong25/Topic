@@ -39,7 +39,6 @@ Chỉ trả về JSON:"""
             investigations = json.loads(result_text)
             
             state["investigation_plan"] = investigations
-            state["messages"].append(f"✅ InvestigationGenerator: {len(investigations)} tests suggested")
             state["current_step"] += 1
             print(f"Generated {len(investigations)} investigation items:")
             for test_name in investigations:
@@ -47,6 +46,5 @@ Chỉ trả về JSON:"""
         except Exception as e:
             print(f"InvestigationGenerator error: {str(e)}")
             state["investigation_plan"] = []
-            state["messages"].append(f"❌ InvestigationGenerator: Error - {str(e)}")
         
         return state

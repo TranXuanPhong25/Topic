@@ -159,6 +159,114 @@ body {
   box-shadow: 0 4px 6px rgba(245, 158, 11, 0.3);
 }
 
+.quick-btn-emergency {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border-color: #ef4444;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+.quick-btn-emergency:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  border-color: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(239, 68, 68, 0);
+  }
+}
+
+.quick-btn-vague {
+  background: linear-gradient(135deg, #94a3b8, #64748b);
+  color: white;
+  border-color: #94a3b8;
+  font-weight: 600;
+}
+
+.quick-btn-vague:hover {
+  background: linear-gradient(135deg, #64748b, #475569);
+  border-color: #64748b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(148, 163, 184, 0.3);
+}
+
+.quick-btn-recommendation {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  border-color: #8b5cf6;
+  font-weight: 600;
+}
+
+.quick-btn-recommendation:hover {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  border-color: #7c3aed;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3);
+}
+
+.quick-btn-incomplete {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  color: white;
+  border-color: #06b6d4;
+  font-weight: 600;
+}
+
+.quick-btn-incomplete:hover {
+  background: linear-gradient(135deg, #0891b2, #0e7490);
+  border-color: #0891b2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(6, 182, 212, 0.3);
+}
+
+.quick-btn-vietnamese {
+  background: linear-gradient(135deg, #ec4899, #db2777);
+  color: white;
+  border-color: #ec4899;
+  font-weight: 600;
+}
+
+.quick-btn-vietnamese:hover {
+  background: linear-gradient(135deg, #db2777, #be185d);
+  border-color: #db2777;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(236, 72, 153, 0.3);
+}
+
+.quick-btn-investigation {
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
+  color: white;
+  border-color: #14b8a6;
+  font-weight: 600;
+}
+
+.quick-btn-investigation:hover {
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+  border-color: #0d9488;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(20, 184, 166, 0.3);
+}
+
+.quick-btn-mixed {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: white;
+  border-color: #f97316;
+  font-weight: 600;
+}
+
+.quick-btn-mixed:hover {
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+  border-color: #ea580c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(249, 115, 22, 0.3);
+}
+
 /* Chat Widget */
 .chat-widget {
   position: fixed;
