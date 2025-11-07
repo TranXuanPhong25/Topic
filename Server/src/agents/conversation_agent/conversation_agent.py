@@ -53,7 +53,6 @@ class ConversationAgentNode:
             
             state["conversation_output"] = conversation_output
             state["final_response"] = conversation_output
-            state["messages"].append("✅ ConversationAgent: Response generated")
             state["current_step"] +=1
 
             print(f"Conversation response: {conversation_output[:100]}...")
@@ -62,7 +61,6 @@ class ConversationAgentNode:
             print(f"ConversationAgent error: {str(e)}")
             state["conversation_output"] = "Xin lỗi, tôi đang gặp sự cố. Vui lòng gọi phòng khám để được hỗ trợ."
             state["final_response"] = state["conversation_output"]
-            state["messages"].append(f"❌ ConversationAgent: Error - {str(e)}")
         
         return state
 

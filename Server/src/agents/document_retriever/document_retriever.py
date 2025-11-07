@@ -60,7 +60,6 @@ class DocumentRetrieverNode:
             })
             
             state["retrieved_documents"] = documents
-            state["messages"].append(f"✅ DocumentRetriever: Retrieved {len(documents)} documents")
             state["current_step"] +=1
 
             print(f"Retrieved {len(documents)} relevant documents")
@@ -68,6 +67,5 @@ class DocumentRetrieverNode:
         except Exception as e:
             print(f"DocumentRetriever error: {str(e)}")
             state["retrieved_documents"] = []
-            state["messages"].append(f"❌ DocumentRetriever: Error - {str(e)}")
         
         return state

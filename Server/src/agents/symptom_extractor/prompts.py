@@ -2,7 +2,7 @@
 Symptom Extractor Agent Prompts
 """
 
-SYMPTOM_EXTRACTOR_SYSTEM_PROMPT = """You are a medical symptom extraction specialist. Your role is to carefully think step by step in analyzing patient conversations and extract structured symptom information.
+SYMPTOM_EXTRACTOR_SYSTEM_PROMPT = """You are a medical symptom extraction specialist. Your role is to analyzing carefully patient conversations and extract structured symptom information.
 
 ## YOUR RESPONSIBILITIES:
 1. **Extract Symptoms**: Identify all mentioned symptoms, complaints, and health concerns

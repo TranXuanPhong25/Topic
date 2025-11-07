@@ -5,6 +5,7 @@ import json
 import re
 import requests
 from typing import Dict, Any, TYPE_CHECKING
+from collections import Counter
 
 from src.models.state import GraphState
 class DiagnosisCriticNode:
@@ -13,18 +14,35 @@ class DiagnosisCriticNode:
     def __init__(self, model):
 
         self.model = model
-    
+ 
     def __call__(self, state: "GraphState") -> "GraphState":
 
-        print("🩺 DiagnosisEngine: Running diagnostic analysis...")
+        print("🩺 DiagnosisCritic: Running diagnostic Critic...")
         
         # Get input - use combined_analysis if available, otherwise symptoms
         symptoms = state.get("symptoms", {})
-        analysis_input = state.get("combined_analysis") or json.dumps(symptoms)
         diagnosis = state.get("diagnosis", {})
+        
+        
         try:
+            # Determine if we can use fast path review
+            severity = diagnosis.get("risk_assessment", {}).get("severity", "MODERATE")
+            confidence = diagnosis.get("confidence", 0.0)
+            
+            # Fast path for low-risk, high-confidence cases
+            if severity == "LOW" and confidence >= 0.7:
+                print("⚡ DiagnosisCritic: Using fast path review (low severity, high confidence)")
+                fast_review_result = self._fast_review(state, diagnosis)
+                # Update state fields individually
+                for key, value in fast_review_result.items():
+                    state[key] = value  # type: ignore
+                return state
+            
+            # Full comprehensive review for other cases
+            print("🔍 DiagnosisCritic: Using comprehensive review")
             # Generate diagnosis using Gemini
-            diagnosis_critic_prompt = self.build_diagnosis_critic_prompt(diagnosis, json.dumps(symptoms.get("extracted_symptoms",state.get("input",""))), state)
+            combined_symptoms = json.dumps(symptoms.get("extracted_symptoms",state.get("input",""))) + json.dumps(state.get("image_analysis_result",""))
+            diagnosis_critic_prompt = self.build_diagnosis_critic_prompt(diagnosis, combined_symptoms, state)
 
             meditron_text = self._call_meditron(diagnosis_critic_prompt)
             if meditron_text:
@@ -35,16 +53,114 @@ class DiagnosisCriticNode:
                 result_text = response.text.strip()
 
             result_text = re.sub(r'```json\s*|\s*```', '', result_text)
-            try:
-                diagnosis = json.loads(result_text)
-            except Exception:
-                diagnosis = {"error": "Unable to parse diagnosis critic output", "raw": result_text}
+            critic_result = json.loads(result_text)
+            revision_requirements = critic_result["revision_requirements"]
+            routing_decision = critic_result["routing_decision"]
+            detailed_review = critic_result["detailed_review"]
             
+            state["revision_requirements"] = revision_requirements
+            state["detailed_review"] = detailed_review
+            
+            # Check if revision is needed and if we haven't exceeded max attempts
+            requires_revision = routing_decision.get("requires_revision", False)
+            revision_count = state.get("revision_count", 0)
+            max_revisions = state.get("max_revisions", 2)
+            if requires_revision:
+                if revision_count >= max_revisions:
+                    # Force accept after max attempts to prevent infinite loop
+                    print(f"⚠️ DiagnosisCritic: Max revisions ({max_revisions}) reached. Proceeding despite issues.")
+                    state["next_step"] = "supervisor"
+
+                else:
+                    # Request revision
+                    state["revision_count"] = revision_count + 1
+                    state["next_step"] = "diagnosis_engine"
+                    print(f"🔄 DiagnosisCritic: Requesting revision (attempt {revision_count + 1}/{max_revisions})")
+
+            else:
+                # Diagnosis is acceptable
+                state["current_step"] +=1
+                state["next_step"] = routing_decision["next_step"]
+                print(f"✅ DiagnosisCritic: Diagnosis quality: {critic_result.get('review_summary', {}).get('overall_quality', 'N/A')}")
+
             print(f"✅ DiagnosisCritic")            
         except Exception as e:
-            state["messages"].append(f"❌ DiagnosisCritic: Error - {str(e)}")
+            print(f"❌ DiagnosisCritic Error: {str(e)}")
+            # On error, proceed to supervisor to avoid blocking
+            state["next_step"] = "supervisor"
         
         return state
+    
+    def _fast_review(self, state: "GraphState", diagnosis: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Quick sanity check for low-risk diagnoses.
+        Checks basic quality criteria without full LLM review.
+        
+        Args:
+            state: Current graph state
+            diagnosis: Diagnosis to review
+            
+        Returns:
+            Updated state fields
+        """
+        issues = []
+        
+        # Basic check 1: Has primary diagnosis?
+        if not diagnosis.get("primary_diagnosis"):
+            issues.append("Missing primary diagnosis")
+        
+        # Basic check 2: Has at least 2 differential diagnoses?
+        diff_diagnoses = diagnosis.get("differential_diagnoses", [])
+        if len(diff_diagnoses) < 2:
+            issues.append(f"Only {len(diff_diagnoses)} differential diagnoses (need at least 2)")
+        
+        # Basic check 3: Confidence is reasonable?
+        confidence = diagnosis.get("confidence", 0.0)
+        if confidence < 0.5:
+            issues.append(f"Confidence too low ({confidence}) for low severity case")
+        
+        # Basic check 4: Has recommendation?
+        if not diagnosis.get("recommendation"):
+            issues.append("Missing recommendation")
+        
+        # Basic check 5: No internal contradictions (severity vs red flags)
+        risk_assessment = diagnosis.get("risk_assessment", {})
+        red_flags = risk_assessment.get("red_flags", [])
+        severity = risk_assessment.get("severity", "LOW")
+        
+        if severity == "LOW" and len(red_flags) > 0:
+            issues.append(f"Contradiction: LOW severity but {len(red_flags)} red flags present")
+        
+        # Decide routing based on issues
+        if issues:
+            # Has issues - send for revision
+            revision_requirements = [
+                {
+                    "category": "basic_quality",
+                    "issue": issue,
+                    "suggestion": "Please address this issue",
+                    "priority": "HIGH"
+                }
+                for issue in issues
+            ]
+            
+            return {
+                "revision_requirements": json.dumps(revision_requirements),
+                "detailed_review": json.dumps({"fast_review": True, "issues": issues}),
+                "next_step": "diagnosis_engine",
+                "revision_count": state.get("revision_count", 0) + 1,
+                "messages": state.get("messages", []) + [
+                    f"⚡ DiagnosisCritic: Fast review found {len(issues)} issue(s), requesting revision"
+                ]
+            }
+        else:
+            # Passes basic checks - proceed
+            return {
+                "next_step": "supervisor",
+                "messages": state.get("messages", []) + [
+                    "⚡ DiagnosisCritic: Fast review passed - diagnosis approved"
+                ]
+            }
 
     def build_diagnosis_critic_prompt(self, diagnosis: Dict[str, Any], original_symptoms: str, state_context: GraphState) -> str:
         """
@@ -108,11 +224,7 @@ class DiagnosisCriticNode:
             if state_context.get("image_analysis_result"):
                 context += "\n## IMAGE ANALYSIS AVAILABLE\n"
                 context += "Note: Image analysis was also performed and used in diagnosis.\n"
-            
-            if state_context.get("combined_analysis"):
-                context += "\n## COMBINED ANALYSIS CONTEXT\n"
-                context += f"{state_context['combined_analysis']}\n"
-        
+ 
         # Final instruction
         context += """
     ---

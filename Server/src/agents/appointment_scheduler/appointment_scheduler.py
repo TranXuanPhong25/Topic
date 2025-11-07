@@ -1,73 +1,99 @@
-import json
-import re
-from typing import TYPE_CHECKING
+from langchain.agents import create_agent
+from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import HumanMessage
 
-if TYPE_CHECKING:
-    from ..medical_diagnostic_graph import GraphState
+from .prompts import APPOINTMENT_SCHEDULER_SYSTEM_PROMPT
+from .tools import check_appointment_availability, book_appointment, get_available_time_slots
+from ..medical_diagnostic_graph import GraphState
+from src.configs.agent_config import  GEMINI_MODEL_NAME
 
 class AppointmentSchedulerNode:
-    def __init__(self, gemini_model, appointment_handler):
-        self.gemini_model = gemini_model
-        self.appointment_handler = appointment_handler
+    """
+    React Agent-based Appointment Scheduler.
+    Uses LangGraph's create_react_agent to intelligently handle appointment booking
+    by deciding which tools to use based on user input.
+    """
     
+    def __init__(self, model: BaseChatModel):
+        self.agent = create_agent(
+            model=model,
+            system_prompt=APPOINTMENT_SCHEDULER_SYSTEM_PROMPT,
+            tools=[
+                check_appointment_availability,
+                book_appointment,
+                get_available_time_slots
+            ])
+
     def __call__(self, state: "GraphState") -> "GraphState":
-        print("📅 AppointmentScheduler: Handling booking...")
+        """
+        Execute appointment scheduling using React Agent.
+        
+        Args:
+            state: Current graph state
+            
+        Returns:
+            Updated graph state with appointment details
+        """
+        print("📅 AppointmentScheduler (React Agent): Processing request...")
         
         user_input = state.get("input", "")
         
         try:
-            # Extract appointment details using Gemini
-            extraction_prompt = f"""Trích xuất thông tin đặt lịch từ đầu vào. Trả về JSON:
+            # Prepare messages for the React Agent
+            messages = [HumanMessage(user_input)]
 
-Input: "{user_input}"
+            # Run the React Agent
+            print("🤖 React Agent: Analyzing request and selecting tools...")
+            result = self.agent.invoke({"messages": messages})
 
-Trích xuất (nếu có):
-- patient_name: tên bệnh nhân
-- date: ngày (YYYY-MM-DD)
-- time: giờ (HH:MM)
-- reason: lý do khám
-
-Nếu thiếu thông tin, đặt null. Chỉ trả về JSON:
-{{"patient_name": "...", "date": "...", "time": "...", "reason": "..."}}"""
-
-            response = self.gemini_model.generate_content(extraction_prompt)
-            result_text = response.text.strip()
-            result_text = re.sub(r'```json\s*|\s*```', '', result_text)
-            appointment_data = json.loads(result_text)
+            # Extract the final response from agent
+            agent_messages = result.get("messages", [])
+            final_message = ""
             
-            # Check if we have enough information
-            missing_fields = []
-            for field in ["patient_name", "date", "time", "reason"]:
-                if not appointment_data.get(field):
-                    missing_fields.append(field)
+            # Get the last AI message
+            for msg in reversed(agent_messages):
+                if hasattr(msg, 'content') and msg.content:
+                    final_message = msg.content
+                    break
             
-            if missing_fields:
-                # Generate prompt for missing information
-                missing_str = ", ".join(missing_fields)
-                response_text = f"Để đặt lịch, tôi cần thêm thông tin: {missing_str}. Bạn có thể cung cấp không?"
-            else:
-                # Validate and create appointment (simplified - in real app, use AppointmentHandler)
-                response_text = f"""Đã đặt lịch thành công!
-
-📅 Thông tin:
-- Bệnh nhân: {appointment_data['patient_name']}
-- Ngày: {appointment_data['date']}
-- Giờ: {appointment_data['time']}
-- Lý do: {appointment_data['reason']}
-
-Chúng tôi sẽ gửi xác nhận qua tin nhắn. Cảm ơn!"""
-
-            state["appointment_details"] = appointment_data
-            state["final_response"] = response_text
-            state["messages"].append("✅ AppointmentScheduler: Processed")
-            state["current_step"] +=1
-
-            print(f"Appointment: {appointment_data}")
+            # Check if appointment was actually booked by examining tool calls
+            appointment_booked = False
+            appointment_details = {}
+            
+            for msg in agent_messages:
+                # Check for tool calls in the message
+                if hasattr(msg, 'tool_calls') and msg.tool_calls:
+                    for tool_call in msg.tool_calls:
+                        if tool_call.get('name') == 'book_appointment':
+                            # Extract appointment details from tool arguments
+                            args = tool_call.get('args', {})
+                            appointment_details = {
+                                "patient_name": args.get('patient_name'),
+                                "date": args.get('date'),
+                                "time": args.get('time'),
+                                "reason": args.get('reason'),
+                                "phone": args.get('phone'),
+                                "provider": args.get('provider'),
+                                "status": "confirmed"
+                            }
+                            appointment_booked = True
+            
+            # Update state
+            state["appointment_details"] = appointment_details if appointment_booked else {}
+            state["final_response"] = final_message or "I'm ready to help you schedule an appointment. What date and time work for you?"
+            state["current_step"] += 1
+            
+            print(f"📅 Result: {'Appointment booked' if appointment_booked else 'Inquiry handled'}")
+            if appointment_booked:
+                print(f"   Patient: {appointment_details.get('patient_name')}")
+                print(f"   Date/Time: {appointment_details.get('date')} at {appointment_details.get('time')}")
             
         except Exception as e:
-            print(f"AppointmentScheduler error: {str(e)}")
+            print(f"❌ AppointmentScheduler error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            
             state["appointment_details"] = {}
-            state["final_response"] = "Để đặt lịch, vui lòng cung cấp: tên, ngày, giờ, và lý do khám."
-            state["messages"].append(f"❌ AppointmentScheduler: Error - {str(e)}")
+            state["final_response"] = "Xin lỗi, tôi gặp sự cố khi xử lý yêu cầu đặt lịch của bạn. Vui lòng cung cấp thông tin: tên, ngày, giờ, và lý do khám."
         
         return state
