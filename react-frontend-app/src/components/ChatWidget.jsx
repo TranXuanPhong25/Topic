@@ -102,9 +102,34 @@ const ChatWidget = ({ sessionId }, ref) => {
     setIsTyping(show);
   };
 
+  // Convert messages to Gemini API format
+  const convertToGeminiFormat = (messages) => {
+    const history = [];
+    
+    // Skip welcome message (first bot message)
+    const conversationMessages = messages.slice(1);
+    
+    for (const msg of conversationMessages) {
+      const role = msg.sender === 'user' ? 'user' : 'model';
+      
+      history.push({
+        role: role,
+        parts: [
+          { text: msg.content }
+        ]
+      });
+    }
+    
+    return history;
+  };
+
   const sendMessageToAPI = async (message) => {
     try {
-      console.log('Content:', messages);
+      // Convert messages to Gemini format
+      const chatHistory = convertToGeminiFormat(messages);
+      
+      console.log('Sending chat history:', chatHistory);
+      
       const response = await fetch(`${API_BASE_URL}/ma/chat`, {
         method: 'POST',
         headers: {
@@ -112,7 +137,7 @@ const ChatWidget = ({ sessionId }, ref) => {
         },
         body: JSON.stringify({
           message: message,
-          content: messages,
+          chat_history: chatHistory,
           session_id: sessionId
         })
       });
@@ -131,6 +156,11 @@ const ChatWidget = ({ sessionId }, ref) => {
 
   const sendImageToAPI = async (message, imageData) => {
     try {
+      // Convert messages to Gemini format
+      const chatHistory = convertToGeminiFormat(messages);
+      
+      console.log('Sending image with chat history:', chatHistory);
+      
       const response = await fetch(`${API_BASE_URL}/ma/chat/image`, {
         method: 'POST',
         headers: {
@@ -139,7 +169,7 @@ const ChatWidget = ({ sessionId }, ref) => {
         body: JSON.stringify({
           message: message || 'Vui lòng phân tích ảnh này',
           image: imageData,
-          content: messages,
+          chat_history: chatHistory,
           session_id: sessionId
         })
       });

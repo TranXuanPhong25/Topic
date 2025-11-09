@@ -12,15 +12,29 @@ print(graph.get_graph().draw_ascii())
 @chat_router.post("/ma/chat", response_model=ChatResponse)
 async def ma_chat(request: ChatRequest):
     try:
-
         # Generate session ID if not provided
         session_id = request.session_id or str(uuid.uuid4())
+        
+        # Convert chat_history to dict format if provided
+        chat_history = None
+        if request.chat_history:
+            chat_history = [
+                {
+                    "role": msg.role,
+                    "parts": [{"text": part.text} for part in msg.parts]
+                }
+                for msg in request.chat_history
+            ]
+            print(f"📝 Chat history: {len(chat_history)} messages")
         
         # Initialize multi-agent system
         agent_graph = MedicalDiagnosticGraph()
 
-        # Run analysis
-        result = agent_graph.analyze(user_input=request.message)
+        # Run analysis with chat history
+        result = agent_graph.analyze(
+            user_input=request.message,
+            chat_history=chat_history
+        )
     
         return {
             "session_id": session_id,
@@ -50,11 +64,27 @@ def ma_chat_with_image(request: ImageChatRequest):
         # Generate session ID if not provided
         session_id = request.session_id or str(uuid.uuid4())
         
+        # Convert chat_history to dict format if provided
+        chat_history = None
+        if request.chat_history:
+            chat_history = [
+                {
+                    "role": msg.role,
+                    "parts": [{"text": part.text} for part in msg.parts]
+                }
+                for msg in request.chat_history
+            ]
+            print(f"📝 Image chat history: {len(chat_history)} messages")
+        
         # Initialize multi-agent system
         agent_graph = MedicalDiagnosticGraph()
 
-        # Run analysis
-        result = agent_graph.analyze(request.message, request.image)
+        # Run analysis with chat history
+        result = agent_graph.analyze(
+            user_input=request.message,
+            image=request.image,
+            chat_history=chat_history
+        )
     
         return {
             "session_id": session_id,

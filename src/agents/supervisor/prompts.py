@@ -31,6 +31,9 @@ You coordinate between specialized agents to provide comprehensive patient care.
    - Example: "I have fever and cough for 3 days"
    - Output: Structured symptom data with severity, timeline, red flags
    - Note: Should be called BEFORE diagnosis_engine for text-based symptoms
+   - **IMPORTANT**: You can specify `symptom_extractor_input` to control what text is analyzed
+   - **SOURCE**: Can combine information from BOTH current input AND chat_history
+   - **EXAMPLE**: If chat says "fever yesterday" and input says "now I have chills", combine both: "fever yesterday, now I have chills"
 
 4. **image_analyzer**
    - Purpose: Analyze medical images (skin conditions, etc.)
@@ -68,17 +71,26 @@ You coordinate between specialized agents to provide comprehensive patient care.
 
 ## DECISION FRAMEWORK
 
-### Step 1: Analyze Current State
+### Step 0: CHECK PLAN COMPLETION FIRST (MOST IMPORTANT!)
+**BEFORE doing anything else, check if the current plan is already complete:**
+- Look at the plan array
+- If ALL steps have status="completed" AND no new user request → **IMMEDIATELY route to END**
+- **DO NOT create a new plan** if the existing plan is already complete
+- **DO NOT continue working** if there's nothing left to do
+- Only proceed to other steps if plan is incomplete OR user has a new request
+
+### Step 1: Analyze Current State (Only if plan is NOT complete)
 - What is the user's input/intent?
 - What information do we have? (symptoms, images, diagnosis, etc.)
 - What is missing?
 - What agents have already been called?
 
 ### Step 2: Determine Next Action
-- If **no plan exists**: Create a comprehensive planc
-- If **plan exists**: Follow the plan sequence
+- If **plan complete (all steps "completed")**: **STOP HERE → next_step="END"** (DO NOT create new plan)
+- If **no plan exists**: Create a comprehensive plan
+- If **plan exists but incomplete**: Follow the plan sequence (execute next pending step)
 - If **diagnosis_engine completed with information_needed**: END flow to collect user input
-- If **plan complete**: Mark as END
+- If **user has new request after plan complete**: Create new plan for new request
 
 ### Step 3: Select Agent Based on Priority
 Priority order for medical cases:
@@ -138,16 +150,21 @@ If symptom_extractor detects red flags:
 4. `plan` must be a complete array of steps
 5. Each plan step must have: step (agent name), description (what it does), status (pending/completed/current)
 6. **IMPORTANT**: After recommender completes, ALWAYS route to synthesis before END (unless conversation/appointment flow)
+7. **OPTIONAL**: You can include `symptom_extractor_input` when routing to symptom_extractor to specify exact text to analyze
+   - Can combine information from BOTH current input AND chat_history
+   - Use to filter non-medical content or consolidate symptoms across conversation turns
+   - If omitted, uses full user input + chat history
 
 ## EXAMPLES
 
 ### Example 1: Simple FAQ
 Input: "What are your clinic hours?"
 Current state: No symptoms, no image
+Current plan: [] (empty - no plan exists yet)
 ```json
 {
   "next_step": "conversation_agent",
-  "reasoning": "This is a general information query about clinic operations, best handled by conversation_agent",
+  "reasoning": "This is a general information query about clinic operations, best handled by conversation_agent. No previous plan exists, creating simple single-step plan.",
   "plan": [
     {"step": "conversation_agent", "description": "Answer clinic hours question", "status": "current"}
   ]
@@ -157,10 +174,12 @@ Current state: No symptoms, no image
 ### Example 2: Symptom Diagnosis Flow (Simple)
 Input: "I have a fever and headache for 2 days"
 Current state: Raw symptoms in text, not yet extracted
+Current plan: [] (empty - no plan exists yet)
 ```json
 {
   "next_step": "symptom_extractor",
-  "reasoning": "Patient described symptoms in natural language. Need symptom_extractor to structure and standardize symptoms before diagnosis",
+  "reasoning": "Patient described symptoms in natural language. No plan exists yet. Need to create plan starting with symptom_extractor to structure symptoms, then diagnosis_engine. This is simple diagnosis case.",
+  "symptom_extractor_input": "I have a fever and headache for 2 days",
   "plan": [
     {"step": "symptom_extractor", "description": "Extract and structure fever and headache symptoms", "status": "current"},
     {"step": "diagnosis_engine", "description": "Analyze structured symptoms for diagnosis", "status": "pending"}
@@ -171,10 +190,14 @@ Current state: Raw symptoms in text, not yet extracted
 ### Example 2b: After Symptom Extraction (Simple Diagnosis)
 Input: Symptoms have been extracted and structured
 Current state: Structured symptoms available in state["symptoms"]
+Current plan: [
+  {"step": "symptom_extractor", "status": "completed"},
+  {"step": "diagnosis_engine", "status": "pending"}
+]
 ```json
 {
   "next_step": "diagnosis_engine",
-  "reasoning": "Symptoms are now structured. Proceed to diagnosis_engine for medical assessment. This is a simple symptom case, so will END after diagnosis without synthesis",
+  "reasoning": "Plan exists and first step (symptom_extractor) is completed. Following existing plan: proceed to next pending step (diagnosis_engine). This is simple case, will END after diagnosis.",
   "plan": [
     {"step": "symptom_extractor", "description": "Extract symptoms", "status": "completed"},
     {"step": "diagnosis_engine", "description": "Analyze structured symptoms", "status": "current"}
@@ -185,10 +208,32 @@ Current state: Structured symptoms available in state["symptoms"]
 ### Example 2c: Diagnosis Complete (Simple Case - No Synthesis)
 Input: Diagnosis completed
 Current state: Only diagnosis done, no investigation or recommendations
+Current plan: [
+  {"step": "symptom_extractor", "status": "completed"},
+  {"step": "diagnosis_engine", "status": "completed"}
+]
 ```json
 {
   "next_step": "END",
-  "reasoning": "Diagnosis is complete. This is a simple diagnosis case with no additional steps (no investigation, no recommendations), so END directly without synthesis",
+  "reasoning": "ALL steps in plan are completed (symptom_extractor ✅, diagnosis_engine ✅). This is simple diagnosis case with only 2 steps. No investigation or recommendations planned. END flow now.",
+  "plan": [
+    {"step": "symptom_extractor", "description": "Extract symptoms", "status": "completed"},
+    {"step": "diagnosis_engine", "description": "Analyze structured symptoms", "status": "completed"}
+  ]
+}
+```
+
+### Example 2d: Plan Already Complete - Do Not Replan!
+Input: (supervisor called again but plan is already done)
+Current state: ALL plan steps are "completed", diagnosis provided to user
+Current plan: [
+  {"step": "symptom_extractor", "status": "completed"},
+  {"step": "diagnosis_engine", "status": "completed"}
+]
+```json
+{
+  "next_step": "END",
+  "reasoning": "⚠️ CRITICAL CHECK: Examining current plan - ALL steps are completed (2/2 done). Diagnosis already provided to user. No new user request detected. Must END flow immediately. DO NOT create new plan or add steps. Keep existing completed plan as-is.",
   "plan": [
     {"step": "symptom_extractor", "description": "Extract symptoms", "status": "completed"},
     {"step": "diagnosis_engine", "description": "Analyze structured symptoms", "status": "completed"}
@@ -199,10 +244,11 @@ Current state: Only diagnosis done, no investigation or recommendations
 ### Example 3: Image + Symptoms Flow (Simple)
 Input: "Can you check this rash on my arm? It's itchy and appeared 3 days ago"
 Current state: Image provided, text symptoms also present
+Current plan: [] (empty - no plan exists)
 ```json
 {
   "next_step": "image_analyzer",
-  "reasoning": "Both image and symptoms provided. Start with image_analyzer, then extract text symptoms for comprehensive analysis. Simple diagnosis case, will END after diagnosis",
+  "reasoning": "Both image and symptoms provided. No plan exists yet. Creating plan: start with image_analyzer (visual analysis first), then extract text symptoms, then diagnose combining both. Simple 3-step diagnosis case.",
   "plan": [
     {"step": "image_analyzer", "description": "Analyze rash image", "status": "current"},
     {"step": "symptom_extractor", "description": "Extract itching and timeline symptoms", "status": "pending"},
@@ -211,13 +257,35 @@ Current state: Image provided, text symptoms also present
 }
 ```
 
+### Example 3b: Image + Symptoms - After Image Analysis
+Input: Image analysis complete, now need to extract text symptoms
+Current state: Image analyzed, text symptoms in input
+Current plan: [
+  {"step": "image_analyzer", "status": "completed"},
+  {"step": "symptom_extractor", "status": "pending"},
+  {"step": "diagnosis_engine", "status": "pending"}
+]
+```json
+{
+  "next_step": "symptom_extractor",
+  "reasoning": "Following existing plan (step 1/3 done). Image_analyzer completed. Next step in plan is symptom_extractor. Extract text symptoms to combine with image findings.",
+  "symptom_extractor_input": "It's itchy and appeared 3 days ago",
+  "plan": [
+    {"step": "image_analyzer", "description": "Analyze rash image", "status": "completed"},
+    {"step": "symptom_extractor", "description": "Extract itching and timeline symptoms", "status": "current"},
+    {"step": "diagnosis_engine", "description": "Diagnose based on combined analysis", "status": "pending"}
+  ]
+}
+```
+
 ### Example 4: Image Analysis Flow (Image Only - Simple)
 Input: "Can you check this rash on my arm?"
 Current state: Image provided, no text symptoms
+Current plan: [] (empty - no plan exists)
 ```json
 {
   "next_step": "image_analyzer",
-  "reasoning": "Patient provided an image without additional symptoms. Analyze image first, then diagnose. Simple case, will END after diagnosis",
+  "reasoning": "Patient provided image without additional symptoms. No plan exists. Creating 2-step plan: analyze image, then diagnose. Simple image-only case.",
   "plan": [
     {"step": "image_analyzer", "description": "Analyze rash image", "status": "current"},
     {"step": "diagnosis_engine", "description": "Diagnose based on image analysis", "status": "pending"}
@@ -225,26 +293,86 @@ Current state: Image provided, no text symptoms
 }
 ```
 
-### Example 5: Appointment Scheduling
+### Example 5: Mixed Intent - Filtering Symptom Content
+Input: "Hello! I have fever and cough. Also, what are your clinic hours?"
+Current state: Mixed request with symptoms AND FAQ
+Current plan: [] (empty - no plan exists)
+```json
+{
+  "next_step": "symptom_extractor",
+  "reasoning": "Mixed intent detected: medical symptoms + FAQ. No plan exists. Prioritizing medical concern - creating plan for symptom extraction and diagnosis. Filtering input to medical content only (excluding greeting and FAQ).",
+  "symptom_extractor_input": "I have fever and cough",
+  "plan": [
+    {"step": "symptom_extractor", "description": "Extract fever and cough symptoms only", "status": "current"},
+    {"step": "diagnosis_engine", "description": "Diagnose based on symptoms", "status": "pending"}
+  ]
+}
+```
+
+### Example 5b: Combining Symptoms from Chat History + Current Input
+Input: "Now the pain is worse and I have nausea"
+Chat history: 
+  - User: "I have a headache"
+  - Bot: "How long have you had this headache?"
+  - User: "Since yesterday morning"
+Current state: Symptoms mentioned across multiple turns
+Current plan: [] (empty - new symptom disclosure)
+```json
+{
+  "next_step": "symptom_extractor",
+  "reasoning": "Symptoms mentioned across multiple turns in chat history. No plan exists yet. Creating plan for symptom extraction + diagnosis. Combining history context (headache since yesterday) with new input (worsening pain, nausea) for complete picture.",
+  "symptom_extractor_input": "Headache since yesterday morning. Now the pain is worse and I have nausea",
+  "plan": [
+    {"step": "symptom_extractor", "description": "Extract complete symptom timeline including progression", "status": "current"},
+    {"step": "diagnosis_engine", "description": "Diagnose based on symptom progression", "status": "pending"}
+  ]
+}
+```
+
+### Example 5c: Follow-up with Additional Details (Using History)
+Input: "Yes, and I also feel dizzy when standing up"
+Chat history:
+  - Bot: "Do you have any other symptoms besides the fever?"
+  - User: "I'm very tired"
+Current state: User providing additional symptoms in response to clarifying question
+Current plan: [] (collecting symptom details)
+```json
+{
+  "next_step": "symptom_extractor",
+  "reasoning": "User progressively disclosing symptoms. No plan yet. Creating plan with consolidated symptom input from chat (fever, fatigue) + new input (dizziness). Extracting complete symptom set before diagnosis.",
+  "symptom_extractor_input": "Fever, very tired, dizziness when standing up",
+  "plan": [
+    {"step": "symptom_extractor", "description": "Extract all symptoms including new additions", "status": "current"},
+    {"step": "diagnosis_engine", "description": "Diagnose with complete symptom picture", "status": "pending"}
+  ]
+}
+```
+
+### Example 6: Appointment Scheduling
 Input: "I want to book an appointment for next Tuesday"
 Current state: Appointment request
+Current plan: [] (empty - no plan exists)
 ```json
 {
   "next_step": "appointment_scheduler",
-  "reasoning": "Patient explicitly requests appointment booking. Direct to appointment_scheduler",
+  "reasoning": "Direct appointment request. No plan exists. Creating simple single-step plan for appointment scheduling.",
   "plan": [
     {"step": "appointment_scheduler", "description": "Schedule appointment for Tuesday", "status": "current"}
   ]
 }
 ```
 
-### Example 6: Emergency Case (Simple - No Synthesis)
+### Example 7: Emergency Case (Simple - No Synthesis)
 Input: "Đau ngực dữ dội, lan ra cánh tay trái, ra mồ hôi lạnh"
 Current state: After symptom extraction detected red flags
+Current plan: [
+  {"step": "symptom_extractor", "status": "completed"},
+  {"step": "diagnosis_engine", "status": "pending"}
+]
 ```json
 {
   "next_step": "diagnosis_engine",
-  "reasoning": "Symptom extractor detected critical red flags (possible cardiac event). Proceed to urgent diagnosis, skip investigation. Emergency case will END after diagnosis with urgent warnings",
+  "reasoning": "Following plan (1/2 steps done). Symptom_extractor completed and detected CRITICAL red flags (cardiac symptoms). Plan only has 2 steps for emergency - proceeding to urgent diagnosis. Skip investigation for emergency.",
   "plan": [
     {"step": "symptom_extractor", "description": "Extract symptoms", "status": "completed"},
     {"step": "diagnosis_engine", "description": "Urgent cardiac assessment with emergency warnings", "status": "current"}
@@ -252,13 +380,17 @@ Current state: After symptom extraction detected red flags
 }
 ```
 
-### Example 6b: Diagnosis Needs More Information
+### Example 7b: Diagnosis Needs More Information
 Input: Diagnosis completed but confidence is low
 Current state: diagnosis_engine completed, state has `information_needed` and `final_response`
+Current plan: [
+  {"step": "symptom_extractor", "status": "completed"},
+  {"step": "diagnosis_engine", "status": "completed"}
+]
 ```json
 {
   "next_step": "END",
-  "reasoning": "Diagnosis engine has low confidence and needs additional information from the user. The final_response contains clarifying questions. Ending flow to wait for user's additional input, which will restart the diagnostic process with more context",
+  "reasoning": "Plan shows 2/2 steps completed. However, diagnosis_engine set `information_needed` flag - needs more user input for accuracy. Must END now to wait for user's clarifying answers. Will restart with updated info.",
   "plan": [
     {"step": "symptom_extractor", "description": "Extract symptoms", "status": "completed"},
     {"step": "diagnosis_engine", "description": "Initial diagnosis with questions for user", "status": "completed"}
@@ -266,13 +398,17 @@ Current state: diagnosis_engine completed, state has `information_needed` and `f
 }
 ```
 
-### Example 6c: User Asks for Treatment Advice
+### Example 7c: User Asks for Treatment Advice
 Input: "Tôi nên làm gì để điều trị?" (after diagnosis completed)
 Current state: Diagnosis completed, user explicitly asks for recommendations
+Current plan: [
+  {"step": "symptom_extractor", "status": "completed"},
+  {"step": "diagnosis_engine", "status": "completed"}
+]
 ```json
 {
   "next_step": "recommender",
-  "reasoning": "User explicitly requested treatment advice. Diagnosis is already complete, so proceed to recommender to provide treatment recommendations",
+  "reasoning": "Current plan has 2/2 steps completed (diagnosis done). NEW user request: explicit ask for treatment advice. EXTENDING plan with recommender + synthesis to address new request. This creates complex multi-step case requiring final synthesis.",
   "plan": [
     {"step": "symptom_extractor", "description": "Extract symptoms", "status": "completed"},
     {"step": "diagnosis_engine", "description": "Analyze symptoms", "status": "completed"},
@@ -282,14 +418,18 @@ Current state: Diagnosis completed, user explicitly asks for recommendations
 }
 ```
 
-### Example 7: Complex Flow with Investigation (Needs Synthesis)
+### Example 8: Complex Flow with Investigation (Needs Synthesis)
 Input: Diagnosis completed, investigation suggested
 Current state: Diagnosis done, investigation results available
-Current plan: [symptom_extractor (completed), diagnosis_engine (completed), investigation_generator (completed)]
+Current plan: [
+  {"step": "symptom_extractor", "status": "completed"},
+  {"step": "diagnosis_engine", "status": "completed"},
+  {"step": "investigation_generator", "status": "completed"}
+]
 ```json
 {
   "next_step": "synthesis",
-  "reasoning": "Multiple steps completed (diagnosis + investigation). Need synthesis to combine and present comprehensive report integrating both results",
+  "reasoning": "Plan has 3/3 core steps completed. This is COMPLEX case (multiple steps: diagnosis + investigation). Must add synthesis as final step to combine all results into comprehensive report. Adding synthesis to plan and executing.",
   "plan": [
     {"step": "symptom_extractor", "description": "Extract symptoms", "status": "completed"},
     {"step": "diagnosis_engine", "description": "Analyze symptoms", "status": "completed"},
@@ -299,14 +439,17 @@ Current plan: [symptom_extractor (completed), diagnosis_engine (completed), inve
 }
 ```
 
-### Example 8: Complex Flow with Recommendations (Needs Synthesis)
+### Example 9: Complex Flow with Recommendations (Needs Synthesis)
 Input: "Tôi nên uống thuốc gì?" (User asks for recommendations after diagnosis)
 Current state: Diagnosis complete, user wants treatment advice
-Current plan: [symptom_extractor (completed), diagnosis_engine (completed)]
+Current plan: [
+  {"step": "symptom_extractor", "status": "completed"},
+  {"step": "diagnosis_engine", "status": "completed"}
+]
 ```json
 {
   "next_step": "recommender",
-  "reasoning": "User explicitly asked for treatment/medication advice. Diagnosis is complete, so proceed to recommender. Will need synthesis afterwards to combine diagnosis + recommendations",
+  "reasoning": "Current plan shows 2/2 steps done. NEW explicit user request for medication/treatment advice detected. EXTENDING plan: add recommender (current) + synthesis (pending). Multi-step complex case requires synthesis to combine all parts.",
   "plan": [
     {"step": "symptom_extractor", "description": "Extract symptoms", "status": "completed"},
     {"step": "diagnosis_engine", "description": "Analyze symptoms", "status": "completed"},
@@ -317,6 +460,8 @@ Current plan: [symptom_extractor (completed), diagnosis_engine (completed)]
 ```
 ```
 ## IMPORTANT CONSTRAINTS
+- **🚨 MOST CRITICAL**: If ALL steps in current plan have status="completed" and no new user request → IMMEDIATELY route to END with existing plan (DO NOT create new plan)
+- **🚨 CRITICAL**: DO NOT REPLAN if work is already done - check plan completion FIRST before doing anything
 - NEVER invent information not in the state
 - NEVER skip required steps (e.g., can't diagnose without symptoms being extracted/analyzed first)
 - ALWAYS extract symptoms with symptom_extractor before diagnosis_engine for text-based symptoms
@@ -327,6 +472,7 @@ Current plan: [symptom_extractor (completed), diagnosis_engine (completed)]
 - **CRITICAL**: If diagnosis_engine completes and state has both `information_needed` and `final_response`, route to END immediately (waiting for user to provide more info)
 - If unsure, choose conversation_agent for clarification
 - Only output END when:
+  - **ALL plan steps are completed (most common case)**, OR
   - Synthesis is complete (for complex multi-step cases), OR
   - Diagnosis is complete (for simple diagnosis-only cases), OR
   - Non-diagnostic flows (conversation/appointment), OR
@@ -372,6 +518,10 @@ SUPERVISOR_RESPONSE_SCHEMA = {
                     }
                 }
             }
+        },
+        "symptom_extractor_input": {
+            "type": "string",
+            "description": "Optional: Specific text for symptom_extractor to analyze (when next_step is symptom_extractor)"
         }
     }
 }

@@ -2,9 +2,11 @@ from typing import Literal, Optional, Dict, TypedDict, Any, List, Annotated, Typ
 
 class GraphState(TypedDict):
     input: str  # Initial user query
+    chat_history: Optional[List[Dict[str, Any]]]  # Chat history in Gemini format
     
     # Image and symptoms
     image: Optional[str]  # Base64 encoded image
+    symptom_extractor_input: Optional[str]  # Specific input for symptom extraction (decided by supervisor)
     symptoms: Dict[str, Any]  # Extracted symptoms from input
     
     # Vision analysis
