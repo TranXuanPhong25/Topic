@@ -3,14 +3,48 @@ import { MemoizedMarkdown } from './MemoizedMarkdown';
 import { quickMessages, imageActions, symptomTests } from '../constants/QuickMessages';
 
 const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      content: 'Hello! I\'m your virtual assistant for Happy Health Clinic. How can I help you today?',
-      sender: 'bot',
-      time: 'Just now'
+  const [isOpen, setIsOpen] = useState(true);
+
+  const getCurrentTime = () => {
+    const now = new Date();
+    return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  };
+  
+  // Function to get messages from sessionStorage
+  const getMessagesFromStorage = () => {
+    if (!sessionId) return [];
+    
+    try {
+      const stored = sessionStorage.getItem(`chat_messages_${sessionId}`);
+      if (stored) {
+        return JSON.parse(stored);
+      } else {
+        // Initialize with welcome message if no stored messages
+        const initialMessage = [
+          {
+            id: 1,
+            content: 'Hello! I\'m your virtual assistant for Happy Health Clinic. How can I help you today?',
+            sender: 'bot',
+            time: getCurrentTime()
+          }
+        ];
+        sessionStorage.setItem(`chat_messages_${sessionId}`, JSON.stringify(initialMessage));
+        return initialMessage;
+      }
+    } catch (error) {
+      console.error('Error loading messages from sessionStorage:', error);
+      return [
+        {
+          id: 1,
+          content: 'Hello! I\'m your virtual assistant for Happy Health Clinic. How can I help you today?',
+          sender: 'bot',
+          time: getCurrentTime()
+        }
+      ];
     }
-  ]);
+  };
+
+  const [messages, setMessages] = useState(getMessagesFromStorage());
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -21,6 +55,17 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
   const [isResizing, setIsResizing] = useState(false);
 
   const API_BASE_URL = 'http://localhost:8000';
+
+  // Save messages to sessionStorage whenever they change
+  useEffect(() => {
+    if (sessionId && messages.length > 0) {
+      try {
+        sessionStorage.setItem(`chat_messages_${sessionId}`, JSON.stringify(messages));
+      } catch (error) {
+        console.error('Error saving messages to sessionStorage:', error);
+      }
+    }
+  }, [messages, sessionId]);
 
   const handleMouseDown = () => {
     setIsResizing(true);
@@ -99,11 +144,6 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const getCurrentTime = () => {
-    const now = new Date();
-    return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  };
-
   const addMessage = (content, sender) => {
     const newMessage = {
       id: Date.now(),
@@ -120,6 +160,7 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
 
   const sendMessageToAPI = async (message) => {
     try {
+      console.log('Content:', messages);
       const response = await fetch(`${API_BASE_URL}/ma/chat`, {
         method: 'POST',
         headers: {
@@ -127,6 +168,7 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
         },
         body: JSON.stringify({
           message: message,
+          content: messages,
           session_id: sessionId
         })
       });
@@ -153,6 +195,7 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
         body: JSON.stringify({
           message: message || 'Vui lòng phân tích ảnh này',
           image: imageData,
+          content: messages,
           session_id: sessionId
         })
       });
