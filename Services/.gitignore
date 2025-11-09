@@ -27,7 +27,6 @@ wheels/
 venv/
 ENV/
 env/
-Services/.venv/
 
 # Environment variables
 .env
