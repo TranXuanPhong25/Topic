@@ -26,7 +26,7 @@ async def ma_chat(request: ChatRequest):
     try:
 
         session_id = request.session_id or str(uuid.uuid4())
-
+        
         # Fast path: simple greeting -> lightweight response, avoid full graph
         if _is_simple_greeting(request.message):
             return {
@@ -39,9 +39,24 @@ async def ma_chat(request: ChatRequest):
                 "recommendation": None,
                 "timestamp": datetime.now().isoformat()
             }
+        # Convert chat_history to dict format if provided
+        chat_history = None
+        if request.chat_history:
+            chat_history = [
+                {
+                    "role": msg.role,
+                    "parts": [{"text": part.text} for part in msg.parts]
+                }
+                for msg in request.chat_history
+            ]
+            print(f"📝 Chat history: {len(chat_history)} messages")
+        
 
-        # Run multi-agent diagnostic pipeline (single shared instance)
-        result = graph.analyze(user_input=request.message)
+        # Run analysis with chat history
+        result = graph.analyze(
+            user_input=request.message,
+            chat_history=chat_history
+        )
     
         return {
             "session_id": session_id,
@@ -69,9 +84,27 @@ def ma_chat_with_image(request: ImageChatRequest):
             raise HTTPException(status_code=400, detail="Image data is required")
         
         session_id = request.session_id or str(uuid.uuid4())
-
-        result = graph.analyze(request.message, request.image)
         
+        # Convert chat_history to dict format if provided
+        chat_history = None
+        if request.chat_history:
+            chat_history = [
+                {
+                    "role": msg.role,
+                    "parts": [{"text": part.text} for part in msg.parts]
+                }
+                for msg in request.chat_history
+            ]
+            print(f"📝 Image chat history: {len(chat_history)} messages")
+        
+        # Initialize multi-agent system
+        # Run analysis with chat history
+        result = graph.analyze(
+            user_input=request.message,
+            image=request.image,
+            chat_history=chat_history
+        )
+    
         return {
             "session_id": session_id,
             "response": result['final_response'],

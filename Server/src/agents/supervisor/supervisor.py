@@ -23,14 +23,19 @@ class SupervisorNode:
         try:
             # Build optimized prompt with full context
             if len(state.get("plan", [])) != 0:
-                state["plan"][state.get("current_step",1)-1]["status"] = "completed"
+                current_step = state.get("current_step", 1) - 1
+                if current_step < len(state["plan"]):
+                    state["plan"][current_step]["status"] = "completed"
+                else:
+                    print("⚠️  Current step exceeds plan length; cannot mark as completed.")
+                    return state
+                    
             supervisor_prompt = self.build_supervisor_prompt(state)
             
             # Generate response from Gemini
             response = self._generate_with_retries(supervisor_prompt)
             response_text = response.text.strip()
             
-            print(response_text)
             # Extract JSON from response (handle markdown code blocks)
             json_match = re.search(r'```(?:json)?\s*(\{.*?})\s*```', response_text, re.DOTALL)
             if json_match:
@@ -57,15 +62,16 @@ class SupervisorNode:
             next_step = supervisor_decision.get("next_step", "END")
             reasoning = supervisor_decision.get("reasoning", "No reasoning provided")
             updated_plan = supervisor_decision.get("plan", state.get("plan", []))
-
-            # Auto-terminate simple conversation flows to prevent loops
-            if next_step == "conversation_agent" and state.get("conversation_output"):
-                # If we already produced a conversation output this turn, move to END
-                next_step = "END"
+            symptom_extractor_input = supervisor_decision.get("symptom_extractor_input")
             
             # Update state
             state["next_step"] = next_step
             state["plan"] = updated_plan
+            
+            # Update symptom_extractor_input if supervisor specified it
+            if symptom_extractor_input:
+                state["symptom_extractor_input"] = symptom_extractor_input
+                print(f"📝 Symptom extractor input specified: {symptom_extractor_input[:100]}...")
             
             # Add to messages for tracking
    
@@ -95,6 +101,7 @@ class SupervisorNode:
         Returns:
             Complete prompt string ready for LLM
         """
+        chat_history = state.get("chat_history", "")
         user_input = state.get("input", "")
         current_plan = state.get("plan", [])
         symptoms = state.get("symptoms", "")
@@ -102,7 +109,8 @@ class SupervisorNode:
         diagnosis = state.get("diagnosis", {})
         current_step = state.get("current_step", 0)
         # Build context summary
-        context_parts = [f"**User Input**: {user_input}"]
+        context_parts = [f"**Chat history**: {chat_history}", f"**User Input**: {user_input}"]
+        # print(f"context_parts: {context_parts}  ")
 
         if symptoms:
             context_parts.append(f"**Symptoms**: {symptoms}")
@@ -135,9 +143,36 @@ class SupervisorNode:
 
     ## YOUR TASK
     Analyze the current situation and decide the next step. Think step-by-step:
-    1. What is the patient trying to achieve?
-    2. What information do we already have?
-    3. What is the next logical step in the workflow?
+    1. **CHECK PLAN STATUS FIRST**: Are ALL steps in the current plan marked as "completed"?
+       - If YES and no new user request: Route to END immediately (DO NOT create a new plan)
+       - If YES but user has new request: Create new plan for new request
+       - If NO: Continue with next pending step
+    2. What is the patient trying to achieve?
+    3. What information do we already have?
+    4. What is the next logical step in the workflow?
+    5. If routing to symptom_extractor: Should I specify custom `symptom_extractor_input` to extract specific parts?
+    
+    ## ⚠️ CRITICAL RULE: DO NOT REPLAN IF PLAN IS COMPLETE
+    - If current plan exists and ALL steps have status="completed"
+    - AND there is no new user request or issue to address
+    - Then you MUST set next_step="END" and keep the existing completed plan
+    - DO NOT create a new plan just because you're being called again
+    - Only create a new plan if user explicitly asks for something new
+    
+    ## SPECIAL NOTE FOR SYMPTOM EXTRACTION
+    When routing to symptom_extractor, you can optionally include `symptom_extractor_input` in your response.
+    - If not specified: symptom_extractor will use full user input + chat history
+    - If specified: symptom_extractor will ONLY analyze the text you provide
+    - **IMPORTANT**: You can combine relevant parts from BOTH current input AND chat_history
+    - Use this to filter out non-symptom parts (e.g., greetings, appointments, FAQs)
+    - Use this to consolidate symptoms mentioned across multiple conversation turns
+    
+    Examples:
+    1. Filter non-medical: Input "Hello! I have fever. Can you check your hours?" → symptom_extractor_input: "I have fever"
+    2. Combine history: Chat: "User: I had mild headache yesterday" + Input: "Now it's severe with nausea" 
+       → symptom_extractor_input: "Mild headache yesterday, now severe with nausea"
+    3. Focus on new info: Chat has previous symptoms, Input adds new ones
+       → symptom_extractor_input: "Previous: [old symptoms]. New: [new symptoms]"
     """
     # 4. Which agent is best suited for this step?
     #

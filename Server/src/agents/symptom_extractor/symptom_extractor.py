@@ -44,7 +44,15 @@ class SymptomExtractorNode:
         """
         print("\n🩺 === SYMPTOM EXTRACTION STARTED ===")
         
-        user_input = state.get("input", "")
+        # Check if supervisor specified specific input for extraction
+        symptom_extractor_input = state.get("symptom_extractor_input")
+        if symptom_extractor_input:
+            user_input = symptom_extractor_input
+            print(f"📝 Using supervisor-specified input: {user_input[:100]}...")
+        else:
+            user_input = state.get("input", "")
+            print(f"📝 Using default user input: {user_input[:100]}...")
+        
         conversation_history = self._build_conversation_history(state)
         
         if not user_input:

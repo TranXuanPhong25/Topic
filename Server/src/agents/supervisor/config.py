@@ -20,7 +20,7 @@ class SupervisorModelSingleton:
                 temperature=0.2,  # Very precise for classification
                 top_p=0.9,
                 top_k=40,
-                max_output_tokens=512,
+                # max_output_tokens=512,
             )
             
             cls._instance = genai.GenerativeModel(

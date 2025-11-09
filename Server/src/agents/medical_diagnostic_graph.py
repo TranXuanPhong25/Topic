@@ -122,6 +122,7 @@ class MedicalDiagnosticGraph:
             self,
             user_input: str,
             image: Optional[str] = None,
+            chat_history: Optional[list] = None,
     ) -> Dict[str, Any]:
         """
         Analyze user input and return diagnostic results.
@@ -129,16 +130,19 @@ class MedicalDiagnosticGraph:
         Args:
             user_input: User's text input
             image: Optional base64 encoded image
-            metadata: Optional additional context
+            chat_history: Optional chat history in Gemini format [{"role": "user", "parts": [{"text": "..."}]}]
         
         Returns:
             Dictionary containing final_response and full state
         """
         print(f"Starting analysis for input: {user_input[:100]}...")
+        if chat_history:
+            print(f"📝 Received chat history: {len(chat_history)} messages")
 
         # Initialize state
         initial_state: GraphState = {
             "input": user_input,
+            "chat_history": chat_history or [],
             "image": image,
             "symptoms": {},
             "image_analysis_result": {},

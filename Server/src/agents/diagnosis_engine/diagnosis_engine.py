@@ -35,7 +35,6 @@ class DiagnosisEngineNode:
         analysis_input = state.get("symptoms", {})
         if analysis_input == {}:
             analysis_input = state.get("input", {})
-        print(analysis_input)
         try:
             # Build diagnosis prompt using the system prompt from prompts.py
             image_analysis = json.dumps(state.get("image_analysis_result", ""))
