@@ -3,14 +3,47 @@ import { MemoizedMarkdown } from './MemoizedMarkdown';
 
 const ChatWidget = ({ sessionId }, ref) => {
   const [isOpen, setIsOpen] = useState(true);
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      content: 'Hello! I\'m your virtual assistant for Happy Health Clinic. How can I help you today?',
-      sender: 'bot',
-      time: 'Just now'
+
+  const getCurrentTime = () => {
+    const now = new Date();
+    return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  };
+  
+  // Function to get messages from sessionStorage
+  const getMessagesFromStorage = () => {
+    if (!sessionId) return [];
+    
+    try {
+      const stored = sessionStorage.getItem(`chat_messages_${sessionId}`);
+      if (stored) {
+        return JSON.parse(stored);
+      } else {
+        // Initialize with welcome message if no stored messages
+        const initialMessage = [
+          {
+            id: 1,
+            content: 'Hello! I\'m your virtual assistant for Happy Health Clinic. How can I help you today?',
+            sender: 'bot',
+            time: getCurrentTime()
+          }
+        ];
+        sessionStorage.setItem(`chat_messages_${sessionId}`, JSON.stringify(initialMessage));
+        return initialMessage;
+      }
+    } catch (error) {
+      console.error('Error loading messages from sessionStorage:', error);
+      return [
+        {
+          id: 1,
+          content: 'Hello! I\'m your virtual assistant for Happy Health Clinic. How can I help you today?',
+          sender: 'bot',
+          time: getCurrentTime()
+        }
+      ];
     }
-  ]);
+  };
+
+  const [messages, setMessages] = useState(getMessagesFromStorage());
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -19,6 +52,17 @@ const ChatWidget = ({ sessionId }, ref) => {
   const textareaRef = useRef(null);
 
   const API_BASE_URL = 'http://localhost:8000';
+
+  // Save messages to sessionStorage whenever they change
+  useEffect(() => {
+    if (sessionId && messages.length > 0) {
+      try {
+        sessionStorage.setItem(`chat_messages_${sessionId}`, JSON.stringify(messages));
+      } catch (error) {
+        console.error('Error saving messages to sessionStorage:', error);
+      }
+    }
+  }, [messages, sessionId]);
 
   // Expose sendMessage function to parent component
   useImperativeHandle(ref, () => ({
@@ -44,11 +88,6 @@ const ChatWidget = ({ sessionId }, ref) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const getCurrentTime = () => {
-    const now = new Date();
-    return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  };
-
   const addMessage = (content, sender) => {
     const newMessage = {
       id: Date.now(),
@@ -65,6 +104,7 @@ const ChatWidget = ({ sessionId }, ref) => {
 
   const sendMessageToAPI = async (message) => {
     try {
+      console.log('Content:', messages);
       const response = await fetch(`${API_BASE_URL}/ma/chat`, {
         method: 'POST',
         headers: {
@@ -72,6 +112,7 @@ const ChatWidget = ({ sessionId }, ref) => {
         },
         body: JSON.stringify({
           message: message,
+          content: messages,
           session_id: sessionId
         })
       });
@@ -98,6 +139,7 @@ const ChatWidget = ({ sessionId }, ref) => {
         body: JSON.stringify({
           message: message || 'Vui lòng phân tích ảnh này',
           image: imageData,
+          content: messages,
           session_id: sessionId
         })
       });
@@ -132,9 +174,7 @@ const ChatWidget = ({ sessionId }, ref) => {
     } else {
       addMessage(message, 'user');
     }
-    if (message != null) {
-      setInputValue('');
-    }
+    setInputValue('');
     setImagePreview(null);
     setSelectedImage(null);
 
