@@ -49,6 +49,7 @@ class DiagnosisEngineNode:
 
             meditron_text = self._call_meditron(diagnosis_context)
             if meditron_text:
+                print("Meditron response received.")
                 result_text = meditron_text.strip()
             else:
                 response = self.gemini_model.generate_content(diagnosis_context)
@@ -152,13 +153,13 @@ class DiagnosisEngineNode:
         try:
             payload = {
                 "prompt": prompt,
-                "n_predict": 512,
+                "n_predict": 256,
                 "temperature": 0.2,
                 "top_k": 40,
                 "top_p": 0.9,
                 "stream": False,
             }
-            resp = requests.post(url, json=payload, timeout=30)
+            resp = requests.post(url, json=payload, timeout=120)
             resp.raise_for_status()
             data = resp.json()
             return data.get("content") or data.get("text") or resp.text

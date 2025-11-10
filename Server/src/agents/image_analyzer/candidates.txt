@@ -1,0 +1,73 @@
+# Mỗi dòng: "tên bệnh (tên Việt): mô tả hình thái + vị trí + đối tượng"
+acne vulgaris (mụn trứng cá): inflammatory papules, pustules and comedones on the face and upper trunk of an adolescent
+acne conglobata (mụn trứng cá nặng): nodules, cysts and grouped inflammatory lesions on the face, chest and back with scarring
+folliculitis (viêm nang lông): small erythematous papules and pustules centered on hair follicles on trunk, buttocks or thighs
+
+atopic dermatitis (viêm da cơ địa): chronic pruritic eczematous patches with lichenification in flexural areas, especially in children
+nummular eczema (chàm đồng tiền): coin-shaped erythematous scaly plaques with oozing and crusting on limbs
+dyshidrotic eczema (chàm tổ đỉa): deep-seated pruritic vesicles on the sides of fingers, palms and soles
+contact dermatitis (viêm da tiếp xúc dị ứng hoặc kích ứng): erythematous edematous plaques with vesicles and crusts at sites of allergen or irritant exposure
+seborrheic dermatitis (viêm da tiết bã): erythematous patches with greasy yellow scales on scalp, face and nasolabial folds
+hand eczema (chàm bàn tay): dry fissured erythematous scaly patches on the palms and fingers of adults with wet work
+stasis dermatitis (chàm do suy tĩnh mạch): erythematous scaly and hyperpigmented patches around the ankles with varicose veins
+
+urticaria (mề đay): transient pruritic edematous wheals with pale centers and erythematous borders anywhere on the body
+cholinergic urticaria (mề đay do nóng): small pruritic wheals triggered by heat, exercise or emotional stress
+angioedema (phù mạch): sudden non-pitting swelling of eyelids, lips or tongue sometimes with urticaria
+
+psoriasis vulgaris (vảy nến thể thông thường): well-demarcated erythematous plaques with thick silvery scale on extensor surfaces and scalp
+guttate psoriasis (vảy nến giọt): multiple small drop-like erythematous scaly papules on trunk and limbs after streptococcal infection
+pityriasis rosea (vảy phấn hồng): oval erythematous scaly patches along skin tension lines on trunk with a herald patch
+lichen planus (lichen phẳng): violaceous flat-topped polygonal papules with fine white lines on wrists, ankles and oral mucosa
+
+tinea corporis (hắc lào): annular scaly plaque with central clearing and active raised border on trunk or limbs
+tinea cruris (nấm bẹn): erythematous scaly plaques with active elevated border in the groin and inner thighs sparing scrotum
+tinea pedis (nấm kẽ chân, nước ăn chân): maceration, scaling and fissures between toes especially in the fourth interdigital space
+tinea manuum (nấm bàn tay): dry scaling of one palm often associated with tinea pedis
+tinea unguium (onychomycosis, nấm móng): thickened discolored and crumbly nail plates with subungual debris
+pityriasis versicolor (lang ben): hypopigmented or hyperpigmented macules with fine powdery scale on upper trunk and shoulders
+candidal intertrigo (hăm kẽ do candida): moist erythematous patches with satellite papules in skin folds such as groin and under breasts
+diaper candidiasis (hăm tã nấm): bright red erythematous rash with satellite lesions in diaper area of infants
+
+impetigo (chốc lở): honey-colored crusted erosions on face, around nose and mouth of children
+ecthyma (chốc loét): ulcerative lesions with thick crusts on lower legs in poorly nourished or neglected patients
+cellulitis (viêm mô tế bào): poorly demarcated warm erythematous swelling of skin and subcutaneous tissue often on lower leg
+erysipelas (viêm quầng): sharply demarcated bright red edematous plaque with raised border, usually on face or leg
+folliculitis barbae (viêm nang lông vùng râu): pustules around hair follicles in beard area of adult men
+
+scabies (ghẻ): excoriated papules and burrows in finger web spaces, wrists, axillae and genital area with intense nocturnal pruritus
+nodular scabies (ghẻ dạng nốt): persistent pruritic nodules on scrotum, axillae or groin after scabies infestation
+pediculosis capitis (chí đầu): nits and lice attached to hair shafts with excoriated papules on scalp and nape of neck
+tungiasis (bọ chét cát): firm papule with central black dot on feet or toes after exposure to sand infested with sand fleas
+
+herpes simplex labialis (mụn rộp môi): grouped vesicles on an erythematous base at lip border that crust over
+herpes simplex genitalis (mụn rộp sinh dục): painful grouped vesicles and erosions on genitalia
+herpes zoster (zona thần kinh): painful unilateral dermatomal grouped vesicles on an erythematous base that later crust
+varicella (thủy đậu): generalized pruritic vesicles on an erythematous base at different stages of evolution in children
+molluscum contagiosum (u mềm lây): multiple small flesh-colored dome-shaped papules with central umbilication on trunk or genital area
+verruca vulgaris (mụn cóc thông thường): hyperkeratotic verrucous papules on hands or fingers caused by human papillomavirus
+plantar wart (mụn cóc lòng bàn chân): painful hyperkeratotic lesion on sole with interruption of skin lines
+hand foot and mouth disease (tay chân miệng): vesicles on hands, feet and oral mucosa in young children with low-grade fever
+
+seborrheic keratosis (dày sừng tiết bã): stuck-on appearing waxy verrucous papule or plaque with variable pigmentation on trunk of older adults
+dermatofibroma (u xơ da): firm hyperpigmented papule on lower leg that dimples in when pinched
+epidermal inclusion cyst (u nang bã): subcutaneous nodule with central punctum sometimes discharging cheesy material
+lipoma (u mỡ dưới da): soft mobile subcutaneous nodule with normal overlying skin
+
+vitiligo (bạch biến): sharply demarcated depigmented macules and patches often on face, hands and around body orifices
+melasma (nám da): symmetric hyperpigmented macules and patches on cheeks, forehead and upper lip in women with sun exposure or pregnancy
+postinflammatory hyperpigmentation (tăng sắc tố sau viêm): irregular brown macules at sites of previous inflammation or injury
+postinflammatory hypopigmentation (giảm sắc tố sau viêm): lighter patches at sites of resolved dermatitis or infection
+
+alopecia areata (rụng tóc từng mảng): well-defined round patches of non-scarring hair loss on scalp with exclamation mark hairs
+androgenetic alopecia (hói androgen): gradual thinning of hair on the frontal scalp and vertex in men or central scalp in women
+telogen effluvium (rụng tóc telogen): diffuse increased hair shedding after stress, illness or childbirth
+
+actinic keratosis (dày sừng ánh sáng): rough scaly erythematous macule or papule on chronically sun-exposed skin in older adults
+basal cell carcinoma (ung thư biểu mô tế bào đáy): pearly pink papule with telangiectasia and rolled borders sometimes with central ulceration
+squamous cell carcinoma (ung thư biểu mô tế bào vảy): hyperkeratotic scaly or nodular lesion on sun-exposed skin sometimes ulcerated
+melanoma (u hắc tố ác tính): asymmetric dark lesion with irregular borders color variegation and enlargement over time
+nevus (nốt ruồi lành tính): benign symmetric melanocytic nevus with uniform color and regular smooth borders
+
+leprosy tuberculoid form (phong thể củ): hypopigmented dry anesthetic patch with sharply defined edge and loss of hair and sweat
+leprosy lepromatous form (phong thể u): multiple symmetric nodules and infiltrated plaques on face and extremities with thickened earlobes
