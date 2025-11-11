@@ -1,7 +1,7 @@
 # Backend
 **Make sure set the google api key in .env at root**
 ```bash
-cd Services
+cd Server
 python -m venv .venv
 .\.venv/bin/activate
 pip install -r requirements.txt
