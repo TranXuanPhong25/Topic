@@ -7,6 +7,7 @@ import ChatWidget from './components/ChatWidget';
 import Footer from './components/Footer';
 
 const App = () => {
+  const [isOpen, setIsOpen] = useState(false);
   const [sessionId] = useState(() => {
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   });
@@ -25,8 +26,14 @@ const App = () => {
       <main className="main-content">
         <div className="container">
           <WelcomeCard />
-          <QuickActions onQuickMessage={handleQuickMessage} />
-          <ChatWidget ref={chatWidgetRef} sessionId={sessionId} />
+          <QuickActions onQuickMessage={handleQuickMessage} setIsOpen={setIsOpen} />
+          <ChatWidget 
+            onQuickMessage={handleQuickMessage} 
+            ref={chatWidgetRef} 
+            sessionId={sessionId} 
+            isOpen={isOpen} 
+            setIsOpen={setIsOpen} 
+          />
         </div>
       </main>
       <Footer />
