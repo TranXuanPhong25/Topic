@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { MemoizedMarkdown } from './MemoizedMarkdown';
+import { quickMessages, imageActions, symptomTests } from '../constants/QuickMessages';
 
-const ChatWidget = ({ sessionId }, ref) => {
-  const [isOpen, setIsOpen] = useState(true);
+const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -17,8 +17,63 @@ const ChatWidget = ({ sessionId }, ref) => {
   const [imagePreview, setImagePreview] = useState(null);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+  const [sidebarWidth, setSidebarWidth] = useState(280);
+  const [isResizing, setIsResizing] = useState(false);
 
   const API_BASE_URL = 'http://localhost:8000';
+
+  const handleMouseDown = () => {
+    setIsResizing(true);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (isResizing) {
+        const newWidth = Math.min(Math.max(e.clientX, 200), 400);
+        setSidebarWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing]);
+
+  const handleClickQuickMessage = (message) => {
+    if (onQuickMessage) {
+      onQuickMessage(message);
+    }
+  };
+
+  const handleImageClick = async (imageAction) => {
+    try {
+      // Fetch the image file
+      const response = await fetch(imageAction.imagePath);
+      const blob = await response.blob();
+
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onload = () => {
+        const imageData = reader.result;
+        // Send image with message to parent
+        if (onQuickMessage) {
+          onQuickMessage(imageAction.message, imageData);
+        }
+      };
+      reader.readAsDataURL(blob);
+    } catch (error) {
+      console.error('Error loading image:', error);
+      alert('Failed to load image. Please try again.');
+    }
+  };
 
   // Expose sendMessage function to parent component
   useImperativeHandle(ref, () => ({
@@ -234,7 +289,7 @@ const ChatWidget = ({ sessionId }, ref) => {
 
   return (
     <div className={`chat-widget ${isOpen ? '' : 'minimized'}`} id="chatWidget">
-      <div className="chat-header">
+      <div className={`chat-header ${isOpen ? '' : 'minimized'}`}>
         <div className="chat-header-content">
           <span className="status-indicator"></span>
           <span className="chat-title">Chat with Assistant</span>
@@ -244,28 +299,96 @@ const ChatWidget = ({ sessionId }, ref) => {
 
       {isOpen && (
         <>
-          <div className="chat-messages" id="chatMessages">
-            {messages.map((message) => (
-              <div key={message.id} className={`message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}>
-                <div className="message-avatar">{message.sender === 'user' ? '👤' : '🤖'}</div>
-                <div className="message-content">
-                  <MemoizedMarkdown content={message.content} id={`msg-${message.id}`} />
-                  <span className="message-time">{message.time}</span>
-                </div>
+          <div className="chat-body">
+            <div
+              className="chat-sidebar"
+              style={{ width: sidebarWidth }}
+            >
+              <div className="sidebar-header-sticky">
+                <div className="sidebar-header">Quick Questions</div>
               </div>
-            ))}
-            {isTyping && (
-              <div className="message bot-message typing-message">
-                <div className="message-avatar">🤖</div>
+              <div className="sidebar-content">
+                {/* Quick Messages */}
+                <div className="sidebar-section">
+                  <div className="sidebar-section-title">Quick Messages</div>
+                  <ul className="sidebar-list">
+                    {quickMessages.map((item, index) => (
+                      <li
+                        key={index}
+                        onClick={() => handleClickQuickMessage(item.message)}
+                        className="sidebar-item"
+                      >
+                        {item.text}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
-                <div className="typing-indicator">
-                  <div className="typing-dot"></div>
-                  <div className="typing-dot"></div>
-                  <div className="typing-dot"></div>
+                {/* Symptom Tests */}
+                <div className="sidebar-section">
+                  <div className="sidebar-section-title">Symptom Tests</div>
+                  <ul className="sidebar-list">
+                    {symptomTests.map((item, index) => (
+                      <li
+                        key={`symptom-${index}`}
+                        onClick={() => handleClickQuickMessage(item.message)}
+                        className="sidebar-item"
+                      >
+                        {item.text}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Image Actions */}
+                <div className="sidebar-section">
+                  <div className="sidebar-section-title">Image Actions</div>
+                  <ul className="sidebar-list">
+                    {imageActions.map((item, index) => (
+                      <li
+                        key={`img-${index}`}
+                        onClick={() => handleImageClick(item)}
+                        className="sidebar-item"
+                      >
+                        {item.text}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
-            )}
-            <div ref={messagesEndRef} />
+
+            </div>
+
+            <div
+              className="sidebar-resizer"
+              onMouseDown={handleMouseDown}
+            ></div>
+
+            <div className="chat-main">
+              <div className="chat-messages" id="chatMessages">
+                {messages.map((message) => (
+                  <div key={message.id} className={`message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}>
+                    <div className="message-avatar">{message.sender === 'user' ? '👤' : '🤖'}</div>
+                    <div className="message-content">
+                      <MemoizedMarkdown content={message.content} id={`msg-${message.id}`} />
+                      <span className="message-time">{message.time}</span>
+                    </div>
+                  </div>
+                ))}
+                {isTyping && (
+                  <div className="message bot-message typing-message">
+                    <div className="message-avatar">🤖</div>
+
+                    <div className="typing-indicator">
+                      <div className="typing-dot"></div>
+                      <div className="typing-dot"></div>
+                      <div className="typing-dot"></div>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
           </div>
 
           {/* Image Preview Area */}
