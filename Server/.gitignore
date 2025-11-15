@@ -60,3 +60,4 @@ htmlcov/
 clinic.db
 
 .venv/*
+Server/.venv/*
