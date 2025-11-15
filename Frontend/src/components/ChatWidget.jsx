@@ -3,7 +3,6 @@ import { MemoizedMarkdown } from './MemoizedMarkdown';
 import { quickMessages, imageActions, symptomTests } from '../constants/QuickMessages';
 
 const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
-  const [isOpen, setIsOpen] = useState(true);
 
   const getCurrentTime = () => {
     const now = new Date();
@@ -397,20 +396,199 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
                   </ul>
                 </div>
 
-                {/* Symptom Tests */}
+                {/* Symptom Tests - Grouped by Category */}
                 <div className="sidebar-section">
-                  <div className="sidebar-section-title">Symptom Tests</div>
-                  <ul className="sidebar-list">
-                    {symptomTests.map((item, index) => (
-                      <li
-                        key={`symptom-${index}`}
-                        onClick={() => handleClickQuickMessage(item.message)}
-                        className="sidebar-item"
-                      >
-                        {item.text}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="sidebar-section-title">Symptom Tests (Agent Autonomy)</div>
+                  
+                  {/* Basic */}
+                  {symptomTests.filter(t => t.category === 'basic').length > 0 && (
+                    <div className="symptom-category">
+                      <div className="category-label">✅ Basic</div>
+                      <ul className="sidebar-list">
+                        {symptomTests.filter(t => t.category === 'basic').map((item, index) => (
+                          <li
+                            key={`symptom-basic-${index}`}
+                            onClick={() => handleClickQuickMessage(item.message)}
+                            className="sidebar-item sidebar-item-basic"
+                            title={item.message}
+                          >
+                            {item.text}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Multi-symptom */}
+                  {symptomTests.filter(t => t.category === 'multi-symptom').length > 0 && (
+                    <div className="symptom-category">
+                      <div className="category-label">🔬 Multi-Symptom</div>
+                      <ul className="sidebar-list">
+                        {symptomTests.filter(t => t.category === 'multi-symptom').map((item, index) => (
+                          <li
+                            key={`symptom-multi-${index}`}
+                            onClick={() => handleClickQuickMessage(item.message)}
+                            className="sidebar-item sidebar-item-multi"
+                            title={item.message}
+                          >
+                            {item.text}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Complex */}
+                  {symptomTests.filter(t => t.category === 'complex').length > 0 && (
+                    <div className="symptom-category">
+                      <div className="category-label">🧪 Complex</div>
+                      <ul className="sidebar-list">
+                        {symptomTests.filter(t => t.category === 'complex').map((item, index) => (
+                          <li
+                            key={`symptom-complex-${index}`}
+                            onClick={() => handleClickQuickMessage(item.message)}
+                            className="sidebar-item sidebar-item-complex"
+                            title={item.message}
+                          >
+                            {item.text}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Emergency */}
+                  {symptomTests.filter(t => t.category === 'emergency').length > 0 && (
+                    <div className="symptom-category">
+                      <div className="category-label emergency-label">🚨 Emergency</div>
+                      <ul className="sidebar-list">
+                        {symptomTests.filter(t => t.category === 'emergency').map((item, index) => (
+                          <li
+                            key={`symptom-emergency-${index}`}
+                            onClick={() => handleClickQuickMessage(item.message)}
+                            className="sidebar-item sidebar-item-emergency"
+                            title={item.message}
+                          >
+                            {item.text}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Vague */}
+                  {symptomTests.filter(t => t.category === 'vague').length > 0 && (
+                    <div className="symptom-category">
+                      <div className="category-label">❓ Vague</div>
+                      <ul className="sidebar-list">
+                        {symptomTests.filter(t => t.category === 'vague').map((item, index) => (
+                          <li
+                            key={`symptom-vague-${index}`}
+                            onClick={() => handleClickQuickMessage(item.message)}
+                            className="sidebar-item sidebar-item-vague"
+                            title={item.message}
+                          >
+                            {item.text}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Recommendation */}
+                  {symptomTests.filter(t => t.category === 'recommendation').length > 0 && (
+                    <div className="symptom-category">
+                      <div className="category-label">💊 Recommendation</div>
+                      <ul className="sidebar-list">
+                        {symptomTests.filter(t => t.category === 'recommendation').map((item, index) => (
+                          <li
+                            key={`symptom-rec-${index}`}
+                            onClick={() => handleClickQuickMessage(item.message)}
+                            className="sidebar-item sidebar-item-recommendation"
+                            title={item.message}
+                          >
+                            {item.text}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Incomplete */}
+                  {symptomTests.filter(t => t.category === 'incomplete').length > 0 && (
+                    <div className="symptom-category">
+                      <div className="category-label">🔄 Incomplete</div>
+                      <ul className="sidebar-list">
+                        {symptomTests.filter(t => t.category === 'incomplete').map((item, index) => (
+                          <li
+                            key={`symptom-incomplete-${index}`}
+                            onClick={() => handleClickQuickMessage(item.message)}
+                            className="sidebar-item sidebar-item-incomplete"
+                            title={item.message}
+                          >
+                            {item.text}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Vietnamese */}
+                  {symptomTests.filter(t => t.category === 'vietnamese').length > 0 && (
+                    <div className="symptom-category">
+                      <div className="category-label">🇻🇳 Vietnamese</div>
+                      <ul className="sidebar-list">
+                        {symptomTests.filter(t => t.category === 'vietnamese').map((item, index) => (
+                          <li
+                            key={`symptom-vn-${index}`}
+                            onClick={() => handleClickQuickMessage(item.message)}
+                            className="sidebar-item sidebar-item-vietnamese"
+                            title={item.message}
+                          >
+                            {item.text}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Investigation */}
+                  {symptomTests.filter(t => t.category === 'investigation').length > 0 && (
+                    <div className="symptom-category">
+                      <div className="category-label">🔬 Investigation</div>
+                      <ul className="sidebar-list">
+                        {symptomTests.filter(t => t.category === 'investigation').map((item, index) => (
+                          <li
+                            key={`symptom-inv-${index}`}
+                            onClick={() => handleClickQuickMessage(item.message)}
+                            className="sidebar-item sidebar-item-investigation"
+                            title={item.message}
+                          >
+                            {item.text}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Mixed */}
+                  {symptomTests.filter(t => t.category === 'mixed').length > 0 && (
+                    <div className="symptom-category">
+                      <div className="category-label">🔀 Mixed Intent</div>
+                      <ul className="sidebar-list">
+                        {symptomTests.filter(t => t.category === 'mixed').map((item, index) => (
+                          <li
+                            key={`symptom-mixed-${index}`}
+                            onClick={() => handleClickQuickMessage(item.message)}
+                            className="sidebar-item sidebar-item-mixed"
+                            title={item.message}
+                          >
+                            {item.text}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
 
                 {/* Image Actions */}

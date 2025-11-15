@@ -8,7 +8,6 @@ const QuickActions = ({ onQuickMessage, setIsOpen }) => {
     }
     setIsOpen(true);
   };
-
   const handleImageClick = async (imageAction) => {
     try {
       // Fetch the image file
@@ -149,7 +148,7 @@ const QuickActions = ({ onQuickMessage, setIsOpen }) => {
               title={item.message}
             >
               {item.text}
-            </button>
+            </button> 
           ))}
         </div>
       </div>

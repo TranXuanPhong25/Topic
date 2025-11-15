@@ -565,6 +565,92 @@ body {
   padding: 0;
 }
 
+/* Symptom Category Grouping */
+.symptom-category {
+  margin: 12px 0;
+}
+
+.category-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  padding: 6px 12px;
+  margin: 8px 8px 4px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.emergency-label {
+  color: #ff4444;
+  background: rgba(255, 68, 68, 0.1);
+  font-weight: 700;
+}
+
+/* Category-specific sidebar item colors */
+.sidebar-item-basic:hover {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+}
+
+.sidebar-item-multi:hover {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+}
+
+.sidebar-item-complex:hover {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+}
+
+.sidebar-item-emergency {
+  border-left: 3px solid #ef4444;
+}
+
+.sidebar-item-emergency:hover {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  animation: pulse-red-sidebar 2s infinite;
+}
+
+@keyframes pulse-red-sidebar {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
+  }
+}
+
+.sidebar-item-vague:hover {
+  background: linear-gradient(135deg, #94a3b8, #64748b);
+  color: white;
+}
+
+.sidebar-item-recommendation:hover {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  color: white;
+}
+
+.sidebar-item-incomplete:hover {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: white;
+}
+
+.sidebar-item-vietnamese:hover {
+  background: linear-gradient(135deg, #ec4899, #db2777);
+  color: white;
+}
+
+.sidebar-item-investigation:hover {
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
+  color: white;
+}
+
+.sidebar-item-mixed:hover {
+  background: linear-gradient(135deg, #a855f7, #9333ea);
+  color: white;
+}
+
 
 /* Middle pull bar */
 .sidebar-resizer {
