@@ -2,7 +2,6 @@
 ConversationAgent Node: Handles normal conversations using clinic information and FAQs.
 """
 from typing import TYPE_CHECKING
-import time
 from .prompts import build_conversation_prompt
 
 if TYPE_CHECKING:
@@ -47,13 +46,12 @@ class ConversationAgentNode:
                 knowledge_base_info=knowledge_base_info
             )
             
-            # Use Gemini to generate response with simple backoff on rate limits
-            response = self._generate_with_retries(conversation_prompt)
+            # Use Gemini to generate response
+            response = self.gemini_model.generate_content(conversation_prompt)
             conversation_output = response.text.strip()
             
             state["conversation_output"] = conversation_output
             state["final_response"] = conversation_output
-            state["messages"].append("✅ ConversationAgent: Response generated")
             state["current_step"] +=1
 
             print(f"Conversation response: {conversation_output[:100]}...")
@@ -62,24 +60,5 @@ class ConversationAgentNode:
             print(f"ConversationAgent error: {str(e)}")
             state["conversation_output"] = "Xin lỗi, tôi đang gặp sự cố. Vui lòng gọi phòng khám để được hỗ trợ."
             state["final_response"] = state["conversation_output"]
-            state["messages"].append(f"❌ ConversationAgent: Error - {str(e)}")
         
         return state
-
-    def _generate_with_retries(self, prompt: str, retries: int = 3, base_delay: float = 0.75):
-        last_err = None
-        for attempt in range(retries):
-            try:
-                return self.gemini_model.generate_content(prompt)
-            except Exception as e:
-                msg = str(e).lower()
-                # naive detection of rate limiting or quota issues
-                if "429" in msg or "rate" in msg or "quota" in msg or "exhaust" in msg:
-                    delay = base_delay * (2 ** attempt)
-                    print(f"⏳ ConversationAgent retry {attempt+1}/{retries} after {delay:.2f}s due to rate limit...")
-                    time.sleep(delay)
-                    last_err = e
-                    continue
-                raise
-        # If all retries failed
-        raise last_err if last_err else RuntimeError("LLM generate failed without exception")

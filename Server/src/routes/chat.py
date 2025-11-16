@@ -56,18 +56,24 @@ async def ma_chat(request: ChatRequest):
                 "recommendation": None,
                 "timestamp": datetime.now().isoformat()
             }
-
+         # Convert chat_history to dict format if provided
+        chat_history = None
+        if request.chat_history:
+            chat_history = [
+                {
+                    "role": msg.role,
+                    "parts": [{"text": part.text} for part in msg.parts]
+                }
+                for msg in request.chat_history
+            ]
+            print(f"📝 Chat history: {len(chat_history)} messages")
+        
         # Run multi-agent diagnostic pipeline (single shared instance)
-        result = diagnostic_graph.analyze(user_input=request.message)
+        result = diagnostic_graph.analyze(user_input=request.message, chat_history=chat_history)
     
         return {
             "session_id": session_id,
             "response": result['final_response'],
-            "analysis": result.get("detailed_analysis"),
-            "diagnosis": result.get("diagnosis"),
-            "risk_assessment": result.get("risk_assessment"),
-            "investigation_plan": result.get("investigation_plan"),
-            "recommendation": result.get("recommendation"),
             "timestamp": datetime.now().isoformat()
         }
     
@@ -99,17 +105,22 @@ def ma_chat_with_image(request: ImageChatRequest):
             raise HTTPException(status_code=400, detail="Image data is required")
         
         session_id = request.session_id or str(uuid.uuid4())
-
-        result = diagnostic_graph.analyze(request.message, request.image)
+        chat_history = None
+        if request.chat_history:
+            chat_history = [
+                {
+                    "role": msg.role,
+                    "parts": [{"text": part.text} for part in msg.parts]
+                }
+                for msg in request.chat_history
+            ]
+            print(f"📝 Image chat history: {len(chat_history)} messages")
+        
+        result = diagnostic_graph.analyze(request.message, request.image, chat_history=chat_history)
         
         return {
             "session_id": session_id,
             "response": result['final_response'],
-            "analysis": result.get("detailed_analysis"),
-            "diagnosis": result.get("diagnosis"),
-            "risk_assessment": result.get("risk_assessment"),
-            "investigation_plan": result.get("investigation_plan"),
-            "recommendation": result.get("recommendation"),
             "timestamp": datetime.now().isoformat()
         }
     

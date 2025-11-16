@@ -30,6 +30,7 @@ class ConversationModelSingleton:
                 generation_config=generation_config,
                 system_instruction=CONVERSATION_SYSTEM_PROMPT
             )
+            
             print(f"✅ Conversation model initialized: {GEMINI_MODEL_NAME}")
         return cls._instance
     

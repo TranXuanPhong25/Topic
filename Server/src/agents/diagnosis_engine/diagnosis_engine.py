@@ -40,13 +40,19 @@ class DiagnosisEngineNode:
         print("🩺 DiagnosisEngine: Running diagnostic analysis...")
         
         # Get input - use combined_analysis if available, otherwise symptoms
-        analysis_input = state.get("combined_analysis") or state.get("symptoms", "")
-        
+        analysis_input = state.get("symptoms", {})
+        if analysis_input == {}:
+            analysis_input = state.get("input", {})
         try:
-            image_analysis = state.get("image_analysis", "")
+            # Build diagnosis prompt using the system prompt from prompts.py
+            image_analysis = json.dumps(state.get("image_analysis_result", ""))
+            revision_requirements = state.get("revision_requirements", None)
+            detailed_review = state.get("detailed_review", None)
+            # Convert analysis_input to string if it's a dict
             symptoms_str = str(analysis_input) if isinstance(analysis_input, dict) else analysis_input
-            diagnosis_context = build_diagnosis_prompt(symptoms_str, image_analysis)
-
+            diagnosis_context = build_diagnosis_prompt(symptoms_str, image_analysis, revision_requirements=revision_requirements, detailed_review=detailed_review)
+            # TODO
+            response = self.gemini_model.generate_content(diagnosis_context)
             meditron_text = self._call_meditron(diagnosis_context)
             if meditron_text:
                 print("Meditron response received.")
@@ -56,15 +62,14 @@ class DiagnosisEngineNode:
                 result_text = response.text.strip()
 
             result_text = re.sub(r'```json\s*|\s*```', '', result_text)
-            try:
-                diagnosis = json.loads(result_text)
-            except Exception:
-                diagnosis = {"error": "Unable to parse diagnosis engine output", "raw": result_text}
-            
+            diagnosis = json.loads(result_text)
+
             # Extract risk assessment from diagnosis
             risk_assessment = diagnosis.get("risk_assessment", {})
             severity = risk_assessment.get("severity", "MODERATE")
-            
+            confidence = diagnosis.get("confidence", 0.0)
+
+
             # Store diagnosis and risk assessment in state
             state["diagnosis"] = diagnosis
             state["risk_assessment"] = {
@@ -84,8 +89,25 @@ class DiagnosisEngineNode:
             if "final_response" in diagnosis:
                 state["final_response"] = diagnosis["final_response"]
             
-            state["messages"].append(f"✅ DiagnosisEngine: Diagnosis complete (severity: {severity})")
-            
+            # Check if we should ask for more information instead of proceeding
+
+            # Only ask on first attempt (not during revisions)
+            revision_count = state.get("revision_count", 0)
+            if (confidence < 0.6 and 
+                revision_count == 0 and
+                information_needed and
+                (information_needed.get("missing_critical_info") or 
+                 information_needed.get("clarifying_questions"))):
+
+                print(
+
+                    f"💡 DiagnosisEngine: Low confidence ({confidence:.2f}), requesting additional information from user")
+
+
+
+                # Note: The final_response should already contain the questions for the user
+
+                # The synthesis/conversation agent will handle sending this to the user            
             print(f"Diagnosis: {diagnosis.get('primary_diagnosis', {}).get('condition', 'Unknown')}")
             if information_needed.get("clarifying_questions"):
                 print(f"Additional info needed: {len(information_needed.get('clarifying_questions', []))} questions")
@@ -114,7 +136,6 @@ class DiagnosisEngineNode:
                 "explanation": "Default due to error",
                 "requires_immediate_attention": False
             }
-            state["messages"].append(f"❌ DiagnosisEngine: Error - {str(e)}")
         
         return state
     
