@@ -39,12 +39,10 @@ class SynthesisNode:
             state_data = {
                 "symptoms": state.get("symptoms", ""),
                 "image_analysis_result": state.get("image_analysis_result", {}),
-                "combined_analysis": state.get("combined_analysis", ""),
                 "diagnosis": state.get("diagnosis", {}),
                 "risk_assessment": state.get("risk_assessment", {}),
                 "investigation_plan": state.get("investigation_plan", []),
                 "recommendation": state.get("recommendation", ""),
-                "intent": state.get("intent", ""),
             }
             
             # Build synthesis prompt
@@ -59,25 +57,15 @@ class SynthesisNode:
             # Store in state
             state["final_response"] = final_report
 
-            # Add metadata
-            if "metadata" not in state:
-                state["metadata"] = {}
-            
-            state["metadata"]["synthesis_completed"] = True
-            state["metadata"]["report_length"] = len(final_report)
-            
             # Check for emergency indicators in report
             if "🚨" in final_report or "URGENT" in final_report.upper():
-                state["metadata"]["emergency_detected"] = True
                 print("🚨 EMERGENCY INDICATORS DETECTED IN FINAL REPORT")
             state["current_step"] += 1
-            state["messages"].append("✅ Synthesis: Comprehensive report generated")
 
         except Exception as e:
             print(f"❌ Error during synthesis: {e}")
             # Fallback to basic response
             state["final_response"] = self._create_fallback_response(state)
-            state["messages"].append(f"❌ Synthesis: Error - {str(e)}, using fallback")
         
         print("📊 =========== SYNTHESIS ENDED ============\n")
         return state
@@ -171,15 +159,6 @@ class SynthesisNode:
         return response
     
     def synthesize_directly(self, state_data: Dict[str, Any]) -> str:
-        """
-        Direct synthesis without state management (for testing/utilities)
-        
-        Args:
-            state_data: Dictionary with diagnostic information
-            
-        Returns:
-            Synthesized report
-        """
         try:
             prompt = build_synthesis_prompt(state_data)
             response = self.llm.generate_content(prompt)

@@ -2,6 +2,8 @@
 Diagnosis Engine System Prompts
 Specialized prompts for medical diagnosis
 """
+import json
+from typing import Any
 
 DIAGNOSIS_SYSTEM_PROMPT = """You are an expert Medical Diagnostic AI Assistant.
 
@@ -178,25 +180,92 @@ Symptoms: "Fever 101°F for 2 days, sore throat, body aches"
 - If information is insufficient, prioritize asking for more details over making uncertain diagnosis
 """
 
-def build_diagnosis_prompt(symptoms: str, image_analysis: str = "") -> str:
-    """
-    Build diagnosis prompt with symptom context
-    
-    Args:
-        symptoms: Patient's reported symptoms
-        image_analysis: Results from image analysis (if any)
-    
-    Returns:
-        Complete prompt for diagnosis engine
-    """
+def build_diagnosis_prompt(
+    symptoms: str, 
+    image_analysis: str = "",
+    revision_requirements :dict[str, Any]=None,
+    detailed_review: dict[str, Any] = None
+) -> str:
+    if revision_requirements is None:
+        revision_requirements = {}
+
     img_section = f"\n## IMAGE ANALYSIS FINDINGS\n{image_analysis}\n" if image_analysis else ""
+    print("start revision confirm")
+    # Build revision section if feedback exists
+    revision_section = ""
+    if revision_requirements  and (revision_requirements is not None):
+        try:
+            revision_data = revision_requirements
+            review_data = detailed_review
+            revision_section = "\n## ⚠️ REVISION REQUIRED - PREVIOUS DIAGNOSIS WAS INCOMPLETE\n\n"
+            revision_section += "The previous diagnosis was reviewed and found to need improvements.\n\n"
+            
+            # Add critical issues
+            if isinstance(revision_data, list):
+                print("start issues")
+                critical_issues = [r for r in revision_data if r.get("priority") == "CRITICAL"]
+                high_issues = [r for r in revision_data if r.get("priority") == "HIGH"]
+                medium_issues = [r for r in revision_data if r.get("priority") == "MEDIUM"]
+                if critical_issues:
+                    revision_section += "### 🔴 CRITICAL ISSUES (Must Fix):\n"
+                    for issue in critical_issues:
+                        revision_section += f"- **{issue.get('category', 'general')}**: {issue.get('issue', 'Unknown issue')}\n"
+                        if issue.get('suggestion'):
+                            revision_section += f"  → Suggestion: {issue['suggestion']}\n"
+                    revision_section += "\n"
+                
+                if high_issues:
+                    revision_section += "### 🟡 HIGH PRIORITY ISSUES:\n"
+                    for issue in high_issues:
+                        revision_section += f"- **{issue.get('category', 'general')}**: {issue.get('issue', 'Unknown issue')}\n"
+                        if issue.get('suggestion'):
+                            revision_section += f"  → Suggestion: {issue['suggestion']}\n"
+                    revision_section += "\n"
+                
+                if medium_issues:
+                    revision_section += "### 🔵 MEDIUM PRIORITY ISSUES:\n"
+                    for issue in medium_issues:
+                        revision_section += f"- **{issue.get('category', 'general')}**: {issue.get('issue', 'Unknown issue')}\n"
+                        if issue.get('suggestion'):
+                            revision_section += f"  → Suggestion: {issue['suggestion']}\n"
+                    revision_section += "\n"
+            
+            # Add review context
+            if review_data:
+                revision_section += "### Detailed Quality Review:\n"
+                print("review_dta")
+                if review_data.get("symptom_diagnosis_alignment"):
+                    alignment = review_data["symptom_diagnosis_alignment"]
+                    if alignment.get("status") == "FAIL":
+                        revision_section += f"- Symptom-Diagnosis Alignment: ❌ {alignment.get('reasoning', 'Issues found')}\n"
+                
+                if review_data.get("differential_quality"):
+                    diff_qual = review_data["differential_quality"]
+                    if diff_qual.get("status") == "FAIL":
+                        revision_section += f"- Differential Quality: ❌ {diff_qual.get('reasoning', 'Needs improvement')}\n"
+                        if diff_qual.get("notable_omissions"):
+                            revision_section += f"  Missing conditions: {', '.join(diff_qual['notable_omissions'])}\n"
+                
+                if review_data.get("severity_assessment"):
+                    severity = review_data["severity_assessment"]
+                    if severity.get("status") == "FAIL":
+                        revision_section += f"- Severity Assessment: ❌ {severity.get('reasoning', 'Incorrect severity')}\n"
+                        if severity.get("recommended_severity"):
+                            revision_section += f"  Recommended: {severity['recommended_severity']}\n"
+            
+            revision_section += "\n**IMPORTANT**: Address ALL issues above in your revised diagnosis. "
+            revision_section += "Focus especially on CRITICAL and HIGH priority items.\n"
+            
+        except json.JSONDecodeError:
+            revision_section = "\n## REVISION REQUIRED\nPlease review and improve the previous diagnosis.\n"
     
     context = f"""
 ## PATIENT SYMPTOMS
 {symptoms}
 {img_section}
+{revision_section}
 
 Perform diagnostic analysis and respond with JSON only:
 """
-    
+
     return context

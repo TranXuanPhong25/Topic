@@ -1,15 +1,28 @@
+"""
+Gemini Vision Analyzer for medical image analysis using Gemini 2.0 Flash Lite.
+
+This module provides vision analysis capabilities using Google's Gemini 2.0 Flash Lite model,
+which supports multimodal input (text + images) for analyzing medical images.
+"""
 
 import base64
-import json
 from typing import Dict, Any, Optional
 from PIL import Image
 import io
 
 class GeminiVisionAnalyzer:
-    """Vision analyzer using Gemini 2.0 Flash Lite for medical image analysis."""
-
+    """
+    Vision analyzer using Gemini 2.0 Flash Lite for medical image analysis.
+    
+    This class provides:
+    - Image description and analysis
+    - Visual Q&A based on symptoms
+    - Medical image interpretation
+    - Confidence scoring
+    """
+    
     def __init__(self, model):
-        self.model = model
+       self.model = model
     
     def analyze_image(
         self, 
@@ -31,25 +44,30 @@ class GeminiVisionAnalyzer:
             - error: Error message if any
         """        
         try:
+            # Decode base64 image
             image = self._decode_base64_image(image_data)
+            
+            # Generate visual description
             visual_description = self._generate_visual_description(image)
-
+            
+            # Perform visual Q&A if symptoms provided
             visual_qa_results = {}
             if symptoms_text and symptoms_text.strip():
                 visual_qa_results = self._perform_visual_qa(image, symptoms_text)
-
+            
+            # Calculate confidence based on response quality
             confidence = self._calculate_confidence(visual_description, visual_qa_results)
-
+            
             result = {
                 "visual_description": visual_description,
                 "visual_qa_results": visual_qa_results,
                 "confidence": confidence,
                 "error": None
             }
-
+            
             print(f"Vision analysis complete. Confidence: {confidence:.2f}")
             return result
-
+            
         except Exception as e:
             print(f"Vision analysis error: {str(e)}")
             return {
@@ -70,17 +88,23 @@ class GeminiVisionAnalyzer:
             PIL Image object
         """
         try:
+            # Remove data URL prefix if present
             if ',' in image_data:
                 image_data = image_data.split(',', 1)[1]
-
+            
+            # Decode base64
             image_bytes = base64.b64decode(image_data)
+            
+            # Convert to PIL Image
             image = Image.open(io.BytesIO(image_bytes))
+            
+            # Convert to RGB if needed
             if image.mode != 'RGB':
                 image = image.convert('RGB')
-
+            
             print(f"Decoded image: {image.size}, mode: {image.mode}")
             return image
-
+            
         except Exception as e:
             print(f"Error decoding image: {str(e)}")
             raise ValueError(f"Invalid image data: {str(e)}")
@@ -112,13 +136,15 @@ class GeminiVisionAnalyzer:
                     - Khoảng 4-6 câu
 
                     **Mô tả hình ảnh:**"""
-
+        
         try:
+            # Generate content with image
             response = self.model.generate_content([prompt, image])
             description = response.text.strip()
+            
             print(f"Generated visual description: {description[:100]}...")
             return description
-
+            
         except Exception as e:
             print(f"Error generating visual description: {str(e)}")
             return f"Không thể phân tích hình ảnh: {str(e)}"
@@ -138,9 +164,11 @@ class GeminiVisionAnalyzer:
         Returns:
             Dictionary of questions and answers
         """
+        # Generate relevant questions based on symptoms
         questions = self._generate_questions(symptoms_text)
-
+        
         qa_results = {}
+        
         for question in questions:
             prompt = f"""Bạn là chuyên gia phân tích hình ảnh y tế. 
 
@@ -155,15 +183,17 @@ class GeminiVisionAnalyzer:
                         - Viết bằng tiếng Việt
 
                         **Trả lời:**"""
+                                    
             try:
                 response = self.model.generate_content([prompt, image])
                 answer = response.text.strip()
                 qa_results[question] = answer
                 print(f"Q: {question[:50]}... A: {answer[:50]}...")
+                
             except Exception as e:
                 print(f"Error in visual QA: {str(e)}")
                 qa_results[question] = f"Không thể trả lời: {str(e)}"
-
+        
         return qa_results
     
     def _generate_questions(self, symptoms_text: str) -> list:
@@ -176,27 +206,31 @@ class GeminiVisionAnalyzer:
         Returns:
             List of relevant questions to ask about the image
         """
+        # Default medical image questions
         default_questions = [
             "Có thấy dấu hiệu sưng tấy không?",
             "Màu sắc có bất thường không?",
             "Có thấy dấu hiệu nhiễm trùng không?",
         ]
-
+        
+        # Keyword-based question generation
         questions = default_questions.copy()
+        
         symptoms_lower = symptoms_text.lower()
-
+        
         if any(word in symptoms_lower for word in ['đỏ', 'đỏ', 'sưng', 'phồng']):
             questions.append("Mức độ đỏ và sưng như thế nào?")
-
+        
         if any(word in symptoms_lower for word in ['đau', 'nhức', 'đớn']):
             questions.append("Có dấu hiệu gì cho thấy nguyên nhân đau không?")
-
+        
         if any(word in symptoms_lower for word in ['vết', 'thương', 'rách', 'xước']):
             questions.append("Vết thương trông có sạch sẽ không?")
-
+        
         if any(word in symptoms_lower for word in ['phát ban', 'mẩn', 'nổi']):
             questions.append("Phát ban trông như thế nào (màu sắc, hình dạng)?")
-
+        
+        # Limit to 5 questions max
         return questions[:5]
     
     def _calculate_confidence(
@@ -215,23 +249,26 @@ class GeminiVisionAnalyzer:
             Confidence score between 0 and 1
         """
         confidence = 0.0
-
+        
+        # Base confidence from description quality
         if description and len(description) > 50:
             confidence += 0.5
         elif description and len(description) > 20:
             confidence += 0.3
-
+        
+        # Add confidence from Q&A results
         if qa_results:
             successful_answers = sum(
-                1 for answer in qa_results.values()
+                1 for answer in qa_results.values() 
                 if answer and "Không thể" not in answer
             )
             qa_confidence = (successful_answers / len(qa_results)) * 0.5
             confidence += qa_confidence
-
+        
+        # Check for error indicators
         if "không thể" in description.lower() or "lỗi" in description.lower():
             confidence *= 0.5
-
+        
         return min(confidence, 1.0)
     
     def analyze_skin_condition(
@@ -251,8 +288,9 @@ class GeminiVisionAnalyzer:
         """
         try:
             image = self._decode_base64_image(image_data)
-
+            
             concern_text = f" về {specific_concern}" if specific_concern else ""
+            
             prompt = f"""Bạn là chuyên gia da liễu phân tích hình ảnh. Hãy phân tích tình trạng da trong hình ảnh{concern_text}.
 
                         **Nhiệm vụ:** Cung cấp phân tích chi tiết về:
@@ -269,17 +307,17 @@ class GeminiVisionAnalyzer:
                         - Khoảng 5-7 câu
 
                         **Phân tích:**"""
-
+                                    
             response = self.model.generate_content([prompt, image])
             analysis = response.text.strip()
-
+            
             return {
                 "analysis": analysis,
                 "type": "skin_condition",
                 "confidence": 0.85 if len(analysis) > 100 else 0.6,
                 "error": None
             }
-
+            
         except Exception as e:
             print(f"Skin analysis error: {str(e)}")
             return {
@@ -304,7 +342,7 @@ class GeminiVisionAnalyzer:
         """
         try:
             image = self._decode_base64_image(image_data)
-
+            
             prompt = """Bạn là chuyên gia chăm sóc vết thương phân tích hình ảnh. Hãy đánh giá vết thương trong hình ảnh.
 
                         **Nhiệm vụ:** Phân tích:
@@ -322,80 +360,22 @@ class GeminiVisionAnalyzer:
                         - Khoảng 6-8 câu
 
                         **Đánh giá vết thương:**"""
-
+            
             response = self.model.generate_content([prompt, image])
             analysis = response.text.strip()
-
+            
             return {
                 "analysis": analysis,
                 "type": "wound",
                 "confidence": 0.85 if len(analysis) > 100 else 0.6,
                 "error": None
             }
-
+            
         except Exception as e:
             print(f"Wound analysis error: {str(e)}")
             return {
                 "analysis": "",
                 "type": "wound",
-                "confidence": 0.0,
-                "error": str(e)
-            }
-
-    def analyze_prediction(
-        self,
-        prediction: Any,
-        symptoms_text: str = ""
-    ) -> Dict[str, Any]:
-        """
-        Interpret a local model's prediction (text or structured dict) together with
-        patient symptoms. This is a text-only reasoning method that intentionally
-        avoids re-sending the raw image to Gemini. Useful when a local classifier
-        produced a structured prediction and you want Gemini to provide higher-level
-        interpretation, differentials, and suggested next steps.
-
-        Args:
-            prediction: Prediction as dict or string produced by a local model
-            symptoms_text: Optional patient symptom description
-
-        Returns:
-            Dict with interpretation, echoed prediction text, confidence and error
-        """
-        try:
-            if isinstance(prediction, (dict, list)):
-                pred_text = json.dumps(prediction, ensure_ascii=False, indent=2)
-            else:
-                pred_text = str(prediction)
-
-            prompt = f"""Bạn là một bác sĩ chuyên môn, hãy giúp diễn giải kết quả dự đoán từ một mô hình cục bộ.
-
-Thông tin dự đoán (mô hình cục bộ):\n{pred_text}\n
-Triệu chứng bệnh nhân: {symptoms_text}\n
-Yêu cầu:
-- Diễn giải ngắn gọn ý nghĩa của dự đoán.
-- Nêu các chẩn đoán khả dĩ (danh sách differential diagnoses) nếu phù hợp.
-- Gợi ý các bước tiếp theo: xét nghiệm cần làm, khám chuyên khoa, hay mức độ khẩn cấp.
-- Nêu các giới hạn và điều kiện cần thận trọng (uncertainties).
-
-Lưu ý: Không phân tích hình ảnh gốc; chỉ sử dụng thông tin dự đoán và triệu chứng. Viết bằng tiếng Việt, rõ ràng và ngắn gọn."""
-
-            response = self.model.generate_content([prompt])
-            interpretation = response.text.strip()
-
-            confidence_est = 0.85 if len(interpretation) > 100 else 0.6
-
-            return {
-                "interpretation": interpretation,
-                "prediction_text": pred_text,
-                "confidence": confidence_est,
-                "error": None
-            }
-
-        except Exception as e:
-            print(f"Prediction interpretation error: {str(e)}")
-            return {
-                "interpretation": "",
-                "prediction_text": str(prediction),
                 "confidence": 0.0,
                 "error": str(e)
             }

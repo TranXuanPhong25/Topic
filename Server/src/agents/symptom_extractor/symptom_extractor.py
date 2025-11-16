@@ -3,7 +3,6 @@ Symptom Extractor Agent Node
 Extracts and structures symptoms from patient conversations
 """
 import json
-import time
 from typing import Dict, Any, List, Optional
 from src.models.state import GraphState
 from .config import get_symptom_extractor_model
@@ -44,7 +43,15 @@ class SymptomExtractorNode:
         """
         print("\n🩺 === SYMPTOM EXTRACTION STARTED ===")
         
-        user_input = state.get("input", "")
+        # Check if supervisor specified specific input for extraction
+        symptom_extractor_input = state.get("symptom_extractor_input")
+        if symptom_extractor_input:
+            user_input = symptom_extractor_input
+            print(f"📝 Using supervisor-specified input: {user_input[:100]}...")
+        else:
+            user_input = state.get("input", "")
+            print(f"📝 Using default user input: {user_input[:100]}...")
+        
         conversation_history = self._build_conversation_history(state)
         
         if not user_input:
@@ -60,7 +67,7 @@ class SymptomExtractorNode:
             prompt = build_symptom_extraction_prompt(user_input, conversation_history)
             
             # Generate symptom extraction
-            response = self._generate_with_retries(prompt)
+            response = self.llm.generate_content(prompt)
             # Parse JSON response
             symptom_data = self._parse_response(response.text)
             
@@ -194,26 +201,10 @@ class SymptomExtractorNode:
         """
         try:
             prompt = build_symptom_extraction_prompt(text)
-            response = self._generate_with_retries(prompt)
+            response = self.llm.generate_content(prompt)
             return self._parse_response(response.text)
         except Exception as e:
             return {
                 "error": str(e),
                 "extracted_symptoms": []
             }
-
-    def _generate_with_retries(self, prompt: str, retries: int = 3, base_delay: float = 0.75):
-        last_err = None
-        for attempt in range(retries):
-            try:
-                return self.llm.generate_content(prompt)
-            except Exception as e:
-                msg = str(e).lower()
-                if "429" in msg or "rate" in msg or "quota" in msg or "exhaust" in msg:
-                    delay = base_delay * (2 ** attempt)
-                    print(f"⏳ SymptomExtractor retry {attempt+1}/{retries} after {delay:.2f}s due to rate limit...")
-                    time.sleep(delay)
-                    last_err = e
-                    continue
-                raise
-        raise last_err if last_err else RuntimeError("LLM generate failed without exception")
