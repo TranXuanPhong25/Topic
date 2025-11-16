@@ -259,7 +259,7 @@ while True:
     retrieved_docs = base_retriever.invoke(english_query)
     print(f"Đã tìm thấy {len(retrieved_docs)} tài liệu liên quan.")
     for doc in retrieved_docs:
-        print(f"- Tiêu đề: {doc.metadata}")
+        print(f"- Tiêu đề: {doc.page_content}...")  # In một phần nội dung để nhận biết
     print("--------------------------------------")
     
     if not retrieved_docs:

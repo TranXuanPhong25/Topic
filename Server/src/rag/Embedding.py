@@ -6,35 +6,56 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 # Tải các biến môi trường từ file .env
 load_dotenv()
 
-# --- PHẦN CODE ĐƯỢC THAY ĐỔI ---
-
-# 1. Tải tất cả tài liệu từ một thư mục
+# --- 1. TẢI TẤT CẢ TÀI LIỆU TỪ THƯ MỤC ---
 data_folder = "data/"
 all_documents = []
 
-# Duyệt qua tất cả các file trong thư mục data
 for filename in os.listdir(data_folder):
     file_path = os.path.join(data_folder, filename)
 
-    # Kiểm tra phần mở rộng của file để chọn loader phù hợp
     if filename.endswith(".pdf"):
-        loader = PyPDFLoader(file_path)
         print(f"Đang tải file PDF: {filename}")
-        all_documents.extend(loader.load())
+        loader = PyPDFLoader(file_path)
+        docs = loader.load()
+
     elif filename.endswith(".txt"):
-        loader = TextLoader(file_path, encoding='utf-8') # Thêm encoding để hỗ trợ tiếng Việt
         print(f"Đang tải file TXT: {filename}")
-        all_documents.extend(loader.load())
-    # Bạn có thể thêm các loại file khác ở đây (ví dụ: .docx, .csv)
-    # elif filename.endswith(".docx"):
-    #     loader = Docx2txtLoader(file_path)
-    #     all_documents.extend(loader.load())
+        loader = TextLoader(file_path, encoding='utf-8')
+        docs = loader.load()
+
     else:
         print(f"Bỏ qua file không hỗ trợ: {filename}")
+        continue
 
-print(f"\nĐã tải thành công {len(all_documents)} trang/tài liệu từ thư mục '{data_folder}'.")
+    for doc in docs:
+        # =============== CLEAN TEXT ===============
+        clean_text = (
+            doc.page_content
+                .replace("\n", " ")     # bỏ xuống dòng
+                .replace("\t", " ")     # bỏ tab
+                .replace("\xa0", " ")
+                .replace("\x00", "")
+                .replace("\r", " ")     # bỏ ký tự lạ
+        )
 
-# 2. Chia tất cả tài liệu đã tải thành các đoạn nhỏ (chunks)
+        # Loại bỏ nhiều khoảng trắng liên tiếp
+        clean_text = " ".join(clean_text.split())
+
+        doc.page_content = clean_text
+        # ===========================================
+
+        # Metadata
+        doc.metadata["file_name"] = filename
+        doc.metadata["author"] = " Tapan K. Bhattacharyya"
+        doc.metadata["title"] = "Textbook of Aging Skin"
+        doc.metadata["category"] = "general_documents"
+        doc.metadata["processed_by"] = "RAG-v1"
+
+    all_documents.extend(docs)
+
+print(f"\nĐã tải thành công {len(all_documents)} trang/tài liệu từ '{data_folder}'.")
+
+# 2. Chia chunk
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
 docs = text_splitter.split_documents(all_documents)
 
