@@ -39,3 +39,5 @@ transformers>=4.40.0     # Hugging Face model loading
 grandalf>=0.8
 
 jsonschema>=4.25.0
+pinecone==7.3.0
+langchain_pinecone==0.2.13
