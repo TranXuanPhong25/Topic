@@ -61,18 +61,40 @@ const QuickActions = ({ onQuickMessage, setIsOpen }) => {
         ))}
       </div>
 
-      <h3 style={{ marginTop: '20px' }}>Test Symptoms</h3>
-      <div className="quick-buttons">
-        {symptomTests.map((item, index) => (
-          <button 
-            key={`symptom-${index}`} 
-            className="quick-btn quick-btn-symptom" 
-            onClick={() => handleClick(item.message)}
-          >
-            {item.text}
-          </button>
-        ))}
-      </div>
+      <h3 style={{ marginTop: '20px' }}>Test Symptoms ({symptomTests.length} tests)</h3>
+      
+      {/* Group by category */}
+      {Object.entries(
+        symptomTests.reduce((acc, item) => {
+          const category = item.category || 'other';
+          if (!acc[category]) acc[category] = [];
+          acc[category].push(item);
+          return acc;
+        }, {})
+      ).map(([category, items]) => (
+        <div key={category} style={{ marginBottom: '20px' }}>
+          <h4 style={{ 
+            fontSize: '14px', 
+            color: '#666', 
+            marginTop: '15px', 
+            marginBottom: '10px',
+            textTransform: 'capitalize'
+          }}>
+            {category.replace('-', ' ')} ({items.length})
+          </h4>
+          <div className="quick-buttons">
+            {items.map((item, index) => (
+              <button 
+                key={`symptom-${category}-${index}`} 
+                className={`quick-btn quick-btn-symptom quick-btn-${category}`}
+                onClick={() => handleClick(item.message)}
+              >
+                {item.text}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

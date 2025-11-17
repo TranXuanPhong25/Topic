@@ -326,18 +326,34 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
 
                 {/* Symptom Tests */}
                 <div className="sidebar-section">
-                  <div className="sidebar-section-title">Symptom Tests</div>
-                  <ul className="sidebar-list">
-                    {symptomTests.map((item, index) => (
-                      <li
-                        key={`symptom-${index}`}
-                        onClick={() => handleClickQuickMessage(item.message)}
-                        className="sidebar-item"
-                      >
-                        {item.text}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="sidebar-section-title">Symptom Tests ({symptomTests.length})</div>
+                  
+                  {/* Group by category */}
+                  {Object.entries(
+                    symptomTests.reduce((acc, item) => {
+                      const category = item.category || 'other';
+                      if (!acc[category]) acc[category] = [];
+                      acc[category].push(item);
+                      return acc;
+                    }, {})
+                  ).map(([category, items]) => (
+                    <div key={category} className="symptom-category">
+                      <div className="category-label">
+                        {category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' ')} ({items.length})
+                      </div>
+                      <ul className="sidebar-list">
+                        {items.map((item, index) => (
+                          <li
+                            key={`symptom-${category}-${index}`}
+                            onClick={() => handleClickQuickMessage(item.message)}
+                            className="sidebar-item"
+                          >
+                            {item.text}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Image Actions */}
