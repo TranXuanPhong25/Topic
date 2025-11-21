@@ -5,13 +5,15 @@ import WelcomeCard from './components/WelcomeCard';
 import QuickActions from './components/QuickActions';
 import ChatWidget from './components/ChatWidget';
 import Footer from './components/Footer';
+import Booking from './components/Booking';
+import FloatingBookingIcon from './components/FloatingBookingIcon';
 
 const App = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [sessionId] = useState(() => {
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   });
-  
+
   const chatWidgetRef = useRef();
 
   const handleQuickMessage = (message, imageData = null) => {
@@ -27,16 +29,17 @@ const App = () => {
         <div className="container">
           <WelcomeCard />
           <QuickActions onQuickMessage={handleQuickMessage} setIsOpen={setIsOpen} />
-          <ChatWidget 
-            onQuickMessage={handleQuickMessage} 
-            ref={chatWidgetRef} 
-            sessionId={sessionId} 
-            isOpen={isOpen} 
-            setIsOpen={setIsOpen} 
+          <ChatWidget
+            onQuickMessage={handleQuickMessage}
+            ref={chatWidgetRef}
+            sessionId={sessionId}
+            isOpen={isOpen}
+            setIsOpen={setIsOpen}
           />
         </div>
       </main>
       <Footer />
+      <FloatingBookingIcon bookingComponent={<Booking />} />
     </div>
   );
 };
