@@ -43,7 +43,8 @@ class DiagnosisCriticNode:
             combined_symptoms = json.dumps(symptoms.get("extracted_symptoms",state.get("input",""))) + json.dumps(state.get("image_analysis_result",""))
             # Generate diagnosis using Gemini
             diagnosis_critic_prompt = self.build_diagnosis_critic_prompt(diagnosis, combined_symptoms, state)
-            meditron_text = self._call_meditron(diagnosis_critic_prompt)
+            # TODO: meditron
+            meditron_text = None if True else self._call_meditron(diagnosis_critic_prompt)
             if meditron_text:
                 print("Meditron response received.")
                 result_text = meditron_text.strip()

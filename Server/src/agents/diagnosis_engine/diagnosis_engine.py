@@ -77,13 +77,13 @@ class DiagnosisEngineNode:
             # Convert analysis_input to string if it's a dict
             symptoms_str = str(analysis_input) if isinstance(analysis_input, dict) else analysis_input
             diagnosis_context = build_diagnosis_prompt(symptoms_str, image_analysis, revision_requirements=revision_requirements, detailed_review=detailed_review, goal=goal)
-            # TODO
             messages = [
                 SystemMessage(content=DIAGNOSIS_SYSTEM_PROMPT),
                 HumanMessage(content=diagnosis_context)
             ]
             response = self.gemini_model.invoke(messages)
-            meditron_text = self._call_meditron(diagnosis_context)
+            # TODO: None if True else
+            meditron_text = None if True else self._call_meditron(diagnosis_context)
             if meditron_text:
                 print("Meditron response received.")
                 result_text = meditron_text.strip()
