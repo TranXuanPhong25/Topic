@@ -29,4 +29,5 @@ dependencies = [
     "langchain==1.0.0",
     "langchain-pinecone>=0.2.13",
     "langchain-google-genai==3.0.3",
+    "flashrank>=0.2.10",
 ]
