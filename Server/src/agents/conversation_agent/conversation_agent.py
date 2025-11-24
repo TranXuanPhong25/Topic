@@ -1,8 +1,7 @@
-"""
-ConversationAgent Node: Handles normal conversations using clinic information and FAQs.
-"""
+"""ConversationAgent Node: Handles normal conversations using clinic information and FAQs."""
 from typing import TYPE_CHECKING
-from .prompts import build_conversation_prompt
+from src.configs.agent_config import SystemMessage, HumanMessage
+from .prompts import build_conversation_prompt, CONVERSATION_SYSTEM_PROMPT
 
 if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
@@ -47,8 +46,12 @@ class ConversationAgentNode:
             )
             
             # Use Gemini to generate response
-            response = self.gemini_model.generate_content(conversation_prompt)
-            conversation_output = response.text.strip()
+            messages = [
+                SystemMessage(content=CONVERSATION_SYSTEM_PROMPT),
+                HumanMessage(content=conversation_prompt)
+            ]
+            response = self.gemini_model.invoke(messages)
+            conversation_output = response.content.strip()
             
             state["conversation_output"] = conversation_output
             state["final_response"] = conversation_output

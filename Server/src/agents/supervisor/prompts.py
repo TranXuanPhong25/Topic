@@ -166,7 +166,7 @@ Current plan: [] (empty - no plan exists yet)
   "next_step": "conversation_agent",
   "reasoning": "This is a general information query about clinic operations, best handled by conversation_agent. No previous plan exists, creating simple single-step plan.",
   "plan": [
-    {"step": "conversation_agent", "description": "Answer clinic hours question", "status": "current"}
+    {"step": "conversation_agent", "description": "Answer clinic hours question", "goal": "Provide clinic operational information to answer patient's scheduling question so that they can plan their visit appropriately", "status": "current"}
   ]
 }
 ```
@@ -181,8 +181,8 @@ Current plan: [] (empty - no plan exists yet)
   "reasoning": "Patient described symptoms in natural language. No plan exists yet. Need to create plan starting with symptom_extractor to structure symptoms, then diagnosis_engine. This is simple diagnosis case.",
   "symptom_extractor_input": "I have a fever and headache for 2 days",
   "plan": [
-    {"step": "symptom_extractor", "description": "Extract and structure fever and headache symptoms", "status": "current"},
-    {"step": "diagnosis_engine", "description": "Analyze structured symptoms for diagnosis", "status": "pending"}
+    {"step": "symptom_extractor", "description": "Extract and structure fever and headache symptoms", "goal": "Extract fever and headache details from patient's description to identify key medical concerns so that diagnosis can accurately assess this 2-day illness", "status": "current"},
+    {"step": "diagnosis_engine", "description": "Analyze structured symptoms for diagnosis", "goal": "Analyze fever and headache pattern to determine probable cause so that appropriate treatment guidance can be provided", "status": "pending"}
   ]
 }
 ```
@@ -199,8 +199,8 @@ Current plan: [
   "next_step": "diagnosis_engine",
   "reasoning": "Plan exists and first step (symptom_extractor) is completed. Following existing plan: proceed to next pending step (diagnosis_engine). This is simple case, will END after diagnosis.",
   "plan": [
-    {"step": "symptom_extractor", "description": "Extract symptoms", "status": "completed"},
-    {"step": "diagnosis_engine", "description": "Analyze structured symptoms", "status": "current"}
+    {"step": "symptom_extractor", "description": "Extract symptoms", "goal": "Extract symptoms from patient's description to identify key medical concerns so that diagnosis can be accurate", "status": "completed"},
+    {"step": "diagnosis_engine", "description": "Analyze structured symptoms", "goal": "Analyze extracted symptoms to determine probable conditions so that appropriate treatment can be recommended", "status": "current"}
   ]
 }
 ```
@@ -217,8 +217,8 @@ Current plan: [
   "next_step": "END",
   "reasoning": "ALL steps in plan are completed (symptom_extractor ✅, diagnosis_engine ✅). This is simple diagnosis case with only 2 steps. No investigation or recommendations planned. END flow now.",
   "plan": [
-    {"step": "symptom_extractor", "description": "Extract symptoms", "status": "completed"},
-    {"step": "diagnosis_engine", "description": "Analyze structured symptoms", "status": "completed"}
+    {"step": "symptom_extractor", "description": "Extract symptoms", "goal": "Extract symptoms from patient's description to identify key medical concerns so that diagnosis can be accurate", "status": "completed"},
+    {"step": "diagnosis_engine", "description": "Analyze structured symptoms", "goal": "Analyze extracted symptoms to determine probable conditions so that appropriate treatment guidance can be provided", "status": "completed"}
   ]
 }
 ```
@@ -235,8 +235,8 @@ Current plan: [
   "next_step": "END",
   "reasoning": "⚠️ CRITICAL CHECK: Examining current plan - ALL steps are completed (2/2 done). Diagnosis already provided to user. No new user request detected. Must END flow immediately. DO NOT create new plan or add steps. Keep existing completed plan as-is.",
   "plan": [
-    {"step": "symptom_extractor", "description": "Extract symptoms", "status": "completed"},
-    {"step": "diagnosis_engine", "description": "Analyze structured symptoms", "status": "completed"}
+    {"step": "symptom_extractor", "description": "Extract symptoms", "goal": "Extract symptoms from patient's description to identify key medical concerns so that diagnosis can be accurate", "status": "completed"},
+    {"step": "diagnosis_engine", "description": "Analyze structured symptoms", "goal": "Analyze extracted symptoms to determine probable conditions so that appropriate treatment guidance can be provided", "status": "completed"}
   ]
 }
 ```
@@ -250,9 +250,9 @@ Current plan: [] (empty - no plan exists)
   "next_step": "image_analyzer",
   "reasoning": "Both image and symptoms provided. No plan exists yet. Creating plan: start with image_analyzer (visual analysis first), then extract text symptoms, then diagnose combining both. Simple 3-step diagnosis case.",
   "plan": [
-    {"step": "image_analyzer", "description": "Analyze rash image", "status": "current"},
-    {"step": "symptom_extractor", "description": "Extract itching and timeline symptoms", "status": "pending"},
-    {"step": "diagnosis_engine", "description": "Diagnose based on combined analysis", "status": "pending"}
+    {"step": "image_analyzer", "description": "Analyze rash image", "goal": "Analyze rash visual characteristics to identify skin condition patterns so that diagnosis can include both visual and symptom evidence", "status": "current"},
+    {"step": "symptom_extractor", "description": "Extract itching and timeline symptoms", "goal": "Extract itching sensation and 3-day timeline to complement visual analysis so that complete symptom picture is available for diagnosis", "status": "pending"},
+    {"step": "diagnosis_engine", "description": "Diagnose based on combined analysis", "goal": "Integrate image findings with itching and timeline symptoms to determine rash cause so that accurate diagnosis can be provided", "status": "pending"}
   ]
 }
 ```
@@ -271,9 +271,9 @@ Current plan: [
   "reasoning": "Following existing plan (step 1/3 done). Image_analyzer completed. Next step in plan is symptom_extractor. Extract text symptoms to combine with image findings.",
   "symptom_extractor_input": "It's itchy and appeared 3 days ago",
   "plan": [
-    {"step": "image_analyzer", "description": "Analyze rash image", "status": "completed"},
-    {"step": "symptom_extractor", "description": "Extract itching and timeline symptoms", "status": "current"},
-    {"step": "diagnosis_engine", "description": "Diagnose based on combined analysis", "status": "pending"}
+    {"step": "image_analyzer", "description": "Analyze rash image", "goal": "Analyze rash visual characteristics to identify skin condition patterns so that diagnosis can include both visual and symptom evidence", "status": "completed"},
+    {"step": "symptom_extractor", "description": "Extract itching and timeline symptoms", "goal": "Extract itching sensation and 3-day timeline to complement visual analysis so that complete symptom picture is available for diagnosis", "status": "current"},
+    {"step": "diagnosis_engine", "description": "Diagnose based on combined analysis", "goal": "Integrate image findings with itching and timeline symptoms to determine rash cause so that accurate diagnosis can be provided", "status": "pending"}
   ]
 }
 ```
@@ -287,8 +287,8 @@ Current plan: [] (empty - no plan exists)
   "next_step": "image_analyzer",
   "reasoning": "Patient provided image without additional symptoms. No plan exists. Creating 2-step plan: analyze image, then diagnose. Simple image-only case.",
   "plan": [
-    {"step": "image_analyzer", "description": "Analyze rash image", "status": "current"},
-    {"step": "diagnosis_engine", "description": "Diagnose based on image analysis", "status": "pending"}
+    {"step": "image_analyzer", "description": "Analyze rash image", "goal": "Analyze rash visual appearance to identify skin condition characteristics so that diagnosis can be based on visual evidence", "status": "current"},
+    {"step": "diagnosis_engine", "description": "Diagnose based on image analysis", "goal": "Determine probable rash condition from visual analysis so that patient understands what they're dealing with", "status": "pending"}
   ]
 }
 ```
@@ -303,8 +303,8 @@ Current plan: [] (empty - no plan exists)
   "reasoning": "Mixed intent detected: medical symptoms + FAQ. No plan exists. Prioritizing medical concern - creating plan for symptom extraction and diagnosis. Filtering input to medical content only (excluding greeting and FAQ).",
   "symptom_extractor_input": "I have fever and cough",
   "plan": [
-    {"step": "symptom_extractor", "description": "Extract fever and cough symptoms only", "status": "current"},
-    {"step": "diagnosis_engine", "description": "Diagnose based on symptoms", "status": "pending"}
+    {"step": "symptom_extractor", "description": "Extract fever and cough symptoms only", "goal": "Extract fever and cough from patient's mixed message to focus on medical concerns so that diagnosis prioritizes health issues over administrative questions", "status": "current"},
+    {"step": "diagnosis_engine", "description": "Diagnose based on symptoms", "goal": "Analyze fever and cough to determine respiratory condition so that appropriate treatment guidance can be provided", "status": "pending"}
   ]
 }
 ```
@@ -323,8 +323,8 @@ Current plan: [] (empty - new symptom disclosure)
   "reasoning": "Symptoms mentioned across multiple turns in chat history. No plan exists yet. Creating plan for symptom extraction + diagnosis. Combining history context (headache since yesterday) with new input (worsening pain, nausea) for complete picture.",
   "symptom_extractor_input": "Headache since yesterday morning. Now the pain is worse and I have nausea",
   "plan": [
-    {"step": "symptom_extractor", "description": "Extract complete symptom timeline including progression", "status": "current"},
-    {"step": "diagnosis_engine", "description": "Diagnose based on symptom progression", "status": "pending"}
+    {"step": "symptom_extractor", "description": "Extract complete symptom timeline including progression", "goal": "Extract headache progression and new nausea from conversation history to capture symptom evolution so that diagnosis can assess worsening pattern", "status": "current"},
+    {"step": "diagnosis_engine", "description": "Diagnose based on symptom progression", "goal": "Analyze worsening headache with nausea to identify concerning patterns so that urgent conditions can be ruled out or confirmed", "status": "pending"}
   ]
 }
 ```
@@ -342,8 +342,8 @@ Current plan: [] (collecting symptom details)
   "reasoning": "User progressively disclosing symptoms. No plan yet. Creating plan with consolidated symptom input from chat (fever, fatigue) + new input (dizziness). Extracting complete symptom set before diagnosis.",
   "symptom_extractor_input": "Fever, very tired, dizziness when standing up",
   "plan": [
-    {"step": "symptom_extractor", "description": "Extract all symptoms including new additions", "status": "current"},
-    {"step": "diagnosis_engine", "description": "Diagnose with complete symptom picture", "status": "pending"}
+    {"step": "symptom_extractor", "description": "Extract all symptoms including new additions", "goal": "Extract fever, fatigue, and orthostatic dizziness from progressive disclosure to build complete symptom profile so that diagnosis addresses all concerns", "status": "current"},
+    {"step": "diagnosis_engine", "description": "Diagnose with complete symptom picture", "goal": "Analyze combined symptoms to determine underlying condition so that treatment targets all reported issues comprehensively", "status": "pending"}
   ]
 }
 ```
@@ -357,7 +357,7 @@ Current plan: [] (empty - no plan exists)
   "next_step": "appointment_scheduler",
   "reasoning": "Direct appointment request. No plan exists. Creating simple single-step plan for appointment scheduling.",
   "plan": [
-    {"step": "appointment_scheduler", "description": "Schedule appointment for Tuesday", "status": "current"}
+    {"step": "appointment_scheduler", "description": "Schedule appointment for Tuesday", "goal": "Schedule appointment at requested Tuesday time to confirm patient visit so that clinic can allocate resources and patient has confirmed slot", "status": "current"}
   ]
 }
 ```
@@ -374,8 +374,8 @@ Current plan: [
   "next_step": "diagnosis_engine",
   "reasoning": "Following plan (1/2 steps done). Symptom_extractor completed and detected CRITICAL red flags (cardiac symptoms). Plan only has 2 steps for emergency - proceeding to urgent diagnosis. Skip investigation for emergency.",
   "plan": [
-    {"step": "symptom_extractor", "description": "Extract symptoms", "status": "completed"},
-    {"step": "diagnosis_engine", "description": "Urgent cardiac assessment with emergency warnings", "status": "current"}
+    {"step": "symptom_extractor", "description": "Extract symptoms", "goal": "Extract severe cardiac symptoms to identify life-threatening emergency so that urgent diagnosis can prioritize immediate intervention", "status": "completed"},
+    {"step": "diagnosis_engine", "description": "Urgent cardiac assessment with emergency warnings", "goal": "Immediately assess cardiac emergency symptoms to provide life-saving guidance so that patient seeks emergency medical help without delay", "status": "current"}
   ]
 }
 ```
@@ -392,8 +392,8 @@ Current plan: [
   "next_step": "END",
   "reasoning": "Plan shows 2/2 steps completed. However, diagnosis_engine set `information_needed` flag - needs more user input for accuracy. Must END now to wait for user's clarifying answers. Will restart with updated info.",
   "plan": [
-    {"step": "symptom_extractor", "description": "Extract symptoms", "status": "completed"},
-    {"step": "diagnosis_engine", "description": "Initial diagnosis with questions for user", "status": "completed"}
+    {"step": "symptom_extractor", "description": "Extract symptoms", "goal": "Extract available symptoms from patient's description to begin diagnostic assessment so that initial analysis can identify information gaps", "status": "completed"},
+    {"step": "diagnosis_engine", "description": "Initial diagnosis with questions for user", "goal": "Analyze partial symptom data to identify what additional information is needed so that more accurate diagnosis can be provided after clarification", "status": "completed"}
   ]
 }
 ```
@@ -410,10 +410,10 @@ Current plan: [
   "next_step": "recommender",
   "reasoning": "Current plan has 2/2 steps completed (diagnosis done). NEW user request: explicit ask for treatment advice. EXTENDING plan with recommender + synthesis to address new request. This creates complex multi-step case requiring final synthesis.",
   "plan": [
-    {"step": "symptom_extractor", "description": "Extract symptoms", "status": "completed"},
-    {"step": "diagnosis_engine", "description": "Analyze symptoms", "status": "completed"},
-    {"step": "recommender", "description": "Provide treatment recommendations as requested", "status": "current"},
-    {"step": "synthesis", "description": "Generate final report including recommendations", "status": "pending"}
+    {"step": "symptom_extractor", "description": "Extract symptoms", "goal": "Extract symptoms from initial complaint to establish medical baseline so that diagnosis and treatment can be properly contextualized", "status": "completed"},
+    {"step": "diagnosis_engine", "description": "Analyze symptoms", "goal": "Analyze symptoms to determine condition so that treatment recommendations can target the identified diagnosis", "status": "completed"},
+    {"step": "recommender", "description": "Provide treatment recommendations as requested", "goal": "Generate evidence-based treatment options for diagnosed condition so that patient understands management approaches for their specific case", "status": "current"},
+    {"step": "synthesis", "description": "Generate final report including recommendations", "goal": "Integrate diagnosis and treatment plan into comprehensive report so that patient has complete actionable guidance for managing their condition", "status": "pending"}
   ]
 }
 ```
@@ -431,10 +431,10 @@ Current plan: [
   "next_step": "synthesis",
   "reasoning": "Plan has 3/3 core steps completed. This is COMPLEX case (multiple steps: diagnosis + investigation). Must add synthesis as final step to combine all results into comprehensive report. Adding synthesis to plan and executing.",
   "plan": [
-    {"step": "symptom_extractor", "description": "Extract symptoms", "status": "completed"},
-    {"step": "diagnosis_engine", "description": "Analyze symptoms", "status": "completed"},
-    {"step": "investigation_generator", "description": "Suggest tests", "status": "completed"},
-    {"step": "synthesis", "description": "Combine diagnosis and investigation into comprehensive report", "status": "current"}
+    {"step": "symptom_extractor", "description": "Extract symptoms", "goal": "Extract patient symptoms to establish clinical picture so that diagnosis can be grounded in reported concerns", "status": "completed"},
+    {"step": "diagnosis_engine", "description": "Analyze symptoms", "goal": "Analyze symptoms to determine probable conditions so that appropriate investigations can be selected to confirm diagnosis", "status": "completed"},
+    {"step": "investigation_generator", "description": "Suggest tests", "goal": "Recommend specific diagnostic tests to rule out serious conditions so that diagnosis confidence increases and treatment can be properly targeted", "status": "completed"},
+    {"step": "synthesis", "description": "Combine diagnosis and investigation into comprehensive report", "goal": "Integrate symptoms, diagnosis, and recommended tests into unified report so that patient receives complete diagnostic roadmap with clear next steps", "status": "current"}
   ]
 }
 ```
@@ -451,10 +451,10 @@ Current plan: [
   "next_step": "recommender",
   "reasoning": "Current plan shows 2/2 steps done. NEW explicit user request for medication/treatment advice detected. EXTENDING plan: add recommender (current) + synthesis (pending). Multi-step complex case requires synthesis to combine all parts.",
   "plan": [
-    {"step": "symptom_extractor", "description": "Extract symptoms", "status": "completed"},
-    {"step": "diagnosis_engine", "description": "Analyze symptoms", "status": "completed"},
-    {"step": "recommender", "description": "Provide medication and treatment recommendations", "status": "current"},
-    {"step": "synthesis", "description": "Combine diagnosis and recommendations into final report", "status": "pending"}
+    {"step": "symptom_extractor", "description": "Extract symptoms", "goal": "Extract reported symptoms to establish medical context so that diagnosis can be properly anchored in patient complaints", "status": "completed"},
+    {"step": "diagnosis_engine", "description": "Analyze symptoms", "goal": "Analyze symptoms to identify the underlying condition so that medication recommendations can specifically target the diagnosed problem", "status": "completed"},
+    {"step": "recommender", "description": "Provide medication and treatment recommendations", "goal": "Generate specific medication and treatment options for diagnosed condition so that patient knows exactly what actions to take for relief", "status": "current"},
+    {"step": "synthesis", "description": "Combine diagnosis and recommendations into final report", "goal": "Merge diagnosis with treatment plan into comprehensive guide so that patient has complete understanding of their condition and management strategy", "status": "pending"}
   ]
 }
 ```
@@ -508,10 +508,11 @@ SUPERVISOR_RESPONSE_SCHEMA = {
             "type": "array",
             "items": {
                 "type": "object",
-                "required": ["step", "description", "status"],
+                "required": ["step", "description", "goal", "status"],
                 "properties": {
                     "step": {"type": "string"},
                     "description": {"type": "string"},
+                    "goal": {"type": "string", "description": "Why this step is needed - format: '<action> to <purpose> so that <benefit>'"},
                     "status": {
                         "type": "string",
                         "enum": ["pending", "current", "completed", "skipped"]

@@ -179,17 +179,61 @@ Symptoms: "Fever 101°F for 2 days, sore throat, body aches"
 - Keep `final_response` conversational and patient-friendly
 - If information is insufficient, prioritize asking for more details over making uncertain diagnosis
 """
+COMPACT_DIAGNOSIS_PROMPT = """
+**ROLE:** Expert Medical Diagnostic AI.
+**TASK:** Analyze patient symptoms to provide preliminary differential diagnoses, risk assessment, and clinical reasoning.
+**SAFETY:** NEVER provide definitive diagnosis. ALWAYS recommend professional consultation. For EMERGENCIES (chest pain, stroke signs, severe bleeding), advise immediate care.
 
+**DIAGNOSTIC PROTOCOL:**
+1. **Analyze:** Identify primary/secondary symptoms, duration, severity, demographics.
+2. **Diagnose:** Rank 3-5 likely conditions with reasoning.
+3. **Risk:** Assess severity:
+   - *LOW:* Self-limiting.
+   - *MODERATE:* Needs evaluation soon.
+   - *HIGH:* Urgent (24h).
+   - *EMERGENCY:* Immediate.
+4. **Gap Analysis:** If confidence < 0.6 or critical info is missing, prioritize `information_needed` and ask clarifying questions in `final_response`.
+
+**OUTPUT FORMAT:** Respond ONLY with valid JSON.
+```json
+{
+  "primary_diagnosis": { "condition": "string", "probability": 0.0-1.0, "reasoning": "string" },
+  "differential_diagnoses": [ { "condition": "string", "probability": 0.0-1.0, "reasoning": "string" } ],
+  "risk_assessment": {
+    "severity": "LOW|MODERATE|HIGH|EMERGENCY",
+    "red_flags": ["string"],
+    "complications": ["string"]
+  },
+  "confidence": 0.0-1.0,
+  "confidence_factors": { "increases_confidence": ["string"], "decreases_confidence": ["string"] },
+  "information_needed": {
+    "missing_critical_info": ["string"],
+    "clarifying_questions": ["string"],
+    "additional_symptoms_to_check": ["string"],
+    "relevant_medical_history": ["string"]
+  },
+  "final_response": "Friendly message. If info needed, politely ask 2-3 key questions. If sufficient, provide summary.",
+  "recommendation": "Actionable next steps"
+}
+CONSTRAINTS:
+
+Be conservative with risk (err on side of caution).
+
+Use information_needed to bridge gaps before guessing.
+
+Maintain a pedagogical, direct, and no-fluff tone in reasoning."""
 def build_diagnosis_prompt(
     symptoms: str, 
     image_analysis: str = "",
     revision_requirements :dict[str, Any]=None,
-    detailed_review: dict[str, Any] = None
+    detailed_review: dict[str, Any] = None,
+    goal: str = ""
 ) -> str:
     if revision_requirements is None:
         revision_requirements = {}
 
     img_section = f"\n## IMAGE ANALYSIS FINDINGS\n{image_analysis}\n" if image_analysis else ""
+    goal_section = f"\n## YOUR SPECIFIC GOAL FOR THIS STEP\n{goal}\n" if goal else ""
     print("start revision confirm")
     # Build revision section if feedback exists
     revision_section = ""
@@ -263,6 +307,7 @@ def build_diagnosis_prompt(
 ## PATIENT SYMPTOMS
 {symptoms}
 {img_section}
+{goal_section}
 {revision_section}
 
 Perform diagnostic analysis and respond with JSON only:

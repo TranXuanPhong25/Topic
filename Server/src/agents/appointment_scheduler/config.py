@@ -8,7 +8,6 @@ from langchain.chat_models import init_chat_model
 from src.agents.appointment_scheduler.tools import book_appointment, get_available_time_slots, \
     check_appointment_availability
 from src.configs.agent_config import GOOGLE_API_KEY, GEMINI_MODEL_NAME
-import google.generativeai as genai
 import os
 from typing import Any
 

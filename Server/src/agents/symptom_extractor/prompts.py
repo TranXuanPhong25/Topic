@@ -236,21 +236,23 @@ You must return a structured JSON with the following schema:
 Remember: Your role is to extract and structure, NOT to diagnose. Be thorough, systematic, and always prioritize patient safety by identifying urgent symptoms."""
 
 
-def build_symptom_extraction_prompt(user_input: str, conversation_history: str = "") -> str:
+def build_symptom_extraction_prompt(user_input: str, conversation_history: str = "", goal: str = "") -> str:
     """
     Build the complete prompt for symptom extraction
     
     Args:
         user_input: Current user message
         conversation_history: Previous conversation context
+        goal: Purpose of this extraction step from the plan
     
     Returns:
         Complete prompt string
     """
     history_section = f"Conversation History:\n{conversation_history}\n\n" if conversation_history else ""
+    goal_section = f"\n## YOUR SPECIFIC GOAL FOR THIS STEP:\n{goal}\n" if goal else ""
     
     prompt = f"""Extract symptoms from the following patient conversation.
-
+{goal_section}
 {history_section}
 Current Patient Message:
 {user_input}

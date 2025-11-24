@@ -1,11 +1,10 @@
-"""
-DiagnosisEngine Node: Runs core diagnostic logic with risk assessment.
-"""
+"""DiagnosisEngine Node: Runs core diagnostic logic with risk assessment."""
 import json
 import re
 import requests
 from typing import Dict, Any, TYPE_CHECKING
-from .prompts import build_diagnosis_prompt
+from src.configs.agent_config import SystemMessage, HumanMessage
+from .prompts import build_diagnosis_prompt, DIAGNOSIS_SYSTEM_PROMPT, COMPACT_DIAGNOSIS_PROMPT
 
 if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
@@ -27,6 +26,30 @@ class DiagnosisEngineNode:
         """
         self.gemini_model = gemini_model
     
+    def _get_current_goal(self, state: "GraphState") -> str:
+        """
+        Extract the goal for the current step from the plan
+        
+        Args:
+            state: Current graph state
+            
+        Returns:
+            Goal string or empty string if not found
+        """
+        plan = state.get("plan", [])
+        current_step_index = state.get("current_step", 0)
+        
+        if not plan or current_step_index >= len(plan):
+            return ""
+        
+        current_plan_step = plan[current_step_index]
+        goal = current_plan_step.get("goal", "")
+        
+        if goal:
+            print(f"🎯 Current Goal: {goal}")
+        
+        return goal
+    
     def __call__(self, state: "GraphState") -> "GraphState":
         """
         Execute the diagnosis engine logic.
@@ -44,22 +67,33 @@ class DiagnosisEngineNode:
         if analysis_input == {}:
             analysis_input = state.get("input", {})
         try:
+            # Get goal from current plan step
+            goal = self._get_current_goal(state)
+            
             # Build diagnosis prompt using the system prompt from prompts.py
             image_analysis = json.dumps(state.get("image_analysis_result", ""))
             revision_requirements = state.get("revision_requirements", None)
             detailed_review = state.get("detailed_review", None)
             # Convert analysis_input to string if it's a dict
             symptoms_str = str(analysis_input) if isinstance(analysis_input, dict) else analysis_input
-            diagnosis_context = build_diagnosis_prompt(symptoms_str, image_analysis, revision_requirements=revision_requirements, detailed_review=detailed_review)
+            diagnosis_context = build_diagnosis_prompt(symptoms_str, image_analysis, revision_requirements=revision_requirements, detailed_review=detailed_review, goal=goal)
             # TODO
-            response = self.gemini_model.generate_content(diagnosis_context)
+            messages = [
+                SystemMessage(content=DIAGNOSIS_SYSTEM_PROMPT),
+                HumanMessage(content=diagnosis_context)
+            ]
+            response = self.gemini_model.invoke(messages)
             meditron_text = self._call_meditron(diagnosis_context)
             if meditron_text:
                 print("Meditron response received.")
                 result_text = meditron_text.strip()
             else:
-                response = self.gemini_model.generate_content(diagnosis_context)
-                result_text = response.text.strip()
+                messages = [
+                    SystemMessage(content=DIAGNOSIS_SYSTEM_PROMPT),
+                    HumanMessage(content=diagnosis_context)
+                ]
+                response = self.gemini_model.invoke(messages)
+                result_text = response.content.strip()
 
             result_text = re.sub(r'```json\s*|\s*```', '', result_text)
             diagnosis = json.loads(result_text)
@@ -173,7 +207,7 @@ class DiagnosisEngineNode:
     def _call_meditron(self, prompt: str, url: str = "http://127.0.0.1:8080/completion") -> str:
         try:
             payload = {
-                "prompt": prompt,
+                "prompt": COMPACT_DIAGNOSIS_PROMPT + prompt,
                 "n_predict": 256,
                 "temperature": 0.2,
                 "top_k": 40,

@@ -1,12 +1,12 @@
-"""
-Symptom Extractor Agent Node
+"""Symptom Extractor Agent Node
 Extracts and structures symptoms from patient conversations
 """
 import json
 from typing import Dict, Any, List, Optional
 from src.models.state import GraphState
+from src.configs.agent_config import SystemMessage, HumanMessage
 from .config import get_symptom_extractor_model
-from .prompts import build_symptom_extraction_prompt
+from .prompts import build_symptom_extraction_prompt, SYMPTOM_EXTRACTOR_SYSTEM_PROMPT
 
 
 class SymptomExtractorNode:
@@ -30,6 +30,30 @@ class SymptomExtractorNode:
         """
         self.llm = llm_model or get_symptom_extractor_model()
         print("✅ SymptomExtractorNode initialized")
+    
+    def _get_current_goal(self, state: GraphState) -> str:
+        """
+        Extract the goal for the current step from the plan
+        
+        Args:
+            state: Current graph state
+            
+        Returns:
+            Goal string or empty string if not found
+        """
+        plan = state.get("plan", [])
+        current_step_index = state.get("current_step", 0)
+        
+        if not plan or current_step_index >= len(plan):
+            return ""
+        
+        current_plan_step = plan[current_step_index]
+        goal = current_plan_step.get("goal", "")
+        
+        if goal:
+            print(f"🎯 Current Goal: {goal}")
+        
+        return goal
     
     def __call__(self, state: GraphState) -> GraphState:
         """
@@ -63,13 +87,20 @@ class SymptomExtractorNode:
             return state
         
         try:
-            # Build extraction prompt
-            prompt = build_symptom_extraction_prompt(user_input, conversation_history)
+            # Get goal from current plan step
+            goal = self._get_current_goal(state)
+            
+            # Build extraction prompt with goal
+            prompt = build_symptom_extraction_prompt(user_input, conversation_history, goal)
             
             # Generate symptom extraction
-            response = self.llm.generate_content(prompt)
+            messages = [
+                SystemMessage(content=SYMPTOM_EXTRACTOR_SYSTEM_PROMPT),
+                HumanMessage(content=prompt)
+            ]
+            response = self.llm.invoke(messages)
             # Parse JSON response
-            symptom_data = self._parse_response(response.text)
+            symptom_data = self._parse_response(response.content)
             
             # # Log extracted information
             self._log_extraction_results(symptom_data)
@@ -201,8 +232,12 @@ class SymptomExtractorNode:
         """
         try:
             prompt = build_symptom_extraction_prompt(text)
-            response = self.llm.generate_content(prompt)
-            return self._parse_response(response.text)
+            messages = [
+                SystemMessage(content=SYMPTOM_EXTRACTOR_SYSTEM_PROMPT),
+                HumanMessage(content=prompt)
+            ]
+            response = self.llm.invoke(messages)
+            return self._parse_response(response.content)
         except Exception as e:
             return {
                 "error": str(e),

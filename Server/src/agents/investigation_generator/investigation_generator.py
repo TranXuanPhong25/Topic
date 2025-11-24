@@ -1,9 +1,10 @@
-"""
-InvestigationGenerator Node: Generates potential follow-up tests and investigations.
-"""
+"""InvestigationGenerator Node: Generates potential follow-up tests and investigations."""
 import json
 import re
 from typing import TYPE_CHECKING
+
+from src.configs.agent_config import SystemMessage, HumanMessage
+from .prompts import INVESTIGATION_SYSTEM_PROMPT
 
 if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
@@ -33,13 +34,16 @@ Trả về JSON array:
 
 Chỉ trả về JSON:"""
 
-            response = self.gemini_model.generate_content(investigation_prompt)
-            result_text = response.text.strip()
+            messages = [
+                SystemMessage(content=INVESTIGATION_SYSTEM_PROMPT),
+                HumanMessage(content=investigation_prompt)
+            ]
+            response = self.gemini_model.invoke(messages)
+            result_text = response.content.strip()
             result_text = re.sub(r'```json\s*|\s*```', '', result_text)
             investigations = json.loads(result_text)
             
             state["investigation_plan"] = investigations
-            state["messages"].append(f"✅ InvestigationGenerator: {len(investigations)} tests suggested")
             state["current_step"] += 1
             print(f"Generated {len(investigations)} investigation items:")
             for test_name in investigations:
@@ -47,6 +51,5 @@ Chỉ trả về JSON:"""
         except Exception as e:
             print(f"InvestigationGenerator error: {str(e)}")
             state["investigation_plan"] = []
-            state["messages"].append(f"❌ InvestigationGenerator: Error - {str(e)}")
         
         return state

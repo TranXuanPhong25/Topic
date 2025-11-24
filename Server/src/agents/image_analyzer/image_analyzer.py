@@ -47,7 +47,6 @@ class ImageAnalyzerNode:
                 analysis_result = self.vision_analyzer.analyze_image(image, symptoms)
 
             state["image_analysis_result"] = analysis_result
-            state["messages"].append("✅ ImageAnalyzer: Image analyzed successfully")
             state["current_step"] += 1
 
             print(f"Image analysis confidence: {analysis_result.get('confidence', 0)}")
@@ -60,6 +59,5 @@ class ImageAnalyzerNode:
                 "confidence": 0.0,
                 "error": str(e)
             }
-            state["messages"].append(f"❌ ImageAnalyzer: Error - {str(e)}")
 
         return state

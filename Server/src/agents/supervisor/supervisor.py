@@ -1,11 +1,13 @@
 import json
 import re
+from typing import Any
 from src.models.state import GraphState
+from src.configs.agent_config import SystemMessage, HumanMessage
 from src.agents.supervisor.prompts import (
-    SUPERVISOR_RESPONSE_SCHEMA
+    SUPERVISOR_RESPONSE_SCHEMA,
+    SUPERVISOR_SYSTEM_PROMPT
 )
 from jsonschema import validate, ValidationError
-from google.generativeai.generative_models import GenerativeModel
 
 class SupervisorNode:
     """
@@ -13,7 +15,7 @@ class SupervisorNode:
     Uses optimized prompts and proper error handling.
     """
     
-    def __init__(self, model: GenerativeModel ):
+    def __init__(self, model: Any):
         self.model = model
     
     def __call__(self, state: "GraphState") -> "GraphState":
@@ -31,8 +33,12 @@ class SupervisorNode:
                     
             supervisor_prompt = self.build_supervisor_prompt(state)
 
-            response = self.model.generate_content(supervisor_prompt)
-            response_text = response.text.strip()
+            messages = [
+                SystemMessage(content=SUPERVISOR_SYSTEM_PROMPT),
+                HumanMessage(content=supervisor_prompt)
+            ]
+            response = self.model.invoke(messages)
+            response_text = response.content.strip()
             
             # Extract JSON from response (handle markdown code blocks)
             json_match = re.search(r'```(?:json)?\s*(\{.*?})\s*```', response_text, re.DOTALL)
