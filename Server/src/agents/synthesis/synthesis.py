@@ -5,8 +5,9 @@ Synthesizes all diagnostic results into comprehensive final report
 import json
 from typing import Dict, Any
 from src.models.state import GraphState
+from src.configs.agent_config import SystemMessage, HumanMessage
 from .config import get_synthesis_model
-from .prompts import build_synthesis_prompt
+from .prompts import build_synthesis_prompt, SYNTHESIS_SYSTEM_PROMPT
 
 
 class SynthesisNode:
@@ -48,8 +49,12 @@ class SynthesisNode:
             # Build synthesis prompt
             synthesis_prompt = build_synthesis_prompt(state_data)
             # Generate synthesis
-            response = self.llm.generate_content(synthesis_prompt)
-            final_report = response.text.strip()
+            messages = [
+                SystemMessage(content=SYNTHESIS_SYSTEM_PROMPT),
+                HumanMessage(content=synthesis_prompt)
+            ]
+            response = self.llm.invoke(messages)
+            final_report = response.content.strip()
             
             # Log report sections
             self._log_synthesis_results(final_report)
@@ -161,7 +166,11 @@ class SynthesisNode:
     def synthesize_directly(self, state_data: Dict[str, Any]) -> str:
         try:
             prompt = build_synthesis_prompt(state_data)
-            response = self.llm.generate_content(prompt)
-            return response.text.strip()
+            messages = [
+                SystemMessage(content=SYNTHESIS_SYSTEM_PROMPT),
+                HumanMessage(content=prompt)
+            ]
+            response = self.llm.invoke(messages)
+            return response.content.strip()
         except Exception as e:
             return f"Error in synthesis: {str(e)}"

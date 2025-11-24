@@ -1,7 +1,5 @@
-from langgraph.constants import END
-from langgraph.graph import StateGraph
+from langgraph.graph import StateGraph, END
 from typing import Dict, Any, Optional
-import google.generativeai as genai
 
 from src.agents.diagnosis_critic import new_diagnosis_crictic_node
 from src.models.state import GraphState
@@ -31,18 +29,9 @@ class MedicalDiagnosticGraph:
         self.google_api_key = get_api_key()
 
         # Initialize components
-        self.vision_analyzer = GeminiVisionAnalyzer(self.google_api_key)
         self.knowledge_base = FAQKnowledgeBase()
 
-        # Initialize Gemini for text reasoning using centralized config
-        genai.configure(api_key=self.google_api_key) # type: ignore
-        self.gemini_model = genai.GenerativeModel( # pyright: ignore[reportPrivateImportUsage]
-            model_name=DIAGNOSIS_CONFIG["model_name"],
-            generation_config=DIAGNOSIS_CONFIG["generation_config"],
-            safety_settings=DIAGNOSIS_CONFIG["safety_settings"]
-        )
-
-        # Initialize node instances
+        # Initialize node instances (using singleton configs)
         # self.router_node = RouterNode(self.gemini_model)
         self.conversation_agent_node = new_conversation_agent_node(self.knowledge_base)
         self.appointment_scheduler_node = new_appointment_scheduler_node()
@@ -143,6 +132,7 @@ class MedicalDiagnosticGraph:
         initial_state: GraphState = {
             "input": user_input,
             "chat_history": chat_history or [],
+            "symptom_extractor_input" : "",
             "image": image,
             "symptoms": {},
             "image_analysis_result": {},

@@ -69,7 +69,8 @@ Always respond in this format:
 """
 def build_recommender_prompt(
     diagnosis: dict,
-    risk_assessment: dict
+    risk_assessment: dict,
+    goal: str = ""
 ) -> str:
     """
     Build recommender prompt with diagnosis context
@@ -78,10 +79,13 @@ def build_recommender_prompt(
         diagnosis: Diagnosis results from diagnosis engine
         symptoms: Original patient symptoms
         risk_assessment: Risk assessment from diagnosis
+        goal: Purpose of this recommendation step from the plan
 
     Returns:
         Complete prompt for recommender
     """
+    goal_section = f"\n## YOUR SPECIFIC GOAL FOR THIS STEP\n{goal}\n" if goal else ""
+    
     context = f"""
 ## DIAGNOSIS RESULTS
 Primary Diagnosis: {diagnosis.get('primary_diagnosis', {})}
@@ -90,7 +94,7 @@ Differential Diagnosis: {diagnosis.get('differential_diagnosis',"Unknown")}
 ## RISK ASSESSMENT
 Severity: {risk_assessment.get('severity', 'MODERATE')}
 Red Flags: {', '.join(risk_assessment.get('red_flags', [])) or 'None identified'}
-
+{goal_section}
 Based on this diagnosis and risk level, provide comprehensive recommendations for patient to follow:
 """
     

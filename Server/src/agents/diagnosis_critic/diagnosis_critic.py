@@ -1,6 +1,4 @@
-"""
-DiagnosisEngine Node: Runs core diagnostic logic with risk assessment.
-"""
+"""DiagnosisEngine Node: Runs core diagnostic logic with risk assessment."""
 import json
 import re
 import requests
@@ -8,6 +6,9 @@ from typing import Dict, Any, TYPE_CHECKING
 from collections import Counter
 
 from src.models.state import GraphState
+from src.configs.agent_config import SystemMessage, HumanMessage
+from .prompts import DIAGNOSIS_CRITIC_SYSTEM_PROMPT, DIAGNOSIS_CRITIC_PROMPT
+
 class DiagnosisCriticNode:
 
     
@@ -47,10 +48,14 @@ class DiagnosisCriticNode:
                 print("Meditron response received.")
                 result_text = meditron_text.strip()
             else:
-                response = self.model.generate_content(diagnosis_critic_prompt)
-                result_text = response.text.strip()
+                messages = [
+                    SystemMessage(content=DIAGNOSIS_CRITIC_SYSTEM_PROMPT),
+                    HumanMessage(content=diagnosis_critic_prompt)
+                ]
+                response = self.model.invoke(messages)
+                result_text = response.content.strip()
 
-            result_text = response.text.strip()
+            result_text = result_text
             result_text = re.sub(r'```json\s*|\s*```', '', result_text)
             critic_result = json.loads(result_text)
             revision_requirements = critic_result["revision_requirements"]
@@ -147,17 +152,13 @@ class DiagnosisCriticNode:
                 "detailed_review": json.dumps({"fast_review": True, "issues": issues}),
                 "next_step": "diagnosis_engine",
                 "revision_count": state.get("revision_count", 0) + 1,
-                "messages": state.get("messages", []) + [
-                    f"⚡ DiagnosisCritic: Fast review found {len(issues)} issue(s), requesting revision"
-                ]
+
             }
         else:
             # Passes basic checks - proceed
             return {
                 "next_step": "supervisor",
-                "messages": state.get("messages", []) + [
-                    "⚡ DiagnosisCritic: Fast review passed - diagnosis approved"
-                ]
+
             }
     def build_diagnosis_critic_prompt(self, diagnosis: Dict[str, Any], original_symptoms: str, state_context: GraphState) -> str:
         """
@@ -181,11 +182,10 @@ class DiagnosisCriticNode:
                 symptoms_data = {"raw": original_symptoms}
         else:
             symptoms_data = original_symptoms
-        
-        context = """Please critically review the following diagnosis assessment and determine if it's ready to proceed or requires revision.
-
-    ## ORIGINAL PATIENT SYMPTOMS
-    """
+            
+        # Start building context
+        context = "Please critically review the following diagnosis assessment and determine if it is ready to proceed or requires revision.\n\n"
+        context += "## ORIGINAL PATIENT SYMPTOMS\n"
         
         # Add structured symptoms if available
         if isinstance(symptoms_data, dict):
@@ -202,7 +202,6 @@ class DiagnosisCriticNode:
                         context += f"Duration: {symptom.get('duration', 'N/A')}\n"
                     else:
                         context += f"- {symptom}\n"
-            
             red_flags_in_symptoms = symptoms_data.get("red_flags", [])
             if red_flags_in_symptoms:
                 context += f"\n⚠️ **Red Flags Detected by Symptom Extractor**: {len(red_flags_in_symptoms)}\n"
@@ -215,32 +214,28 @@ class DiagnosisCriticNode:
         # Add diagnosis to review
         context += "\n## DIAGNOSIS TO REVIEW\n"
         context += f"```json\n{json.dumps(diagnosis, indent=2, ensure_ascii=False)}\n```\n"
-        
+
         # Add any additional context
         if state_context:
             if state_context.get("image_analysis_result"):
                 context += "\n## IMAGE ANALYSIS AVAILABLE\n"
                 context += "Note: Image analysis was also performed and used in diagnosis.\n"
- 
+
         # Final instruction
-        context += """
-    ---
-
-    Using your Chain-of-Thought reasoning process:
-    1. Review each quality dimension systematically
-    2. Identify strengths and concerns
-    3. Make routing decision (supervisor or diagnosis_engine)
-    4. Provide specific, actionable feedback if revision is needed
-
-    Output your complete review in the JSON format specified in your system prompt.
-    """
+        context += "\n---\n\n"
+        context += "Using your Chain-of-Thought reasoning process:\n"
+        context += "1. Review each quality dimension systematically\n"
+        context += "2. Identify strengths and concerns\n"
+        context += "3. Make routing decision (supervisor or diagnosis_engine)\n"
+        context += "4. Provide specific, actionable feedback if revision is needed\n\n"
+        context += "Output your complete review in the JSON format specified in your system prompt.\n"
         
         return context
 
     def _call_meditron(self, prompt: str, url: str = "http://127.0.0.1:8080/completion") -> str:
         try:
             payload = {
-                "prompt": prompt,
+                "prompt": DIAGNOSIS_CRITIC_PROMPT + prompt,
                 "n_predict": 256,
                 "temperature": 0.2,
                 "top_k": 40,

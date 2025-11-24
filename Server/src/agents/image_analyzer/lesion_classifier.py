@@ -57,6 +57,7 @@ class LesionClassifier:
 
     def classify_image(self, image: Image.Image, top_k: int = 5) -> Dict[str, Any]:
         inputs = self.processor(
+            
             text=self.candidate_texts,
             images=image,
             return_tensors="pt",

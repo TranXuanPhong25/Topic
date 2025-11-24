@@ -9,6 +9,7 @@ import base64
 from typing import Dict, Any, Optional
 from PIL import Image
 import io
+from src.configs.agent_config import HumanMessage
 
 class GeminiVisionAnalyzer:
     """
@@ -109,6 +110,21 @@ class GeminiVisionAnalyzer:
             print(f"Error decoding image: {str(e)}")
             raise ValueError(f"Invalid image data: {str(e)}")
     
+    def _pil_image_to_base64(self, image: Image.Image) -> str:
+        """
+        Convert PIL Image to base64 string for LangChain vision input.
+        
+        Args:
+            image: PIL Image object
+        
+        Returns:
+            Base64 encoded image string
+        """
+        buffered = io.BytesIO()
+        image.save(buffered, format="JPEG")
+        img_str = base64.b64encode(buffered.getvalue()).decode()
+        return img_str
+    
     def _generate_visual_description(self, image: Image.Image) -> str:
         """
         Generate a detailed description of the medical image using Gemini Vision.
@@ -139,8 +155,15 @@ class GeminiVisionAnalyzer:
         
         try:
             # Generate content with image
-            response = self.model.generate_content([prompt, image])
-            description = response.text.strip()
+            image_base64 = self._pil_image_to_base64(image)
+            message = HumanMessage(
+                content=[
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
+                ]
+            )
+            response = self.model.invoke([message])
+            description = response.content.strip()
             
             print(f"Generated visual description: {description[:100]}...")
             return description
@@ -185,8 +208,15 @@ class GeminiVisionAnalyzer:
                         **Trả lời:**"""
                                     
             try:
-                response = self.model.generate_content([prompt, image])
-                answer = response.text.strip()
+                image_base64 = self._pil_image_to_base64(image)
+                message = HumanMessage(
+                    content=[
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
+                    ]
+                )
+                response = self.model.invoke([message])
+                answer = response.content.strip()
                 qa_results[question] = answer
                 print(f"Q: {question[:50]}... A: {answer[:50]}...")
                 
@@ -308,8 +338,15 @@ class GeminiVisionAnalyzer:
 
                         **Phân tích:**"""
                                     
-            response = self.model.generate_content([prompt, image])
-            analysis = response.text.strip()
+            image_base64 = self._pil_image_to_base64(image)
+            message = HumanMessage(
+                content=[
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
+                ]
+            )
+            response = self.model.invoke([message])
+            analysis = response.content.strip()
             
             return {
                 "analysis": analysis,
@@ -361,8 +398,15 @@ class GeminiVisionAnalyzer:
 
                         **Đánh giá vết thương:**"""
             
-            response = self.model.generate_content([prompt, image])
-            analysis = response.text.strip()
+            image_base64 = self._pil_image_to_base64(image)
+            message = HumanMessage(
+                content=[
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
+                ]
+            )
+            response = self.model.invoke([message])
+            analysis = response.content.strip()
             
             return {
                 "analysis": analysis,
