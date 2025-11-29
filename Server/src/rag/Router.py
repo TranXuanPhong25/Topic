@@ -116,32 +116,3 @@ def create_router(llm: ChatGoogleGenerativeAI) -> QueryRouter:
     """
     return QueryRouter(llm)
 
-
-# Example usage and testing
-if __name__ == "__main__":
-    from dotenv import load_dotenv
-    import os
-    
-    load_dotenv()
-    
-    # Initialize LLM
-    llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.1)
-    
-    # Create router
-    router = create_router(llm)
-    
-    # Test queries
-    test_queries = [
-        "Psoriasis là gì?",
-        "Tại sao da tôi bị ngứa và nổi mẩn đỏ khi trời nóng?",
-        "Atopic dermatitis và cách điều trị như thế nào?",
-        "Herpes zoster",
-        "Làm thế nào để phân biệt giữa eczema và psoriasis?"
-    ]
-    
-    print("=== TESTING QUERY ROUTER ===\n")
-    for query in test_queries:
-        query_type, explanation = router.route_with_explanation(query)
-        print(f"Câu hỏi: {query}")
-        print(f"→ Loại: {query_type.value}")
-        print(f"→ {explanation}\n")

@@ -1,25 +1,36 @@
-import os
+"""Helpers for inspecting document metadata."""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Dict, Iterable, List
+
 from langchain_community.document_loaders import PyPDFLoader
 
-folder = "data/"
+from .Load import DEFAULT_DATA_DIR
 
-for file in os.listdir(folder):
-    if file.lower().endswith(".pdf"):
-        path = os.path.join(folder, file)
-        print(f"\n===== {file} =====")
-        try:
-            loader = PyPDFLoader(path)
-            docs = loader.load()       # trả về list Document
 
-            if len(docs) > 0:
-                meta = docs[0].metadata  # metadata nằm ở từng Document
-                if meta:
-                    for k, v in meta.items():
-                        print(f"{k}: {v}")
-                else:
-                    print("Không có metadata.")
-            else:
-                print("Không load được PDF.")
+def extract_pdf_metadata(pdf_path: str | Path) -> Dict[str, str]:
+    """
+    Return the metadata of the first page of the provided PDF.
+    """
+    path = Path(pdf_path)
+    loader = PyPDFLoader(str(path))
+    docs = loader.load()
+    if not docs:
+        raise ValueError(f"Unable to load PDF: {path}")
+    return docs[0].metadata or {}
 
-        except Exception as e:
-            print("Không đọc được:", e)
+
+def iter_metadata(
+    data_dir: str | Path = DEFAULT_DATA_DIR,
+) -> Iterable[tuple[str, Dict[str, str]]]:
+    """
+    Yield (filename, metadata) pairs for the PDFs inside the data directory.
+    """
+    data_path = Path(data_dir)
+    for pdf_path in sorted(data_path.glob("*.pdf")):
+        yield pdf_path.name, extract_pdf_metadata(pdf_path)
+
+
+__all__ = ["extract_pdf_metadata", "iter_metadata"]

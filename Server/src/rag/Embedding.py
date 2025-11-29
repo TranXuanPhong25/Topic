@@ -1,96 +1,101 @@
-import os
-from dotenv import load_dotenv
-from langchain_community.document_loaders import PyPDFLoader, TextLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+"""Embedding helpers for building the RAG vector store."""
 
-# Tải các biến môi trường từ file .env
+from __future__ import annotations
+
+import logging
+import os
+from typing import Iterable, Sequence
+
+from dotenv import load_dotenv
+from langchain_core.documents import Document
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_pinecone import PineconeVectorStore
+from pinecone import Pinecone, ServerlessSpec
+
 load_dotenv()
 
-# --- 1. TẢI TẤT CẢ TÀI LIỆU TỪ THƯ MỤC ---
-data_folder = "data/"
-all_documents = []
+LOGGER = logging.getLogger(__name__)
+DEFAULT_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "rag-on-pinecone")
+DEFAULT_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL", "models/text-embedding-004")
+DEFAULT_PINECONE_REGION = os.getenv("PINECONE_REGION", "us-east-1")
+DEFAULT_PINECONE_CLOUD = os.getenv("PINECONE_CLOUD", "aws")
 
-for filename in os.listdir(data_folder):
-    file_path = os.path.join(data_folder, filename)
 
-    if filename.endswith(".pdf"):
-        print(f"Đang tải file PDF: {filename}")
-        loader = PyPDFLoader(file_path)
-        docs = loader.load()
+def create_embedding_model(model_name: str = DEFAULT_EMBEDDING_MODEL) -> GoogleGenerativeAIEmbeddings:
+    """Instantiate the Google embedding model used across the RAG stack."""
+    LOGGER.info("Using embedding model: %s", model_name)
+    return GoogleGenerativeAIEmbeddings(model=model_name)
 
-    elif filename.endswith(".txt"):
-        print(f"Đang tải file TXT: {filename}")
-        loader = TextLoader(file_path, encoding='utf-8')
-        docs = loader.load()
 
-    else:
-        print(f"Bỏ qua file không hỗ trợ: {filename}")
-        continue
+def ensure_pinecone_index(
+    *,
+    index_name: str = DEFAULT_INDEX_NAME,
+    dimension: int = 768,
+    api_key: str | None = None,
+    cloud: str = DEFAULT_PINECONE_CLOUD,
+    region: str = DEFAULT_PINECONE_REGION,
+) -> Pinecone:
+    """
+    Ensure the Pinecone index exists and return the client instance.
+    """
+    api_key = api_key or os.environ.get("PINECONE_API_KEY")
+    if not api_key:
+        raise RuntimeError("Missing PINECONE_API_KEY environment variable.")
 
-    for doc in docs:
-        # =============== CLEAN TEXT ===============
-        clean_text = (
-            doc.page_content
-                .replace("\n", " ")     # bỏ xuống dòng
-                .replace("\t", " ")     # bỏ tab
-                .replace("\xa0", " ")
-                .replace("\x00", "")
-                .replace("\r", " ")     # bỏ ký tự lạ
+    pc = Pinecone(api_key=api_key)
+    existing_indexes = pc.list_indexes().names()
+    if index_name not in existing_indexes:
+        LOGGER.info("Creating Pinecone index '%s' (dimension=%s)", index_name, dimension)
+        pc.create_index(
+            name=index_name,
+            dimension=dimension,
+            metric="cosine",
+            spec=ServerlessSpec(cloud=cloud, region=region),
         )
+    else:
+        LOGGER.debug("Pinecone index '%s' already exists", index_name)
+    return pc
 
-        # Loại bỏ nhiều khoảng trắng liên tiếp
-        clean_text = " ".join(clean_text.split())
 
-        doc.page_content = clean_text
-        # ===========================================
+def index_documents(
+    documents: Sequence[Document],
+    *,
+    index_name: str = DEFAULT_INDEX_NAME,
+    embedding_model: GoogleGenerativeAIEmbeddings | None = None,
+    dimension: int = 768,
+) -> PineconeVectorStore:
+    """
+    Create (if needed) and populate the Pinecone index with provided documents.
+    """
+    if not documents:
+        raise ValueError("No documents provided for indexing.")
 
-        # Metadata
-        doc.metadata["file_name"] = filename
-        doc.metadata["author"] = " Tapan K. Bhattacharyya"
-        doc.metadata["title"] = "Textbook of Aging Skin"
-        doc.metadata["category"] = "general_documents"
-        doc.metadata["processed_by"] = "RAG-v1"
+    embeddings = embedding_model or create_embedding_model()
+    ensure_pinecone_index(index_name=index_name, dimension=dimension)
+    LOGGER.info("Uploading %s documents to Pinecone index '%s'", len(documents), index_name)
+    return PineconeVectorStore.from_documents(documents, embeddings, index_name=index_name)
 
-    all_documents.extend(docs)
 
-print(f"\nĐã tải thành công {len(all_documents)} trang/tài liệu từ '{data_folder}'.")
+def connect_vector_store(
+    *,
+    index_name: str = DEFAULT_INDEX_NAME,
+    embedding_model: GoogleGenerativeAIEmbeddings | None = None,
+) -> PineconeVectorStore:
+    """
+    Connect to an existing PineconeVectorStore instance.
+    """
+    embeddings = embedding_model or create_embedding_model()
+    LOGGER.info("Connecting to Pinecone index '%s'", index_name)
+    return PineconeVectorStore.from_existing_index(index_name, embeddings)
 
-# 2. Chia chunk
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
-docs = text_splitter.split_documents(all_documents)
 
-print(f"Tổng số đoạn văn bản được tạo ra: {len(docs)}")
-if docs:
-    print(f"Nội dung đoạn đầu tiên: {docs[0].page_content}")
-
-# --- KẾT THÚC PHẦN THAY ĐỔI ---
-from pinecone import Pinecone, ServerlessSpec
-from langchain_pinecone import PineconeVectorStore
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-
-# Khởi tạo embedding model của Google
-embeddings = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
-
-# Khởi tạo Pinecone
-pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
-
-# Đặt tên cho index của bạn
-index_name = "rag-on-pinecone"
-
-# Kiểm tra xem index đã tồn tại chưa, nếu chưa thì tạo mới
-if index_name not in pc.list_indexes().names():
-    pc.create_index(
-        name=index_name,
-        dimension=768,  # Kích thước của embedding model "models/text-embedding-004"
-        metric="cosine", # Sử dụng độ đo cosine để tính sự tương đồng
-        spec=ServerlessSpec(cloud="aws", region="us-east-1")
-    )
-    print(f"Đã tạo index '{index_name}'")
-else:
-    print(f"Index '{index_name}' đã tồn tại.")
-
-# Tải các đoạn văn bản và embedding của chúng lên Pinecone
-# Đây là bước lập chỉ mục (indexing)
-docsearch = PineconeVectorStore.from_documents(docs, embeddings, index_name=index_name)
-
-print("Đã tải thành công các embeddings lên Pinecone.")
+__all__ = [
+    "DEFAULT_EMBEDDING_MODEL",
+    "DEFAULT_INDEX_NAME",
+    "DEFAULT_PINECONE_CLOUD",
+    "DEFAULT_PINECONE_REGION",
+    "connect_vector_store",
+    "create_embedding_model",
+    "ensure_pinecone_index",
+    "index_documents",
+]
