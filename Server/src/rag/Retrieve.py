@@ -51,11 +51,11 @@ NHIỆM VỤ: Phân tích các "NGUỒN THÔNG TIN" dưới đây để trả l�
 
 QUY TẮC BẮT BUỘC:
 1.  **DỰA VÀO NGỮ CẢNH:** Chỉ sử dụng thông tin trong "NGUỒN THÔNG TIN". Không suy diễn hay dùng kiến thức ngoài.
-2.  **TRÍCH DẪN THÔNG MINH:** Chỉ trích dẫn `[Nguồn X]` ở cuối đoạn trực tiếp rút ra thông tin từ nguồn đó. Tránh lặp lại không cần thiết. các trích dẫn được đánh bắt đầu từ 1.
+2.  **TRÍCH DẪN THÔNG MINH:** Viết mỗi đoạn như một khối thông tin hoàn chỉnh và chỉ đặt tối đa **một** cụm trích dẫn ở cuối đoạn đó. Nếu đoạn dựa trên nhiều nguồn, gộp chúng trong một cặp ngoặc duy nhất theo dạng `[Nguồn 1; Nguồn 3]`. Tuyệt đối không lặp lại cùng nguồn nhiều lần trong cùng đoạn. Các chỉ số nguồn bắt đầu từ 1.
 3.  **DANH SÁCH THAM KHẢO CHÍNH XÁC:**
     *   Ở cuối câu trả lời, tạo một danh sách có tiêu đề "**Tài liệu tham khảo:**".
     *   Trong danh sách này, **CHỈ LIỆT KÊ NHỮNG NGUỒN ĐÃ ĐƯỢC TRÍCH DẪN** trong câu trả lời.
-    *   Mỗi nguồn phải gồm Tác giả, Tiêu đề, và Số trang cụ thể.
+    *   Mỗi dòng chỉ trình bày **một nguồn với đúng một số trang** (nếu cần nhiều trang của cùng nguồn thì lặp lại dòng đó cho từng trang). Mỗi dòng phải gồm Tác giả, Tiêu đề, và Số trang cụ thể.
 
 BÂY GIỜ, HÃY BẮT ĐẦU VỚI CÁC THÔNG TIN DƯỚI ĐÂY:
 - **Câu hỏi gốc bằng tiếng Việt:** {original_question}
