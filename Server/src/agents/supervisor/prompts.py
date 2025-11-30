@@ -23,7 +23,7 @@ SUPERVISOR_SYSTEM_PROMPT = """You are a Medical Diagnostic Supervisor coordinati
 
 ## DECISION LOGIC (Be autonomous)
 
-**Check plan first**: If ALL steps "completed" AND no new request → END immediately. Don't replan needlessly.
+**Check plan first**: If ALL steps "completed" → END immediately. Don't replan needlessly.
 
 **Medical flow intuition**:
 - Symptoms text → symptom_extractor → diagnosis_engine → END (simple case)

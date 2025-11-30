@@ -1,8 +1,40 @@
 import json
+from datetime import datetime
 
 from langchain_core.tools import tool
 
 from src.handlers.appointment import AppointmentHandler
+
+
+@tool
+def get_current_datetime() -> str:
+    """
+    Get the current date and time to help calculate relative dates.
+    Use this when the user mentions relative dates like 'tomorrow', 'next week', 'in 3 days', etc.
+    
+    Returns:
+        JSON string with current date, time, day of week, and examples for common relative dates
+    """
+    now = datetime.now()
+    
+    # Calculate common relative dates
+    from datetime import timedelta
+    tomorrow = now + timedelta(days=1)
+    next_week = now + timedelta(days=7)
+    in_3_days = now + timedelta(days=3)
+    
+    return json.dumps({
+        "current_date": now.strftime("%Y-%m-%d"),
+        "current_time": now.strftime("%H:%M"),
+        "current_datetime": now.strftime("%Y-%m-%d %H:%M:%S"),
+        "day_of_week": now.strftime("%A"),
+        "examples": {
+            "tomorrow": tomorrow.strftime("%Y-%m-%d"),
+            "in_3_days": in_3_days.strftime("%Y-%m-%d"),
+            "next_week": next_week.strftime("%Y-%m-%d")
+        },
+        "message": f"Today is {now.strftime('%A, %B %d, %Y')} at {now.strftime('%H:%M')}"
+    })
 
 
 @tool

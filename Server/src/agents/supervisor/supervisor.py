@@ -47,7 +47,7 @@ class SupervisorNode:
                     if role == "user":
                         messages.append(HumanMessage(content=text))
                     else:  # model/assistant
-                        messages.append(AIMessage(content=text))  # or AIMessage if available
+                        messages.append(AIMessage(content=text))
             
             # Add current prompt
             messages.append(HumanMessage(content=supervisor_prompt))
@@ -141,7 +141,16 @@ class SupervisorNode:
         context_parts = []
         if chat_history_formatted:
             context_parts.append(f"**Previous Conversation**:\n{chat_history_formatted}")
-        context_parts.append(f"**Current User Input**: {user_input}")
+            # If we have chat history AND a plan that's started, check if input is new
+            if current_plan and current_step > 0:
+                # Input has already been processed - don't show as "new" request
+                context_parts.append(f"**Original Request** (already processed): {user_input}")
+            else:
+                # First time or new conversation
+                context_parts.append(f"**Current User Input**: {user_input}")
+        else:
+            # No chat history - this is the first/only input
+            context_parts.append(f"**Current User Input**: {user_input}")
         # print(f"context_parts: {context_parts}  ")
 
         if symptoms:
@@ -156,7 +165,7 @@ class SupervisorNode:
 
         # Format current plan
         if current_plan:
-            plan_str = f"**Current Plan** (current at step {current_step}):\n"
+            plan_str = f"**Current Plan** (current at step {current_step-1}):\n"
             for i, step in enumerate(current_plan, 0):
                 status = step.get("status", "not_started")
                 plan_str += f"  {i}. {step.get('step', 'unknown')} - {step.get('description', '')} [{status}]\n"
@@ -176,10 +185,12 @@ class SupervisorNode:
     ## YOUR TASK
     Analyze the current situation and decide the next step. Think step-by-step:
     1. **UNDERSTAND CONTEXT**: Review "Previous Conversation" (User/Assistant messages) to understand history
-    2. **ANALYZE CURRENT INPUT**: What is the user asking NOW in "Current User Input"?
+    2. **CHECK REQUEST TYPE**: 
+       - If you see "**Original Request** (already processed)": This is NOT a new request, plan is handling it
+       - If you see "**Current User Input**": This is a new/first request
     3. **CHECK PLAN STATUS**: Are ALL steps in the current plan marked as "completed"?
-       - If YES and no new user request: Route to END immediately (DO NOT create a new plan)
-       - If YES but user has new request: Create new plan for new request
+       - If YES and request shows "already processed": Route to END immediately (DO NOT create a new plan)
+       - If YES and you see new "Current User Input": Create new plan for new request
        - If NO: Continue with next not_started step
     4. What is the patient trying to achieve?
     5. What information do we already have?
@@ -188,10 +199,10 @@ class SupervisorNode:
     
     ## ⚠️ CRITICAL RULE: DO NOT REPLAN IF PLAN IS COMPLETE
     - If current plan exists and ALL steps have status="completed"
-    - AND there is no new user request or issue to address
+    - AND you see "**Original Request** (already processed)" (NOT "Current User Input")
     - Then you MUST set next_step="END" and keep the existing completed plan
-    - DO NOT create a new plan just because you're being called again
-    - Only create a new plan if user explicitly asks for something new
+    - DO NOT create a new plan - the work is done!
+    - Only create a new plan if you see fresh "**Current User Input**" (without "already processed")
     
     ## SPECIAL NOTE FOR SYMPTOM EXTRACTION
     When routing to symptom_extractor, you can optionally include `symptom_extractor_input` in your response.
@@ -209,16 +220,5 @@ class SupervisorNode:
     3. Focus on new info: Chat has previous symptoms, Input adds new ones
        → symptom_extractor_input: "Previous: [old symptoms]. New: [new symptoms]"
     """
-    # 4. Which agent is best suited for this step?
-    #
-    # Respond with ONLY valid JSON (no markdown, no comments):
-    # {{
-    #   "next_step": "<agent_name or END>",
-    #   "reasoning": "<your step-by-step thinking process>",
-    #   "plan": [
-    #     {{"step": "agent_name", "description": "what this agent will do", "status": "current|not_started|completed|skipped"}}
-    #   ]
-    # }}
-
         return prompt
 

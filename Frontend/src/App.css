@@ -654,6 +654,29 @@ body {
   overflow-wrap: break-word;
 }
 
+/* Message Image Styling */
+.message-image {
+  margin-bottom: 8px;
+}
+
+.message-image img {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.message-image img:hover {
+  transform: scale(1.05);
+}
+
+.user-message .message-image img {
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
 .bot-message .message-content {
   background: var(--bot-message-bg);
   padding: 0.75rem 1rem;

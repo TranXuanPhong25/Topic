@@ -1,11 +1,10 @@
 from langchain.agents import create_agent
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import HumanMessage
 
 from .prompts import APPOINTMENT_SCHEDULER_SYSTEM_PROMPT
-from .tools import check_appointment_availability, book_appointment, get_available_time_slots
+from .tools import check_appointment_availability, book_appointment, get_available_time_slots, get_current_datetime
 from ..medical_diagnostic_graph import GraphState
-from src.configs.agent_config import  GEMINI_MODEL_NAME
+from src.configs.agent_config import HumanMessage, AIMessage, SystemMessage, BaseMessage
 
 class AppointmentSchedulerNode:
     """
@@ -19,6 +18,7 @@ class AppointmentSchedulerNode:
             model=model,
             system_prompt=APPOINTMENT_SCHEDULER_SYSTEM_PROMPT,
             tools=[
+                get_current_datetime,
                 check_appointment_availability,
                 book_appointment,
                 get_available_time_slots
@@ -90,8 +90,24 @@ class AppointmentSchedulerNode:
         user_input = state.get("input", "")
         
         try:
-            # Prepare messages for the React Agent
-            messages = [HumanMessage(user_input)]
+            # Build messages with chat history for full context
+            messages = []
+            
+            # Add chat history as message pairs if available
+            chat_history_raw = state.get("chat_history", [])
+            if chat_history_raw:
+                for msg in chat_history_raw:
+                    role = msg.get("role")
+                    text_parts = [part.get("text", "") for part in msg.get("parts", [])]
+                    text = " ".join(text_parts)
+                    
+                    if role == "user":
+                        messages.append(HumanMessage(content=text))
+                    else:  # model/assistant
+                        messages.append(AIMessage(content=text))
+            
+            # Add current user input
+            messages.append(HumanMessage(user_input))
 
             # Run the React Agent
             print("🤖 React Agent: Analyzing request and selecting tools...")

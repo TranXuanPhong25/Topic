@@ -1,8 +1,7 @@
 """ConversationAgent Node: Handles normal conversations using clinic information and FAQs."""
 from typing import TYPE_CHECKING
-from src.configs.agent_config import SystemMessage, HumanMessage
 from .prompts import build_conversation_prompt, CONVERSATION_SYSTEM_PROMPT
-
+from src.configs.agent_config import HumanMessage, AIMessage, SystemMessage, BaseMessage
 if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
 
@@ -103,11 +102,27 @@ class ConversationAgentNode:
                 user_context=context_data.get("user_context", "")
             )
             
+            # Build messages with chat history for full context
+            messages : list[BaseMessage] = [SystemMessage(content=CONVERSATION_SYSTEM_PROMPT)]
+            
+            # Add chat history as message pairs if available
+            chat_history_raw = state.get("chat_history", [])
+            if chat_history_raw:
+                from src.configs.agent_config import AIMessage
+                for msg in chat_history_raw:
+                    role = msg.get("role")
+                    text_parts = [part.get("text", "") for part in msg.get("parts", [])]
+                    text = " ".join(text_parts)
+                    
+                    if role == "user":
+                        messages.append(HumanMessage(content=text))
+                    else:  # model/assistant
+                        messages.append(AIMessage(content=text))
+            
+            # Add current prompt
+            messages.append(HumanMessage(content=conversation_prompt))
+            
             # Use Gemini to generate response
-            messages = [
-                SystemMessage(content=CONVERSATION_SYSTEM_PROMPT),
-                HumanMessage(content=conversation_prompt)
-            ]
             response = self.gemini_model.invoke(messages)
             conversation_output = response.content.strip()
             
