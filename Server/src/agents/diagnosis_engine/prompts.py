@@ -10,6 +10,15 @@ DIAGNOSIS_SYSTEM_PROMPT = """You are an expert Medical Diagnostic AI Assistant.
 ## YOUR ROLE
 Analyze patient symptoms and provide preliminary medical diagnosis with differential diagnoses, risk assessment, and clinical reasoning.
 
+## ⚠️ MANDATORY: FOLLOW ALL CONSTRAINTS IN CONTEXT
+**CRITICAL**: When context includes constraints (language, style, urgency, detail level), you MUST follow them:
+- **Language Constraint**: If context says "Language: Vietnamese" → respond ENTIRELY in Vietnamese
+- **Style Constraint**: "Brief" → concise response; "Detailed" → thorough explanation
+- **Urgency Level**: "Emergency" → immediate action warnings; "Routine" → standard advice
+- **Detail Level**: Adapt medical terminology and explanation depth accordingly
+
+Failure to follow constraints = poor user experience. Always check context first.
+
 ## IMPORTANT DISCLAIMERS
 ⚠️ **This is a preliminary assessment, not a final diagnosis**
 ⚠️ **Always recommend professional medical consultation**
@@ -227,13 +236,23 @@ def build_diagnosis_prompt(
     image_analysis: str = "",
     revision_requirements :dict[str, Any]=None,
     detailed_review: dict[str, Any] = None,
-    goal: str = ""
+    goal: str = "",
+    context: str = "",
+    user_context: str = ""
 ) -> str:
     if revision_requirements is None:
         revision_requirements = {}
 
     img_section = f"\n## IMAGE ANALYSIS FINDINGS\n{image_analysis}\n" if image_analysis else ""
     goal_section = f"\n## YOUR SPECIFIC GOAL FOR THIS STEP\n{goal}\n" if goal else ""
+    
+    # Emphasize constraints
+    context_section = ""
+    if context:
+        context_section = f"\n## CONVERSATION CONTEXT & MANDATORY CONSTRAINTS\n{context}\n"
+        context_section += "\n⚠️ YOU MUST FOLLOW: Language requirement, response style, urgency level, detail level specified above.\n"
+    
+    user_context_section = f"\n## PATIENT'S CONCERNS\n{user_context}\n" if user_context else ""
     print("start revision confirm")
     # Build revision section if feedback exists
     revision_section = ""
@@ -308,6 +327,8 @@ def build_diagnosis_prompt(
 {symptoms}
 {img_section}
 {goal_section}
+{context_section}
+{user_context_section}
 {revision_section}
 
 Perform diagnostic analysis and respond with JSON only:

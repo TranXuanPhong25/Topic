@@ -50,6 +50,33 @@ class DiagnosisEngineNode:
         
         return goal
     
+    def _get_current_context(self, state: "GraphState") -> Dict[str, str]:
+        """
+        Extract context and user_context for the current step from the plan
+        
+        Args:
+            state: Current graph state
+            
+        Returns:
+            Dict with 'context' and 'user_context' keys (empty strings if not found)
+        """
+        plan = state.get("plan", [])
+        current_step_index = state.get("current_step", 0)
+        
+        if not plan or current_step_index >= len(plan):
+            return {"context": "", "user_context": ""}
+        
+        current_plan_step = plan[current_step_index]
+        context = current_plan_step.get("context", "")
+        user_context = current_plan_step.get("user_context", "")
+        
+        if context:
+            print(f"📝 Context: {context[:100]}...")
+        if user_context:
+            print(f"👤 User Context: {user_context[:100]}...")
+        
+        return {"context": context, "user_context": user_context}
+    
     def __call__(self, state: "GraphState") -> "GraphState":
         """
         Execute the diagnosis engine logic.
@@ -67,8 +94,9 @@ class DiagnosisEngineNode:
         if analysis_input == {}:
             analysis_input = state.get("input", {})
         try:
-            # Get goal from current plan step
+            # Get goal and context from current plan step
             goal = self._get_current_goal(state)
+            context_data = self._get_current_context(state)
             
             # Build diagnosis prompt using the system prompt from prompts.py
             image_analysis = json.dumps(state.get("image_analysis_result", ""))
@@ -76,7 +104,15 @@ class DiagnosisEngineNode:
             detailed_review = state.get("detailed_review", None)
             # Convert analysis_input to string if it's a dict
             symptoms_str = str(analysis_input) if isinstance(analysis_input, dict) else analysis_input
-            diagnosis_context = build_diagnosis_prompt(symptoms_str, image_analysis, revision_requirements=revision_requirements, detailed_review=detailed_review, goal=goal)
+            diagnosis_context = build_diagnosis_prompt(
+                symptoms_str, 
+                image_analysis, 
+                revision_requirements=revision_requirements, 
+                detailed_review=detailed_review, 
+                goal=goal,
+                context=context_data.get("context", ""),
+                user_context=context_data.get("user_context", "")
+            )
             messages = [
                 SystemMessage(content=DIAGNOSIS_SYSTEM_PROMPT),
                 HumanMessage(content=diagnosis_context)
