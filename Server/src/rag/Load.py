@@ -48,6 +48,8 @@ def load_documents(
 
         loaded_docs = loader.load()
         for doc in loaded_docs:
+            doc.metadata["title"] = "Ferri's Fast Facts in Dermatology"
+            doc.metadata["author"] = "Fred F. Ferri"
             doc.metadata.setdefault("source", str(path))
             doc.metadata.setdefault("file_name", path.name)
         documents.extend(loaded_docs)

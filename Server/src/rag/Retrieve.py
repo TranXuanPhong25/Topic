@@ -50,7 +50,7 @@ def _default_final_prompt() -> ChatPromptTemplate:
 NHIỆM VỤ: Phân tích các "NGUỒN THÔNG TIN" dưới đây để trả lời "Câu hỏi gốc bằng tiếng Việt" của người dùng. Câu trả lời của bạn phải chính xác, súc tích và hoàn toàn dựa trên bằng chứng được cung cấp.
 
 QUY TẮC BẮT BUỘC:
-1.  **DỰA VÀO NGỮ CẢNH:** Chỉ sử dụng thông tin trong "NGUỒN THÔNG TIN". Không suy diễn hay dùng kiến thức ngoài.
+1.  **DỰA VÀO NGỮ CẢNH:** Chỉ sử dụng thông tin trong "NGUỒN THÔNG TIN". Không suy diễn hay dùng kiến thức ngoài. Nếu không tìm thấy nội dung phù hợp trong nguồn, hãy trả lời rõ ràng rằng không có dữ liệu và KHÔNG tạo thêm thông tin hay trích dẫn giả.
 2.  **TRÍCH DẪN THÔNG MINH:** Viết mỗi đoạn như một khối thông tin hoàn chỉnh và chỉ đặt tối đa **một** cụm trích dẫn ở cuối đoạn đó. Nếu đoạn dựa trên nhiều nguồn, gộp chúng trong một cặp ngoặc duy nhất theo dạng `[Nguồn 1; Nguồn 3]`. Tuyệt đối không lặp lại cùng nguồn nhiều lần trong cùng đoạn. Các chỉ số nguồn bắt đầu từ 1.
 3.  **DANH SÁCH THAM KHẢO CHÍNH XÁC:**
     *   Ở cuối câu trả lời, tạo một danh sách có tiêu đề "**Tài liệu tham khảo:**".
