@@ -15,6 +15,8 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
   const [isTyping, setIsTyping] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  // Chat history in Gemini API format
+  const [chatHistory, setChatHistory] = useState([]);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   const [sidebarWidth, setSidebarWidth] = useState(280);
@@ -112,6 +114,16 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
       time: getCurrentTime()
     };
     setMessages(prev => [...prev, newMessage]);
+    
+    // Update chat history in Gemini format
+    const role = sender === 'user' ? 'user' : 'model';
+    setChatHistory(prev => [
+      ...prev,
+      {
+        role: role,
+        parts: [{ text: content }]
+      }
+    ]);
   };
 
   const setTypingIndicator = (show) => {
@@ -127,7 +139,8 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
         },
         body: JSON.stringify({
           message: message,
-          session_id: sessionId
+          session_id: sessionId,
+          chat_history: chatHistory.length > 0 ? chatHistory : null
         })
       });
 
@@ -153,7 +166,8 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
         body: JSON.stringify({
           message: message || 'Vui lòng phân tích ảnh này',
           image: imageData,
-          session_id: sessionId
+          session_id: sessionId,
+          chat_history: chatHistory.length > 0 ? chatHistory : null
         })
       });
       if (!response.ok) {

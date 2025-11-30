@@ -1,8 +1,8 @@
 import json
 import re
-from typing import Any
+from typing import Any, List
 from src.models.state import GraphState
-from src.configs.agent_config import SystemMessage, HumanMessage
+from src.configs.agent_config import SystemMessage, HumanMessage, AIMessage, BaseMessage
 from src.agents.supervisor.prompts import (
     SUPERVISOR_RESPONSE_SCHEMA,
     SUPERVISOR_SYSTEM_PROMPT
@@ -32,11 +32,25 @@ class SupervisorNode:
                     return state
                     
             supervisor_prompt = self.build_supervisor_prompt(state)
-
-            messages = [
-                SystemMessage(content=SUPERVISOR_SYSTEM_PROMPT),
-                HumanMessage(content=supervisor_prompt)
-            ]
+            
+            # Build messages with chat history for full context
+            messages :List[BaseMessage]= [SystemMessage(content=SUPERVISOR_SYSTEM_PROMPT)]
+            
+            # Add chat history as message pairs if available
+            chat_history_raw = state.get("chat_history", [])
+            if chat_history_raw:
+                for msg in chat_history_raw:
+                    role = msg.get("role")
+                    text_parts = [part.get("text", "") for part in msg.get("parts", [])]
+                    text = " ".join(text_parts)
+                    
+                    if role == "user":
+                        messages.append(HumanMessage(content=text))
+                    else:  # model/assistant
+                        messages.append(AIMessage(content=text))  # or AIMessage if available
+            
+            # Add current prompt
+            messages.append(HumanMessage(content=supervisor_prompt))
             response = self.model.invoke(messages)
             response_text = response.content.strip()
             
@@ -79,12 +93,10 @@ class SupervisorNode:
             
             # Add to messages for tracking
    
-            print(f"✅ Decision: {next_step}")
             print(f"💭 Reasoning: {reasoning}")
-            print(f"📝 Updated plan: {len(updated_plan)} steps")
             print("******************************************** CURRENT PLAN ********************************************")
             for i, step in enumerate(updated_plan, 1):
-                print(f"  {i}. {step.get('step', 'unknown')} - {step.get('description', '')} [{step.get('status', 'pending')}]")
+                print(f"  {i}. {step.get('step', 'unknown')} - {step.get('description', '')} [{step.get('status', 'not_started')}]")
             print("*******************************************************************************************************")
             
         except json.JSONDecodeError as e:
@@ -105,15 +117,31 @@ class SupervisorNode:
         Returns:
             Complete prompt string ready for LLM
         """
-        chat_history = state.get("chat_history", "")
+        chat_history_raw = state.get("chat_history", [])
         user_input = state.get("input", "")
         current_plan = state.get("plan", [])
         symptoms = state.get("symptoms", "")
         has_image = bool(state.get("image"))
         diagnosis = state.get("diagnosis", {})
         current_step = state.get("current_step", 0)
+        
+        # Format chat history into readable message list
+        chat_history_formatted = ""
+        if chat_history_raw:
+            messages = []
+            for msg in chat_history_raw:
+                role = "User" if msg.get("role") == "user" else "Assistant"
+                # Extract text from parts
+                text_parts = [part.get("text", "") for part in msg.get("parts", [])]
+                text = " ".join(text_parts)
+                messages.append(f"{role}: {text}")
+            chat_history_formatted = "\n".join(messages)
+        
         # Build context summary
-        context_parts = [f"**Chat history**: {chat_history}", f"**User Input**: {user_input}"]
+        context_parts = []
+        if chat_history_formatted:
+            context_parts.append(f"**Previous Conversation**:\n{chat_history_formatted}")
+        context_parts.append(f"**Current User Input**: {user_input}")
         # print(f"context_parts: {context_parts}  ")
 
         if symptoms:
@@ -130,7 +158,7 @@ class SupervisorNode:
         if current_plan:
             plan_str = f"**Current Plan** (current at step {current_step}):\n"
             for i, step in enumerate(current_plan, 0):
-                status = step.get("status", "pending")
+                status = step.get("status", "not_started")
                 plan_str += f"  {i}. {step.get('step', 'unknown')} - {step.get('description', '')} [{status}]\n"
         else:
             plan_str = "**Current Plan**: None (you must create one)"
@@ -147,14 +175,16 @@ class SupervisorNode:
 
     ## YOUR TASK
     Analyze the current situation and decide the next step. Think step-by-step:
-    1. **CHECK PLAN STATUS FIRST**: Are ALL steps in the current plan marked as "completed"?
+    1. **UNDERSTAND CONTEXT**: Review "Previous Conversation" (User/Assistant messages) to understand history
+    2. **ANALYZE CURRENT INPUT**: What is the user asking NOW in "Current User Input"?
+    3. **CHECK PLAN STATUS**: Are ALL steps in the current plan marked as "completed"?
        - If YES and no new user request: Route to END immediately (DO NOT create a new plan)
        - If YES but user has new request: Create new plan for new request
-       - If NO: Continue with next pending step
-    2. What is the patient trying to achieve?
-    3. What information do we already have?
-    4. What is the next logical step in the workflow?
-    5. If routing to symptom_extractor: Should I specify custom `symptom_extractor_input` to extract specific parts?
+       - If NO: Continue with next not_started step
+    4. What is the patient trying to achieve?
+    5. What information do we already have?
+    6. What is the next logical step in the workflow?
+    7. If routing to symptom_extractor: Should I specify custom `symptom_extractor_input` to extract specific parts?
     
     ## ⚠️ CRITICAL RULE: DO NOT REPLAN IF PLAN IS COMPLETE
     - If current plan exists and ALL steps have status="completed"
@@ -167,9 +197,10 @@ class SupervisorNode:
     When routing to symptom_extractor, you can optionally include `symptom_extractor_input` in your response.
     - If not specified: symptom_extractor will use full user input + chat history
     - If specified: symptom_extractor will ONLY analyze the text you provide
-    - **IMPORTANT**: You can combine relevant parts from BOTH current input AND chat_history
+    - **IMPORTANT**: You can combine relevant parts from BOTH "Previous Conversation" AND "Current User Input"
     - Use this to filter out non-symptom parts (e.g., greetings, appointments, FAQs)
     - Use this to consolidate symptoms mentioned across multiple conversation turns
+    - Example: User said "I have fever" earlier, now says "and cough too" → combine to "fever and cough"
     
     Examples:
     1. Filter non-medical: Input "Hello! I have fever. Can you check your hours?" → symptom_extractor_input: "I have fever"
@@ -185,7 +216,7 @@ class SupervisorNode:
     #   "next_step": "<agent_name or END>",
     #   "reasoning": "<your step-by-step thinking process>",
     #   "plan": [
-    #     {{"step": "agent_name", "description": "what this agent will do", "status": "current|pending|completed|skipped"}}
+    #     {{"step": "agent_name", "description": "what this agent will do", "status": "current|not_started|completed|skipped"}}
     #   ]
     # }}
 
