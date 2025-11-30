@@ -50,7 +50,7 @@ Always respond in this format:
 ---
 
 ### SEVERITY GUIDE
-- **EMERGENCY** → Call 911 or go to ER immediately.  
+- **EMERGENCY** → Call 115 or go to ER immediately.  
 - **HIGH** → See doctor within 24h; minimal self-care.  
 - **MODERATE** → Visit Doctor in few days; focus on rest, hydration, and monitoring.  
 - **LOW** → Home care and observation sufficient.

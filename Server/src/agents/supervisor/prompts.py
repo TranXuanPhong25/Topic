@@ -225,7 +225,7 @@ Current state: After symptom extraction detected red flags
   "plan": [
     {"step": "symptom_extractor", "description": "Extract symptoms", "status": "completed"},
     {"step": "diagnosis_engine", "description": "Urgent cardiac assessment", "status": "current"},
-    {"step": "recommender", "description": "Emergency recommendations - call 911", "status": "pending"}
+    {"step": "recommender", "description": "Emergency recommendations - call 115", "status": "pending"}
   ]
 }
 ```

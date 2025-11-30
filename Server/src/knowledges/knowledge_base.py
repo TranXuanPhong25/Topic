@@ -147,12 +147,12 @@ class FAQKnowledgeBase:
             "emergency": [
                 {
                     "question": "Is this an emergency?",
-                    "answer": "For life-threatening emergencies (chest pain, difficulty breathing, severe bleeding, etc.), call 911 or go to the nearest emergency room immediately. For urgent but non-emergency care, we offer same-day appointments.",
-                    "keywords": ["emergency", "urgent", "911", "er", "immediate"],
+                    "answer": "For life-threatening emergencies (chest pain, difficulty breathing, severe bleeding, etc.), call 115 or go to the nearest emergency room immediately. For urgent but non-emergency care, we offer same-day appointments.",
+                    "keywords": ["emergency", "urgent", "115", "er", "immediate"],
                 },
                 {
                     "question": "What should I do after hours?",
-                    "answer": "For urgent medical concerns after hours, call our main number (555) 123-4567 - you'll reach our answering service who can connect you with the on-call provider. For emergencies, call 911.",
+                    "answer": "For urgent medical concerns after hours, call our main number (555) 123-4567 - you'll reach our answering service who can connect you with the on-call provider. For emergencies, call 115.",
                     "keywords": ["after hours", "night", "weekend", "closed", "on-call"],
                 },
             ],

@@ -1,5 +1,6 @@
 from . import chat_router
 from src.agents.medical_diagnostic_graph import MedicalDiagnosticGraph
+from src.middleware.guardrails import apply_guardrails, refusal_message
 import uuid
 from datetime import datetime
 from fastapi import HTTPException
@@ -57,8 +58,23 @@ async def ma_chat(request: ChatRequest):
                 "timestamp": datetime.now().isoformat()
             }
 
-        # Run multi-agent diagnostic pipeline (single shared instance)
-        result = diagnostic_graph.analyze(user_input=request.message)
+        # Guardrails: sanitize & possibly short-circuit
+        safe, action, sanitized, meta = apply_guardrails(request.message)
+        if not safe:
+            session_id = request.session_id or str(uuid.uuid4())
+            return {
+                "session_id": session_id,
+                "response": refusal_message(action, text=request.message),
+                "analysis": None,
+                "diagnosis": None,
+                "risk_assessment": None,
+                "investigation_plan": None,
+                "recommendation": None,
+                "timestamp": datetime.now().isoformat()
+            }
+
+        # Run multi-agent diagnostic pipeline (single shared instance) with sanitized input
+        result = diagnostic_graph.analyze(user_input=sanitized, metadata={"guardrails": meta})
     
         return {
             "session_id": session_id,
@@ -100,7 +116,20 @@ def ma_chat_with_image(request: ImageChatRequest):
         
         session_id = request.session_id or str(uuid.uuid4())
 
-        result = diagnostic_graph.analyze(request.message, request.image)
+        safe, action, sanitized, meta = apply_guardrails(request.message)
+        if not safe:
+            session_id = request.session_id or str(uuid.uuid4())
+            return {
+                "session_id": session_id,
+                "response": refusal_message(action, text=request.message),
+                "analysis": None,
+                "diagnosis": None,
+                "risk_assessment": None,
+                "investigation_plan": None,
+                "recommendation": None,
+                "timestamp": datetime.now().isoformat()
+            }
+        result = diagnostic_graph.analyze(sanitized, request.image, metadata={"guardrails": meta})
         
         return {
             "session_id": session_id,

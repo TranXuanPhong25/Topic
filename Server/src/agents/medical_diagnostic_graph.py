@@ -1,6 +1,6 @@
 from langgraph.constants import END
 from langgraph.graph import StateGraph
-from typing import  Dict, Any, Optional
+from typing import  Dict, Any, Optional, List
 import google.generativeai as genai
 from src.models.state import GraphState
 from src.configs.agent_config import (
@@ -22,6 +22,7 @@ from src.agents.investigation_generator import InvestigationGeneratorNode, new_i
 from src.agents.document_retriever import DocumentRetrieverNode, new_document_retriever_node
 from src.agents.recommender import RecommenderNode, new_recommender_node
 from src.agents.synthesis import SynthesisNode, new_synthesis_node
+from src.middleware.guardrails import detect_language
 
 
 class MedicalDiagnosticGraph:
@@ -106,6 +107,31 @@ class MedicalDiagnosticGraph:
         # Compile the graph
         return workflow.compile()
 
+    def _translate_text(self, text: str, target_lang: str) -> str:
+        if not text or target_lang == 'en':
+            return text
+        try:
+            if target_lang == 'vi':
+                prompt = (
+                    "Dịch sang tiếng Việt một cách tự nhiên, ngắn gọn, giữ nguyên ý và cảnh báo an toàn nếu có.\n"
+                    "Không thêm thông tin mới. Văn bản:\n\n" + text
+                )
+            else:
+                prompt = f"Translate to {target_lang} naturally, preserving meaning without adding content.\n\n" + text
+            resp = self.gemini_model.generate_content(prompt)
+            return getattr(resp, 'text', None) or text
+        except Exception:
+            return text
+
+    def _translate_list(self, items: List[Any], target_lang: str) -> List[Any]:
+        out: List[Any] = []
+        for it in items or []:
+            if isinstance(it, str):
+                out.append(self._translate_text(it, target_lang))
+            else:
+                out.append(it)
+        return out
+
     # ========================================================================
     # PUBLIC API
     # ========================================================================
@@ -173,14 +199,26 @@ class MedicalDiagnosticGraph:
                         cleaned_messages.append(msg)
                         seen_nodes.add(msg_key)
             
+            # Auto-translate to user language before returning
+            user_lang = detect_language(initial_state["input"])
+            final_response = final_state["final_response"]
+            investigation_plan = final_state.get("investigation_plan")
+
+            if user_lang and user_lang != 'en':
+                final_response = self._translate_text(final_response, user_lang)
+                if isinstance(investigation_plan, list):
+                    investigation_plan = self._translate_list(investigation_plan, user_lang)
+                # Optionally translate cleaned message lines (strings)
+                cleaned_messages = self._translate_list(cleaned_messages, user_lang)
+
             return {
                 "success": True,
-                "final_response": final_state["final_response"],
+                "final_response": final_response,
                 "intent": final_state.get("intent"),
                 "diagnosis": final_state.get("diagnosis"),
                 "risk_assessment": final_state.get("risk_assessment"),
-                "investigation_plan": final_state.get("investigation_plan"),
-                "messages": cleaned_messages,  # Use cleaned messages
+                "investigation_plan": investigation_plan,
+                "messages": cleaned_messages,  # possibly translated
                 "metadata": final_state.get("metadata", {})
             }
             

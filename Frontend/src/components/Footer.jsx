@@ -6,7 +6,7 @@ const Footer = () => {
       <div className="container">
         <p>&copy; 2025 Happy Health Clinic. All rights reserved.</p>
         <p className="footer-note">
-          <strong>Emergency?</strong> Call 911 immediately.
+          <strong>Emergency?</strong> Call 115 immediately.
           This chatbot is for general information and appointment scheduling only.
         </p>
         <p className="contact-info">

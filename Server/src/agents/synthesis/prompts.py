@@ -93,7 +93,7 @@ A 2-3 sentence executive summary of the patient's condition and key recommendati
 **Summary**: [Brief critical assessment]
 
 **Immediate Actions**:
-1. Call 911 or go to Emergency Room NOW
+1. Call 115 or go to Emergency Room NOW
 2. [Critical symptoms detected]
 3. Do not delay seeking care
 
@@ -232,7 +232,7 @@ Upper respiratory infections are typically viral and self-limiting. Your immune 
 🚨 **URGENT MEDICAL ATTENTION REQUIRED**
 
 **Summary**
-Your symptoms suggest a possible cardiac emergency. Call 911 or go to the nearest Emergency Room immediately. Do not drive yourself.
+Your symptoms suggest a possible cardiac emergency. Call 115 or go to the nearest Emergency Room immediately. Do not drive yourself.
 
 **Critical Symptoms Detected**:
 - Severe chest pain with radiation to left arm
@@ -244,7 +244,7 @@ Your symptoms suggest a possible cardiac emergency. Call 911 or go to the neares
 These symptoms are classic signs of a possible heart attack (myocardial infarction). Time is critical - every minute counts in preserving heart muscle.
 
 **Immediate Actions**:
-1. **CALL 911 NOW** - Do not delay
+1. **CALL 115 NOW** - Do not delay
 2. Chew one aspirin (if not allergic) while waiting
 3. Sit down and try to stay calm
 4. Do NOT drive yourself to hospital

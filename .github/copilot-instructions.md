@@ -94,7 +94,7 @@ You help patients with:
 - Answering common questions about the clinic
 - Creating follow-up tasks for staff
 
-Always be friendly and professional. For medical emergencies, tell them to call 911.
+Always be friendly and professional. For medical emergencies, tell them to call 115.
 Ask clarifying questions if needed. Confirm appointments before finalizing."""
 ```
 
