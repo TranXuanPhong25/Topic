@@ -15,6 +15,8 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
   const [isTyping, setIsTyping] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  // Chat history in Gemini API format
+  const [chatHistory, setChatHistory] = useState([]);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   const [sidebarWidth, setSidebarWidth] = useState(280);
@@ -104,14 +106,25 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
     return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
-  const addMessage = (content, sender) => {
+  const addMessage = (content, sender, imageData = null) => {
     const newMessage = {
       id: Date.now(),
       content,
       sender,
-      time: getCurrentTime()
+      time: getCurrentTime(),
+      image: imageData  // Store image data with message
     };
     setMessages(prev => [...prev, newMessage]);
+    
+    // Update chat history in Gemini format
+    const role = sender === 'user' ? 'user' : 'model';
+    setChatHistory(prev => [
+      ...prev,
+      {
+        role: role,
+        parts: [{ text: content }]
+      }
+    ]);
   };
 
   const setTypingIndicator = (show) => {
@@ -127,7 +140,8 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
         },
         body: JSON.stringify({
           message: message,
-          session_id: sessionId
+          session_id: sessionId,
+          chat_history: chatHistory.length > 0 ? chatHistory : null
         })
       });
 
@@ -153,7 +167,8 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
         body: JSON.stringify({
           message: message || 'Vui lòng phân tích ảnh này',
           image: imageData,
-          session_id: sessionId
+          session_id: sessionId,
+          chat_history: chatHistory.length > 0 ? chatHistory : null
         })
       });
       if (!response.ok) {
@@ -183,7 +198,7 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
 
     // Add user message to chat
     if (hasImage) {
-      addMessage(`📸 [Image] ${message || 'Analyzing image...'}`, 'user');
+      addMessage(`📸 ${message || 'Analyzing image...'}`, 'user', imageToSend);
     } else {
       addMessage(message, 'user');
     }
@@ -386,6 +401,11 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
                   <div key={message.id} className={`message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}>
                     <div className="message-avatar">{message.sender === 'user' ? '👤' : '🤖'}</div>
                     <div className="message-content">
+                      {message.image && (
+                        <div className="message-image">
+                          <img src={message.image} alt="User uploaded" style={{ maxWidth: '200px', borderRadius: '8px', marginBottom: '8px' }} />
+                        </div>
+                      )}
                       <MemoizedMarkdown content={message.content} id={`msg-${message.id}`} />
                       <span className="message-time">{message.time}</span>
                     </div>

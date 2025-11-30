@@ -1,6 +1,6 @@
 """Recommender Node: Synthesizes investigations and retrieved context to generate final recommendations."""
 import json
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict
 
 from src.configs.agent_config import SystemMessage, HumanMessage
 from .prompts import build_recommender_prompt, RECOMMENDER_SYSTEM_PROMPT
@@ -36,6 +36,33 @@ class RecommenderNode:
         
         return goal
     
+    def _get_current_context(self, state: "GraphState") -> Dict[str, str]:
+        """
+        Extract context and user_context for the current step from the plan
+        
+        Args:
+            state: Current graph state
+            
+        Returns:
+            Dict with 'context' and 'user_context' keys (empty strings if not found)
+        """
+        plan = state.get("plan", [])
+        current_step_index = state.get("current_step", 0)
+        
+        if not plan or current_step_index >= len(plan):
+            return {"context": "", "user_context": ""}
+        
+        current_plan_step = plan[current_step_index]
+        context = current_plan_step.get("context", "")
+        user_context = current_plan_step.get("user_context", "")
+        
+        if context:
+            print(f"📝 Context: {context[:100]}...")
+        if user_context:
+            print(f"👤 User Context: {user_context[:100]}...")
+        
+        return {"context": context, "user_context": user_context}
+    
     def __call__(self, state: "GraphState") -> "GraphState":
         print("================ Recommender Agent =================")
         
@@ -44,10 +71,17 @@ class RecommenderNode:
         # investigation_plan = state.get("investigation_plan", [])
         retrieved_documents = state.get("retrieved_documents", [])
         try:
-            # Get goal from current plan step
+            # Get goal and context from current plan step
             goal = self._get_current_goal(state)
+            context_data = self._get_current_context(state)
             
-            recommendation_prompt = build_recommender_prompt(diagnosis, risk_assessment, goal)
+            recommendation_prompt = build_recommender_prompt(
+                diagnosis, 
+                risk_assessment, 
+                goal,
+                context_data.get("context", ""),
+                context_data.get("user_context", "")
+            )
             # **Tài liệu tham khảo:**
             # {len(retrieved_documents)} documents retrieved"""
 

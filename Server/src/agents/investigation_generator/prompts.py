@@ -74,10 +74,29 @@ Suggest appropriate medical tests, lab work, and investigations to confirm diagn
 - Explain rationale for each test
 """
 
-def build_investigation_prompt(diagnosis: dict, symptoms: str) -> str:
-    """Build investigation prompt with diagnosis context"""
+def build_investigation_prompt(diagnosis: dict, symptoms: str, goal: str = "", context: str = "", user_context: str = "") -> str:
+    """
+    Build investigation prompt with diagnosis context
+    
+    Args:
+        diagnosis: Diagnosis results
+        symptoms: Patient symptoms
+        goal: Purpose of investigation step from plan
+        context: Relevant conversation history from plan
+        user_context: User's specific concerns from plan
+    """
+    goal_section = f"## YOUR GOAL\n{goal}\n\n" if goal else ""
+    
+    # Emphasize constraints
+    context_section = ""
+    if context:
+        context_section = f"## CONTEXT & CONSTRAINTS (MUST FOLLOW)\n{context}\n"
+        context_section += "\n⚠️ REQUIRED: Respond in specified language. Match detail level to user's needs.\n\n"
+    
+    user_context_section = f"## PATIENT'S CONCERNS\n{user_context}\n\n" if user_context else ""
+    
     context = f"""
-## DIAGNOSIS
+{goal_section}{context_section}{user_context_section}## DIAGNOSIS
 Primary: {diagnosis.get('primary_diagnosis', {}).get('condition', 'Unknown')}
 Confidence: {diagnosis.get('confidence', 0.0)}
 

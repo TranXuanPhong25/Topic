@@ -1,11 +1,10 @@
 from langchain.agents import create_agent
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import HumanMessage
 
 from .prompts import APPOINTMENT_SCHEDULER_SYSTEM_PROMPT
-from .tools import check_appointment_availability, book_appointment, get_available_time_slots
+from .tools import check_appointment_availability, book_appointment, get_available_time_slots, get_current_datetime
 from ..medical_diagnostic_graph import GraphState
-from src.configs.agent_config import  GEMINI_MODEL_NAME
+from src.configs.agent_config import HumanMessage, AIMessage, SystemMessage, BaseMessage
 
 class AppointmentSchedulerNode:
     """
@@ -19,10 +18,62 @@ class AppointmentSchedulerNode:
             model=model,
             system_prompt=APPOINTMENT_SCHEDULER_SYSTEM_PROMPT,
             tools=[
+                get_current_datetime,
                 check_appointment_availability,
                 book_appointment,
                 get_available_time_slots
             ])
+    
+    def _get_current_goal(self, state: "GraphState") -> str:
+        """
+        Extract the goal for the current step from the plan
+        
+        Args:
+            state: Current graph state
+            
+        Returns:
+            Goal string or empty string if not found
+        """
+        plan = state.get("plan", [])
+        current_step_index = state.get("current_step", 0)
+        
+        if not plan or current_step_index >= len(plan):
+            return ""
+        
+        current_plan_step = plan[current_step_index]
+        goal = current_plan_step.get("goal", "")
+        
+        if goal:
+            print(f"🎯 Current Goal: {goal}")
+        
+        return goal
+    
+    def _get_current_context(self, state: "GraphState") -> dict:
+        """
+        Extract context and user_context for the current step from the plan
+        
+        Args:
+            state: Current graph state
+            
+        Returns:
+            Dict with 'context' and 'user_context' keys (empty strings if not found)
+        """
+        plan = state.get("plan", [])
+        current_step_index = state.get("current_step", 0)
+        
+        if not plan or current_step_index >= len(plan):
+            return {"context": "", "user_context": ""}
+        
+        current_plan_step = plan[current_step_index]
+        context = current_plan_step.get("context", "")
+        user_context = current_plan_step.get("user_context", "")
+        
+        if context:
+            print(f"📝 Context: {context[:100]}...")
+        if user_context:
+            print(f"👤 User Context: {user_context[:100]}...")
+        
+        return {"context": context, "user_context": user_context}
 
     def __call__(self, state: "GraphState") -> "GraphState":
         """
@@ -39,8 +90,24 @@ class AppointmentSchedulerNode:
         user_input = state.get("input", "")
         
         try:
-            # Prepare messages for the React Agent
-            messages = [HumanMessage(user_input)]
+            # Build messages with chat history for full context
+            messages = []
+            
+            # Add chat history as message pairs if available
+            chat_history_raw = state.get("chat_history", [])
+            if chat_history_raw:
+                for msg in chat_history_raw:
+                    role = msg.get("role")
+                    text_parts = [part.get("text", "") for part in msg.get("parts", [])]
+                    text = " ".join(text_parts)
+                    
+                    if role == "user":
+                        messages.append(HumanMessage(content=text))
+                    else:  # model/assistant
+                        messages.append(AIMessage(content=text))
+            
+            # Add current user input
+            messages.append(HumanMessage(user_input))
 
             # Run the React Agent
             print("🤖 React Agent: Analyzing request and selecting tools...")

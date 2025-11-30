@@ -7,6 +7,7 @@ uvicorn[standard]>=0.24.0
 # Database
 sqlalchemy>=2.0.0
 alembic>=1.12.0  # For database migrations
+openpyxl>=3.1.0  # For Excel file handling
 
 # Environment variables
 python-dotenv>=1.0.0
@@ -31,6 +32,7 @@ huggingface-hub>=0.20.0  # HF Inference API (FREE)
 Pillow>=10.0.0           # Image processing
 torch>=2.2.0             # Needed for lesion classifier (skin disease model)
 transformers>=4.40.0     # Hugging Face model loading
+langchain-google-genai>=0.3.0  # Google Gemini integration
 
 #graph visualization
 grandalf>=0.8

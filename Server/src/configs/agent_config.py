@@ -5,7 +5,7 @@ This module provides shared settings for model names, API keys, and generation p
 import os
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, BaseMessage
 
 # Load environment variables
 load_dotenv()
@@ -217,4 +217,6 @@ __all__ = [
     "ChatGoogleGenerativeAI",
     "SystemMessage",
     "HumanMessage",
+    "AIMessage",
+    "BaseMessage",
 ]

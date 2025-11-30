@@ -1,8 +1,7 @@
 """ConversationAgent Node: Handles normal conversations using clinic information and FAQs."""
 from typing import TYPE_CHECKING
-from src.configs.agent_config import SystemMessage, HumanMessage
 from .prompts import build_conversation_prompt, CONVERSATION_SYSTEM_PROMPT
-
+from src.configs.agent_config import HumanMessage, AIMessage, SystemMessage, BaseMessage
 if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
 
@@ -16,6 +15,57 @@ class ConversationAgentNode:
     def __init__(self, gemini_model, knowledge_base):
         self.gemini_model = gemini_model
         self.knowledge_base = knowledge_base
+    
+    def _get_current_goal(self, state: "GraphState") -> str:
+        """
+        Extract the goal for the current step from the plan
+        
+        Args:
+            state: Current graph state
+            
+        Returns:
+            Goal string or empty string if not found
+        """
+        plan = state.get("plan", [])
+        current_step_index = state.get("current_step", 0)
+        
+        if not plan or current_step_index >= len(plan):
+            return ""
+        
+        current_plan_step = plan[current_step_index]
+        goal = current_plan_step.get("goal", "")
+        
+        if goal:
+            print(f"🎯 Current Goal: {goal}")
+        
+        return goal
+    
+    def _get_current_context(self, state: "GraphState") -> dict:
+        """
+        Extract context and user_context for the current step from the plan
+        
+        Args:
+            state: Current graph state
+            
+        Returns:
+            Dict with 'context' and 'user_context' keys (empty strings if not found)
+        """
+        plan = state.get("plan", [])
+        current_step_index = state.get("current_step", 0)
+        
+        if not plan or current_step_index >= len(plan):
+            return {"context": "", "user_context": ""}
+        
+        current_plan_step = plan[current_step_index]
+        context = current_plan_step.get("context", "")
+        user_context = current_plan_step.get("user_context", "")
+        
+        if context:
+            print(f"📝 Context: {context[:100]}...")
+        if user_context:
+            print(f"👤 User Context: {user_context[:100]}...")
+        
+        return {"context": context, "user_context": user_context}
     
     def __call__(self, state: "GraphState") -> "GraphState":
         print("💬 ConversationAgent: Handling conversation...")
@@ -39,17 +89,40 @@ class ConversationAgentNode:
             
             knowledge_base_info = "\n\n".join(kb_info_parts)
             
+            # Get goal and context from current plan step
+            goal = self._get_current_goal(state)
+            context_data = self._get_current_context(state)
+            
             # Build prompt using optimized template
             conversation_prompt = build_conversation_prompt(
                 user_input=user_input,
-                knowledge_base_info=knowledge_base_info
+                knowledge_base_info=knowledge_base_info,
+                goal=goal,
+                context=context_data.get("context", ""),
+                user_context=context_data.get("user_context", "")
             )
             
+            # Build messages with chat history for full context
+            messages : list[BaseMessage] = [SystemMessage(content=CONVERSATION_SYSTEM_PROMPT)]
+            
+            # Add chat history as message pairs if available
+            chat_history_raw = state.get("chat_history", [])
+            if chat_history_raw:
+                from src.configs.agent_config import AIMessage
+                for msg in chat_history_raw:
+                    role = msg.get("role")
+                    text_parts = [part.get("text", "") for part in msg.get("parts", [])]
+                    text = " ".join(text_parts)
+                    
+                    if role == "user":
+                        messages.append(HumanMessage(content=text))
+                    else:  # model/assistant
+                        messages.append(AIMessage(content=text))
+            
+            # Add current prompt
+            messages.append(HumanMessage(content=conversation_prompt))
+            
             # Use Gemini to generate response
-            messages = [
-                SystemMessage(content=CONVERSATION_SYSTEM_PROMPT),
-                HumanMessage(content=conversation_prompt)
-            ]
             response = self.gemini_model.invoke(messages)
             conversation_output = response.content.strip()
             
