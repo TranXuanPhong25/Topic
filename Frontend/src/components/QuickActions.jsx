@@ -1,5 +1,5 @@
 import React from 'react';
-import { quickMessages, imageActions, symptomTests } from '../constants/QuickMessages';
+import { quickMessages, imageActions, symptomTests, appointmentTests } from '../constants/QuickMessages';
 
 const QuickActions = ({ onQuickMessage, setIsOpen }) => {
   const handleClick = (message) => {
@@ -61,9 +61,48 @@ const QuickActions = ({ onQuickMessage, setIsOpen }) => {
         ))}
       </div>
 
+      <h3 style={{ marginTop: '20px' }}>Test Appointments ({appointmentTests.length} tests)</h3>
+      
+      {/* Appointment tests grouped by category */}
+      {Object.entries(
+        appointmentTests.reduce((acc, item) => {
+          const category = item.category || 'other';
+          if (!acc[category]) acc[category] = [];
+          acc[category].push(item);
+          return acc;
+        }, {})
+      ).map(([category, items]) => (
+        <div key={`appt-${category}`} style={{ marginBottom: '20px' }}>
+          <h4 style={{ 
+            fontSize: '14px', 
+            color: '#0066cc', 
+            marginTop: '15px', 
+            marginBottom: '10px',
+            textTransform: 'capitalize'
+          }}>
+            📅 {category.replace('-', ' ')} ({items.length})
+          </h4>
+          <div className="quick-buttons">
+            {items.map((item, index) => (
+              <button 
+                key={`appt-${category}-${index}`} 
+                className={`quick-btn quick-btn-appointment quick-btn-${category}`}
+                onClick={() => handleClick(item.message)}
+                style={{ 
+                  borderLeft: '3px solid #0066cc',
+                  backgroundColor: '#f0f8ff'
+                }}
+              >
+                {item.text}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+
       <h3 style={{ marginTop: '20px' }}>Test Symptoms ({symptomTests.length} tests)</h3>
       
-      {/* Group by category */}
+      {/* Symptom tests grouped by category */}
       {Object.entries(
         symptomTests.reduce((acc, item) => {
           const category = item.category || 'other';
@@ -72,7 +111,7 @@ const QuickActions = ({ onQuickMessage, setIsOpen }) => {
           return acc;
         }, {})
       ).map(([category, items]) => (
-        <div key={category} style={{ marginBottom: '20px' }}>
+        <div key={`symptom-${category}`} style={{ marginBottom: '20px' }}>
           <h4 style={{ 
             fontSize: '14px', 
             color: '#666', 

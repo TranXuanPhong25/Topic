@@ -31,15 +31,6 @@ def _is_simple_greeting(text: str) -> bool:
 
 @chat_router.post("/ma/chat", response_model=ChatResponse)
 async def ma_chat(request: ChatRequest):
-    """
-    Main chat endpoint - send a message and get a response.
-    
-    Args:
-        request: ChatRequest with message and optional session_id
-        
-    Returns:
-        ChatResponse with bot's reply, session_id, and timestamp
-    """
     try:
 
         session_id = request.session_id or str(uuid.uuid4())
@@ -64,7 +55,7 @@ async def ma_chat(request: ChatRequest):
                     "role": msg.role,
                     "parts": [{"text": part.text} for part in msg.parts]
                 }
-                for msg in request.chat_history[:-20]
+                for msg in request.chat_history[-20:]
             ]
             print(f"📝 Chat history: {len(chat_history)} messages")
         

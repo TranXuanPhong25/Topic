@@ -324,3 +324,200 @@ export const symptomTests = [
     category: 'wellness'
   }
 ];
+
+export const appointmentTests = [
+  // Standard appointment requests
+  { 
+    text: '📅 General Checkup', 
+    message: 'I need to schedule a general checkup appointment for next Monday at 9 AM. My name is John Smith, phone: 0123456789.',
+    category: 'standard'
+  },
+  { 
+    text: '🦷 Dental Checkup', 
+    message: 'Can I book a dental checkup? I\'m available Tuesday afternoon, around 2 PM. Name: Sarah Johnson, phone: 0987654321.',
+    category: 'standard'
+  },
+  { 
+    text: '💉 Vaccination', 
+    message: 'I want to get my flu vaccine. Can we schedule for December 15th at 10:30 AM? My name is Michael Lee, phone: 0912345678.',
+    category: 'standard'
+  },
+  { 
+    text: '🩺 Follow-up Visit', 
+    message: 'Need to schedule a follow-up appointment for my blood test results. Next Friday morning would be great. Name: Emily Davis, phone: 0945678901.',
+    category: 'standard'
+  },
+  
+  // Urgent appointments
+  { 
+    text: '🚨 Urgent - Fever', 
+    message: 'My child has high fever (39°C) for 2 days. Can we get an appointment today? ASAP please. Name: Linda Brown, phone: 0923456789.',
+    category: 'urgent'
+  },
+  { 
+    text: '⚠️ Urgent - Injury', 
+    message: 'I hurt my ankle badly, it\'s very swollen. Need to see a doctor soon. Can you fit me in today? Name: David Wilson, phone: 0934567890.',
+    category: 'urgent'
+  },
+  { 
+    text: '🤒 Same Day - Sick', 
+    message: 'I feel very sick with flu symptoms. Is there any available slot today or tomorrow? Name: Rachel Martinez, phone: 0956789012.',
+    category: 'urgent'
+  },
+  
+  // Incomplete information (testing chatbot's ability to ask follow-up questions)
+  { 
+    text: '📅 Missing Time', 
+    message: 'I need an appointment next week for a checkup. My name is Tom Anderson, phone: 0967890123.',
+    category: 'incomplete'
+  },
+  { 
+    text: '📅 Missing Name', 
+    message: 'Can I book an appointment for December 10th at 2 PM for a general checkup?',
+    category: 'incomplete'
+  },
+  { 
+    text: '📅 Missing Phone', 
+    message: 'I\'d like to schedule a visit on Monday at 11 AM for my annual physical. Name is Jessica Taylor.',
+    category: 'incomplete'
+  },
+  { 
+    text: '📅 Missing Reason', 
+    message: 'Hi, I want to make an appointment for next Wednesday at 3 PM. I\'m Chris Roberts, phone: 0978901234.',
+    category: 'incomplete'
+  },
+  { 
+    text: '📅 Vague Request', 
+    message: 'I need to see a doctor sometime next week.',
+    category: 'incomplete'
+  },
+  
+  // Specific time requests
+  { 
+    text: '🕐 Morning Slot', 
+    message: 'I need an early morning appointment, preferably 8 AM on Thursday. Routine checkup. Name: Kevin Zhang, phone: 0989012345.',
+    category: 'time-specific'
+  },
+  { 
+    text: '🕒 Lunch Time', 
+    message: 'Can I get an appointment during lunch break, around 12-1 PM tomorrow? Name: Amy White, phone: 0990123456.',
+    category: 'time-specific'
+  },
+  { 
+    text: '🕔 After Work', 
+    message: 'Do you have evening slots after 5 PM? I work during the day. Need checkup. Name: Brian Thompson, phone: 0901234567.',
+    category: 'time-specific'
+  },
+  { 
+    text: '🗓️ Weekend', 
+    message: 'I can only come on weekends. Is Saturday morning available? General consultation. Name: Nancy Green, phone: 0912345670.',
+    category: 'time-specific'
+  },
+  
+  // Multiple people
+  { 
+    text: '👨‍👩‍👧 Family Appointment', 
+    message: 'Can we book appointments for the whole family? 3 people - me, my wife, and daughter. December 20th around 10 AM. Name: Paul Harris, phone: 0923456701.',
+    category: 'multiple'
+  },
+  { 
+    text: '👶 Mother & Baby', 
+    message: 'I need appointments for both me and my baby for checkup. Can we do back-to-back? Next Tuesday 9 AM. Name: Maria Garcia, phone: 0934567012.',
+    category: 'multiple'
+  },
+  
+  // Rescheduling
+  { 
+    text: '🔄 Reschedule', 
+    message: 'I have an appointment on Monday but need to change it to Wednesday same time. Name: Robert Kim, phone: 0945678123.',
+    category: 'reschedule'
+  },
+  { 
+    text: '❌ Cancel & Rebook', 
+    message: 'Need to cancel my Friday appointment and book for next week instead. Name: Jennifer Lopez, phone: 0956789234.',
+    category: 'reschedule'
+  },
+  
+  // Special requirements
+  { 
+    text: '👨‍⚕️ Specific Doctor', 
+    message: 'I want to see Dr. Smith if possible. Next Thursday afternoon. General checkup. Name: Mark Taylor, phone: 0967890345.',
+    category: 'special'
+  },
+  { 
+    text: '🌐 Language Request', 
+    message: 'I need an appointment with a Vietnamese-speaking doctor. Next week any day. Name: Nguyen Van A, phone: 0978901456.',
+    category: 'special'
+  },
+  { 
+    text: '♿ Accessibility', 
+    message: 'I use a wheelchair. Do I need to mention this when booking? Want appointment Dec 12 at 10 AM. Name: Susan Clark, phone: 0989012567.',
+    category: 'special'
+  },
+  
+  // Vietnamese language
+  { 
+    text: '🇻🇳 Đặt Lịch Khám', 
+    message: 'Tôi muốn đặt lịch khám tổng quát vào thứ 2 tuần sau lúc 9 giờ sáng. Tên: Trần Văn B, SĐT: 0990123678.',
+    category: 'vietnamese'
+  },
+  { 
+    text: '🇻🇳 Khám Cho Con', 
+    message: 'Con tôi cần khám bệnh gấp, con bị sốt. Có thể đặt lịch hôm nay không? Tên: Lê Thị C, SĐT: 0901234789.',
+    category: 'vietnamese'
+  },
+  { 
+    text: '🇻🇳 Tái Khám', 
+    message: 'Đặt lịch tái khám kết quả xét nghiệm. Thứ 6 này 2 giờ chiều được không? Tên: Phạm Văn D, SĐT: 0912345890.',
+    category: 'vietnamese'
+  },
+  { 
+    text: '🇻🇳 Hỏi Giờ Trống', 
+    message: 'Thứ 4 tuần sau buổi sáng có giờ nào trống không ạ? Khám nội khoa. Tên: Hoàng Thị E, SĐT: 0923456901.',
+    category: 'vietnamese'
+  },
+  
+  // Edge cases
+  { 
+    text: '⏰ Very Early', 
+    message: 'Can I get the first appointment of the day? Like 7 AM? Checkup. Name: William Brown, phone: 0934567012.',
+    category: 'edge-case'
+  },
+  { 
+    text: '🌙 Late Evening', 
+    message: 'Do you have any slots after 7 PM? I work late. Name: Olivia Martinez, phone: 0945678123.',
+    category: 'edge-case'
+  },
+  { 
+    text: '📅 Far Future', 
+    message: 'I want to book an appointment for March 2026. Annual physical. Name: Ethan Anderson, phone: 0956789234.',
+    category: 'edge-case'
+  },
+  { 
+    text: '🔜 Tomorrow', 
+    message: 'Can I get in tomorrow? Any time works. Just need a quick consultation. Name: Sophia White, phone: 0967890345.',
+    category: 'edge-case'
+  },
+  { 
+    text: '📞 No Name Given', 
+    message: 'Book me for Thursday 3 PM, general checkup, phone: 0978901456.',
+    category: 'edge-case'
+  },
+  
+  // Natural conversation style
+  { 
+    text: '💬 Casual Style', 
+    message: 'Hey, can you squeeze me in sometime next week? Need to get my knee checked. Name\'s Alex Johnson, call me at 0989012567.',
+    category: 'natural'
+  },
+  { 
+    text: '💬 Polite Formal', 
+    message: 'Good morning. I would like to request an appointment for a health screening. Would December 18th at 10:00 AM be available? My name is Dr. Richard Lee, contact: 0990123678.',
+    category: 'natural'
+  },
+  { 
+    text: '💬 Brief', 
+    message: 'Appointment Dec 15, 2pm, checkup. John Doe, 0901234789.',
+    category: 'natural'
+  }
+];

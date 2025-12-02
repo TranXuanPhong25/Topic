@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { MemoizedMarkdown } from './MemoizedMarkdown';
-import { quickMessages, imageActions, symptomTests } from '../constants/QuickMessages';
+import { quickMessages, imageActions, symptomTests, appointmentTests } from '../constants/QuickMessages';
 
 const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
   const [messages, setMessages] = useState([
@@ -337,6 +337,42 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
                       </li>
                     ))}
                   </ul>
+                </div>
+
+                {/* Appointment Tests */}
+                <div className="sidebar-section">
+                  <div className="sidebar-section-title" style={{ color: '#0066cc' }}>📅 Appointment Tests ({appointmentTests.length})</div>
+                  
+                  {/* Group by category */}
+                  {Object.entries(
+                    appointmentTests.reduce((acc, item) => {
+                      const category = item.category || 'other';
+                      if (!acc[category]) acc[category] = [];
+                      acc[category].push(item);
+                      return acc;
+                    }, {})
+                  ).map(([category, items]) => (
+                    <div key={`appt-${category}`} className="symptom-category">
+                      <div className="category-label" style={{ color: '#0066cc' }}>
+                        📅 {category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' ')} ({items.length})
+                      </div>
+                      <ul className="sidebar-list">
+                        {items.map((item, index) => (
+                          <li
+                            key={`appt-${category}-${index}`}
+                            onClick={() => handleClickQuickMessage(item.message)}
+                            className="sidebar-item"
+                            style={{ 
+                              borderLeft: '3px solid #0066cc',
+                              paddingLeft: '8px'
+                            }}
+                          >
+                            {item.text}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Symptom Tests */}

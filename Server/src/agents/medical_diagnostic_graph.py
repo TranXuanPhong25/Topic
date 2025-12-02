@@ -147,8 +147,6 @@ class MedicalDiagnosticGraph:
             "investigation_plan": [],
             "retrieved_documents": [],
             "recommendation": "",
-            "conversation_output": "",
-            "appointment_details": {},
             "final_response": "",
             "plan": [],
             "current_step": 0,

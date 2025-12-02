@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional
-from bson import ObjectId, errors
+from typing import Any, Dict, List, Optional
+from bson import ObjectId
 from src.database import get_collection 
 import traceback
 
@@ -31,15 +31,15 @@ def map_appointment(appointment: dict) -> dict:
         "phone": appointment.get("phone", "")
     }
 
-async def is_duplicate_time(time_str: str, ignore_id_str: str = None):
+async def is_duplicate_time(time_str: str, ignore_id_str: str = "") -> bool:
     """Kiểm tra trùng lịch (có hỗ trợ loại trừ ID khi update)"""
-    query = {"time": time_str}
+    query :Dict[str, Any]= {"time": time_str}
     
     if ignore_id_str:
         try:
             # Loại trừ chính document đang sửa
             query["_id"] = {"$ne": ObjectId(ignore_id_str)}
-        except errors.InvalidId:
+        except Exception:
             pass # Nếu ID không hợp lệ thì bỏ qua filter này
 
     existing_appointment = await collection.find_one(query)
@@ -48,10 +48,6 @@ async def is_duplicate_time(time_str: str, ignore_id_str: str = None):
 # --- AI FUNCTION (Dành riêng cho Bot/Agent) ---
 
 async def book_appointment_internal(patient_name: str, reason: str, time: str, phone: str) -> dict:
-    """
-    Hàm nội bộ dành cho AI Agent gọi.
-    Không ném exception HTTP, trả về kết quả dạng dict {success, message}.
-    """
     try:
         # 1. Validate
         if not time or not patient_name:
@@ -83,9 +79,7 @@ async def book_appointment_internal(patient_name: str, reason: str, time: str, p
         print(f"AI Booking Error: {e}")
         return {"success": False, "message": "Lỗi hệ thống khi lưu lịch."}
 
-# --- API ENDPOINTS (HTTP) ---
 
-# ➤ CREATE APPOINTMENT
 @router.post("/create", response_model=AppointmentResponse)
 async def create_appointment(request: AppointmentRequest):
     # 1. Kiểm tra trùng giờ
@@ -96,9 +90,8 @@ async def create_appointment(request: AppointmentRequest):
         )
 
     # 2. Tạo dữ liệu (Chuyển Pydantic -> Dict)
-    new_appointment_dict = request.dict()
+    new_appointment_dict = request.model_dump()
 
-    # 3. Lưu vào MongoDB (Tự sinh _id)
     result = await collection.insert_one(new_appointment_dict)
 
     # 4. Gán lại _id vừa sinh ra để map dữ liệu trả về
@@ -107,7 +100,6 @@ async def create_appointment(request: AppointmentRequest):
     return map_appointment(new_appointment_dict)
 
 
-# ➤ LIST ALL APPOINTMENTS
 @router.get("/list", response_model=List[AppointmentResponse])
 async def list_appointments():
     appointments = []
@@ -120,12 +112,11 @@ async def list_appointments():
     return appointments
 
 
-# ➤ GET BY ID
 @router.get("/{appointment_id}", response_model=AppointmentResponse)
 async def get_appointment(appointment_id: str):
     try:
         oid = ObjectId(appointment_id)
-    except errors.InvalidId:
+    except Exception:
         raise HTTPException(status_code=400, detail="ID không hợp lệ")
 
     appointment = await collection.find_one({"_id": oid})
@@ -136,12 +127,11 @@ async def get_appointment(appointment_id: str):
     return map_appointment(appointment)
 
 
-# ➤ UPDATE APPOINTMENT
 @router.put("/{appointment_id}", response_model=AppointmentResponse)
 async def update_appointment(appointment_id: str, request: AppointmentRequest):
     try:
         oid = ObjectId(appointment_id)
-    except errors.InvalidId:
+    except Exception:
         raise HTTPException(status_code=400, detail="ID không hợp lệ")
 
     # 1. Kiểm tra tồn tại
@@ -169,12 +159,11 @@ async def update_appointment(appointment_id: str, request: AppointmentRequest):
     return map_appointment(update_data)
 
 
-# ➤ DELETE APPOINTMENT
 @router.delete("/{appointment_id}")
 async def delete_appointment(appointment_id: str):
     try:
         oid = ObjectId(appointment_id)
-    except errors.InvalidId:
+    except Exception:
         raise HTTPException(status_code=400, detail="ID không hợp lệ")
 
     result = await collection.delete_one({"_id": oid})

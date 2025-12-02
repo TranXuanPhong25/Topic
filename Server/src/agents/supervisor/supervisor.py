@@ -7,6 +7,8 @@ from src.agents.supervisor.prompts import (
     SUPERVISOR_RESPONSE_SCHEMA,
     SUPERVISOR_SYSTEM_PROMPT
 )
+from src.agents.utils import build_messages_with_history
+from src.agents.utils.message_builder import extract_text_from_gemini_message
 from jsonschema import validate, ValidationError
 
 class SupervisorNode:
@@ -34,23 +36,11 @@ class SupervisorNode:
             supervisor_prompt = self.build_supervisor_prompt(state)
             
             # Build messages with chat history for full context
-            messages :List[BaseMessage]= [SystemMessage(content=SUPERVISOR_SYSTEM_PROMPT)]
-            
-            # Add chat history as message pairs if available
-            chat_history_raw = state.get("chat_history", [])
-            if chat_history_raw:
-                for msg in chat_history_raw:
-                    role = msg.get("role")
-                    text_parts = [part.get("text", "") for part in msg.get("parts", [])]
-                    text = " ".join(text_parts)
-                    
-                    if role == "user":
-                        messages.append(HumanMessage(content=text))
-                    else:  # model/assistant
-                        messages.append(AIMessage(content=text))
-            
-            # Add current prompt
-            messages.append(HumanMessage(content=supervisor_prompt))
+            messages = build_messages_with_history(
+                system_prompt=SUPERVISOR_SYSTEM_PROMPT,
+                current_prompt=supervisor_prompt,
+                chat_history=state.get("chat_history", [])
+            )
             response = self.model.invoke(messages)
             response_text = response.content.strip()
             
@@ -131,10 +121,9 @@ class SupervisorNode:
             messages = []
             for msg in chat_history_raw:
                 role = "User" if msg.get("role") == "user" else "Assistant"
-                # Extract text from parts
-                text_parts = [part.get("text", "") for part in msg.get("parts", [])]
-                text = " ".join(text_parts)
-                messages.append(f"{role}: {text}")
+                text = extract_text_from_gemini_message(msg)
+                if text:
+                    messages.append(f"{role}: {text}")
             chat_history_formatted = "\n".join(messages)
         
         # Build context summary

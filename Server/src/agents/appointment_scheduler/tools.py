@@ -10,7 +10,7 @@ from src.handlers.appointment import AppointmentHandler
 def get_current_datetime() -> str:
     """
     Get the current date and time to help calculate relative dates.
-    Use this when the user mentions relative dates like 'tomorrow', 'next week', 'in 3 days', etc.
+    Use this when need current date time or the user mentions relative dates like 'tomorrow', 'next week', 'in 3 days', etc.
     
     Returns:
         JSON string with current date, time, day of week, and examples for common relative dates

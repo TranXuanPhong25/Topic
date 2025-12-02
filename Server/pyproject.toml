@@ -31,4 +31,6 @@ dependencies = [
     "langchain-google-genai==3.0.3",
     "flashrank>=0.2.10",
     "openpyxl>=3.1.5",
+    "bson>=0.5.10",
+    "motor>=3.7.1",
 ]

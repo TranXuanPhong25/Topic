@@ -37,7 +37,7 @@ async def health_check():
     return HealthResponse(
         status="healthy",
         version="1.0.0",
-        model="gemini-2.0-flash-lite",
+        model="gemini-2.5-flash-lite",
         clinic=CLINIC_CONFIG["name"]
     )
 
