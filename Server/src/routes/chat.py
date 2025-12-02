@@ -64,7 +64,7 @@ async def ma_chat(request: ChatRequest):
                     "role": msg.role,
                     "parts": [{"text": part.text} for part in msg.parts]
                 }
-                for msg in request.chat_history
+                for msg in request.chat_history[:-20]
             ]
             print(f"📝 Chat history: {len(chat_history)} messages")
         
@@ -112,7 +112,7 @@ def ma_chat_with_image(request: ImageChatRequest):
                     "role": msg.role,
                     "parts": [{"text": part.text} for part in msg.parts]
                 }
-                for msg in request.chat_history
+                for msg in request.chat_history[:-20]
             ]
             print(f"📝 Image chat history: {len(chat_history)} messages")
         

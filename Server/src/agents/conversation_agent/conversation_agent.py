@@ -126,7 +126,6 @@ class ConversationAgentNode:
             response = self.gemini_model.invoke(messages)
             conversation_output = response.content.strip()
             
-            state["conversation_output"] = conversation_output
             state["final_response"] = conversation_output
             state["current_step"] +=1
 
@@ -134,7 +133,6 @@ class ConversationAgentNode:
             
         except Exception as e:
             print(f"ConversationAgent error: {str(e)}")
-            state["conversation_output"] = "Xin lỗi, tôi đang gặp sự cố. Vui lòng gọi phòng khám để được hỗ trợ."
-            state["final_response"] = state["conversation_output"]
+            state["final_response"] = "Xin lỗi, tôi đang gặp sự cố. Vui lòng gọi phòng khám để được hỗ trợ."
         
         return state

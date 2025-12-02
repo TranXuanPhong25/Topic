@@ -107,60 +107,23 @@ class AppointmentSchedulerNode:
                         messages.append(AIMessage(content=text))
             
             # Add current user input
-            messages.append(HumanMessage(user_input))
+            messages.append(HumanMessage(content=user_input))
 
             # Run the React Agent
-            print("🤖 React Agent: Analyzing request and selecting tools...")
             result = self.agent.invoke({"messages": messages})
-
+            print(f"🤖 React Appointment Agent Result: {result}")
             # Extract the final response from agent
             agent_messages = result.get("messages", [])
-            final_message = ""
-            
-            # Get the last AI message
-            for msg in reversed(agent_messages):
-                if hasattr(msg, 'content') and msg.content:
-                    final_message = msg.content
-                    break
-            
-            # Check if appointment was actually booked by examining tool calls
-            appointment_booked = False
-            appointment_details = {}
-            
-            for msg in agent_messages:
-                # Check for tool calls in the message
-                if hasattr(msg, 'tool_calls') and msg.tool_calls:
-                    for tool_call in msg.tool_calls:
-                        if tool_call.get('name') == 'book_appointment':
-                            # Extract appointment details from tool arguments
-                            args = tool_call.get('args', {})
-                            appointment_details = {
-                                "patient_name": args.get('patient_name'),
-                                "date": args.get('date'),
-                                "time": args.get('time'),
-                                "reason": args.get('reason'),
-                                "phone": args.get('phone'),
-                                "provider": args.get('provider'),
-                                "status": "confirmed"
-                            }
-                            appointment_booked = True
-            
+            final_message = agent_messages[:-1][0]
+            print(f"🤖 Final message: {final_message}")
             # Update state
-            state["appointment_details"] = appointment_details if appointment_booked else {}
             state["final_response"] = final_message or "I'm ready to help you schedule an appointment. What date and time work for you?"
             state["current_step"] += 1
-            
-            print(f"📅 Result: {'Appointment booked' if appointment_booked else 'Inquiry handled'}")
-            if appointment_booked:
-                print(f"   Patient: {appointment_details.get('patient_name')}")
-                print(f"   Date/Time: {appointment_details.get('date')} at {appointment_details.get('time')}")
-            
         except Exception as e:
             print(f"❌ AppointmentScheduler error: {str(e)}")
             import traceback
             traceback.print_exc()
             
-            state["appointment_details"] = {}
             state["final_response"] = "Xin lỗi, tôi gặp sự cố khi xử lý yêu cầu đặt lịch của bạn. Vui lòng cung cấp thông tin: tên, ngày, giờ, và lý do khám."
         
         return state

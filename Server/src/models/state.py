@@ -29,11 +29,7 @@ class GraphState(TypedDict):
     
     # Recommendations
     recommendation: str  # Final actionable advice
-    
-    # Conversation and appointment
-    conversation_output: str  # Result from ConversationAgent
-    appointment_details: Dict[str, Any]  # Result from AppointmentScheduler
-    
+        
     # Final output
     final_response: str  # Message to be sent to user
     
