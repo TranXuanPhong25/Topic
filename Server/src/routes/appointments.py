@@ -1,182 +1,185 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-import os
-import uuid
-import openpyxl
-from datetime import datetime
+from typing import List, Optional
+from bson import ObjectId, errors
+from src.database import get_collection 
+import traceback
 
 router = APIRouter(prefix="/appointments", tags=["Appointments"])
+collection = get_collection("appointments")
 
-DATA_FOLDER = "data"
-FILE_PATH = os.path.join(DATA_FOLDER, "appointments.xlsx")
+# --- PYDANTIC MODELS ---
 
-
-# Initialize Excel storage
-def init_excel():
-    if not os.path.exists(DATA_FOLDER):
-        os.makedirs(DATA_FOLDER)
-
-    if not os.path.exists(FILE_PATH):
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Appointments"
-        ws.append(["ID", "PatientName", "Reason", "Time", "Phone"])
-        wb.save(FILE_PATH)
-    else:
-        # Nếu file đã có nhưng chưa có cột "Phone" → tự thêm
-        wb = openpyxl.load_workbook(FILE_PATH)
-        ws = wb.active
-        headers = [cell.value for cell in ws[1]]
-        if "Phone" not in headers:
-            ws.cell(row=1, column=len(headers) + 1, value="Phone")
-            wb.save(FILE_PATH)
-
-
-# Generate UUID4
-def generate_uuid():
-    return str(uuid.uuid4())
-
-
-# Pydantic Model
 class AppointmentRequest(BaseModel):
     patient_name: str
     reason: str
-    time: str      # "2025-12-01 10:30"
-    phone: str     # số điện thoại
+    time: str      # Format: "YYYY-MM-DD HH:MM"
+    phone: str
 
+class AppointmentResponse(AppointmentRequest):
+    id: str        # Trả về ID dạng string cho Frontend dễ dùng
 
-# Check duplicate time
-def is_duplicate_time(time_str, ignore_id=None):
-    wb = openpyxl.load_workbook(FILE_PATH)
-    ws = wb.active
+# --- HELPER FUNCTIONS ---
 
-    for row in ws.iter_rows(min_row=2, values_only=True):
-        existing_id, _, _, existing_time, _ = row
-        if existing_time == time_str and existing_id != ignore_id:
-            return True
-    return False
+def map_appointment(appointment: dict) -> dict:
+    """Chuyển đổi document MongoDB sang dict chuẩn cho API (đổi _id -> id)"""
+    return {
+        "id": str(appointment["_id"]),
+        "patient_name": appointment["patient_name"],
+        "reason": appointment["reason"],
+        "time": appointment["time"],
+        "phone": appointment.get("phone", "")
+    }
 
+async def is_duplicate_time(time_str: str, ignore_id_str: str = None):
+    """Kiểm tra trùng lịch (có hỗ trợ loại trừ ID khi update)"""
+    query = {"time": time_str}
+    
+    if ignore_id_str:
+        try:
+            # Loại trừ chính document đang sửa
+            query["_id"] = {"$ne": ObjectId(ignore_id_str)}
+        except errors.InvalidId:
+            pass # Nếu ID không hợp lệ thì bỏ qua filter này
+
+    existing_appointment = await collection.find_one(query)
+    return existing_appointment is not None
+
+# --- AI FUNCTION (Dành riêng cho Bot/Agent) ---
+
+async def book_appointment_internal(patient_name: str, reason: str, time: str, phone: str) -> dict:
+    """
+    Hàm nội bộ dành cho AI Agent gọi.
+    Không ném exception HTTP, trả về kết quả dạng dict {success, message}.
+    """
+    try:
+        # 1. Validate
+        if not time or not patient_name:
+            return {"success": False, "message": "Thiếu tên hoặc thời gian."}
+
+        # 2. Check trùng
+        if await is_duplicate_time(time):
+            return {"success": False, "message": f"Giờ {time} đã có người đặt."}
+
+        # 3. Insert
+        new_data = {
+            "patient_name": patient_name,
+            "reason": reason,
+            "time": time,
+            "phone": phone
+        }
+        result = await collection.insert_one(new_data)
+
+        return {
+            "success": True,
+            "message": f"Đã đặt lịch thành công cho {patient_name} lúc {time}.",
+            "data": {
+                "id": str(result.inserted_id),
+                "patient_name": patient_name,
+                "time": time
+            }
+        }
+    except Exception as e:
+        print(f"AI Booking Error: {e}")
+        return {"success": False, "message": "Lỗi hệ thống khi lưu lịch."}
+
+# --- API ENDPOINTS (HTTP) ---
 
 # ➤ CREATE APPOINTMENT
-@router.post("/create")
+@router.post("/create", response_model=AppointmentResponse)
 async def create_appointment(request: AppointmentRequest):
-    init_excel()
-
-    # Check duplicate time
-    if is_duplicate_time(request.time):
+    # 1. Kiểm tra trùng giờ
+    if await is_duplicate_time(request.time):
         raise HTTPException(
             status_code=400,
             detail=f"Đã có lịch khám lúc {request.time}. Vui lòng chọn thời gian khác."
         )
 
-    appointment_id = generate_uuid()
+    # 2. Tạo dữ liệu (Chuyển Pydantic -> Dict)
+    new_appointment_dict = request.dict()
 
-    wb = openpyxl.load_workbook(FILE_PATH)
-    ws = wb.active
+    # 3. Lưu vào MongoDB (Tự sinh _id)
+    result = await collection.insert_one(new_appointment_dict)
 
-    ws.append([
-        appointment_id,
-        request.patient_name,
-        request.reason,
-        request.time,
-        request.phone
-    ])
-    wb.save(FILE_PATH)
+    # 4. Gán lại _id vừa sinh ra để map dữ liệu trả về
+    new_appointment_dict["_id"] = result.inserted_id
 
-    return {
-        "id": appointment_id,
-        "patient_name": request.patient_name,
-        "reason": request.reason,
-        "time": request.time,
-        "phone": request.phone
-    }
+    return map_appointment(new_appointment_dict)
 
 
 # ➤ LIST ALL APPOINTMENTS
-@router.get("/list")
+@router.get("/list", response_model=List[AppointmentResponse])
 async def list_appointments():
-    init_excel()
-    wb = openpyxl.load_workbook(FILE_PATH)
-    ws = wb.active
-
     appointments = []
-    for row in ws.iter_rows(min_row=2, values_only=True):
-        appointments.append({
-            "id": row[0],
-            "patient_name": row[1],
-            "reason": row[2],
-            "time": row[3],
-            "phone": row[4]
-        })
+    # Lấy tất cả, không cần {"_id": 0} nữa vì ta cần lấy ID
+    cursor = collection.find()
+    
+    async for document in cursor:
+        appointments.append(map_appointment(document))
 
     return appointments
 
 
 # ➤ GET BY ID
-@router.get("/{appointment_id}")
+@router.get("/{appointment_id}", response_model=AppointmentResponse)
 async def get_appointment(appointment_id: str):
-    init_excel()
-    wb = openpyxl.load_workbook(FILE_PATH)
-    ws = wb.active
+    try:
+        oid = ObjectId(appointment_id)
+    except errors.InvalidId:
+        raise HTTPException(status_code=400, detail="ID không hợp lệ")
 
-    for row in ws.iter_rows(min_row=2, values_only=True):
-        if row[0] == appointment_id:
-            return {
-                "id": row[0],
-                "patient_name": row[1],
-                "reason": row[2],
-                "time": row[3],
-                "phone": row[4]
-            }
+    appointment = await collection.find_one({"_id": oid})
 
-    raise HTTPException(status_code=404, detail="Không tìm thấy lịch khám")
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Không tìm thấy lịch khám")
+    
+    return map_appointment(appointment)
 
 
 # ➤ UPDATE APPOINTMENT
-@router.put("/{appointment_id}")
+@router.put("/{appointment_id}", response_model=AppointmentResponse)
 async def update_appointment(appointment_id: str, request: AppointmentRequest):
-    init_excel()
+    try:
+        oid = ObjectId(appointment_id)
+    except errors.InvalidId:
+        raise HTTPException(status_code=400, detail="ID không hợp lệ")
 
-    # Kiểm tra trùng giờ (trừ chính ID này)
-    if is_duplicate_time(request.time, ignore_id=appointment_id):
+    # 1. Kiểm tra tồn tại
+    existing_ppt = await collection.find_one({"_id": oid})
+    if not existing_ppt:
+        raise HTTPException(status_code=404, detail="Không tìm thấy lịch khám")
+
+    # 2. Kiểm tra trùng giờ (trừ chính ID này)
+    if await is_duplicate_time(request.time, ignore_id_str=appointment_id):
         raise HTTPException(
             status_code=400,
             detail=f"Đã có lịch khám lúc {request.time}. Vui lòng chọn thời gian khác."
         )
 
-    wb = openpyxl.load_workbook(FILE_PATH)
-    ws = wb.active
+    # 3. Thực hiện update
+    update_data = request.dict()
+    
+    await collection.update_one(
+        {"_id": oid},
+        {"$set": update_data}
+    )
 
-    for row in ws.iter_rows(min_row=2):
-        if row[0].value == appointment_id:
-            row[1].value = request.patient_name
-            row[2].value = request.reason
-            row[3].value = request.time
-            row[4].value = request.phone
-            wb.save(FILE_PATH)
-
-            return {
-                "id": appointment_id,
-                "patient_name": request.patient_name,
-                "reason": request.reason,
-                "time": request.time,
-                "phone": request.phone
-            }
-
-    raise HTTPException(status_code=404, detail="Không tìm thấy lịch khám")
+    # Trả về dữ liệu mới (kèm ID cũ)
+    update_data["_id"] = oid
+    return map_appointment(update_data)
 
 
 # ➤ DELETE APPOINTMENT
 @router.delete("/{appointment_id}")
 async def delete_appointment(appointment_id: str):
-    init_excel()
-    wb = openpyxl.load_workbook(FILE_PATH)
-    ws = wb.active
+    try:
+        oid = ObjectId(appointment_id)
+    except errors.InvalidId:
+        raise HTTPException(status_code=400, detail="ID không hợp lệ")
 
-    for row in range(2, ws.max_row + 1):
-        if ws.cell(row=row, column=1).value == appointment_id:
-            ws.delete_rows(row)
-            wb.save(FILE_PATH)
-            return {"message": "Đã xóa lịch khám thành công"}
+    result = await collection.delete_one({"_id": oid})
 
-    raise HTTPException(status_code=404, detail="Không tìm thấy lịch khám")
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Không tìm thấy lịch khám")
+
+    return {"message": "Đã xóa lịch khám thành công"}
