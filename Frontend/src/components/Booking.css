@@ -30,17 +30,46 @@
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-group select {
   width: 100%;
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
   box-sizing: border-box;
+  background-color: white;
+}
+
+.form-group input:disabled,
+.form-group textarea:disabled,
+.form-group select:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.form-group select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
 }
 
 .form-group textarea {
   resize: vertical;
+}
+
+/* Form row for date and time side by side */
+.form-row {
+  display: flex;
+  gap: 15px;
+}
+
+.form-row .form-group {
+  flex: 1;
 }
 
 .submit-btn {
@@ -53,10 +82,52 @@
   font-size: 16px;
   cursor: pointer;
   transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-.submit-btn:hover {
+.submit-btn:hover:not(:disabled) {
   background-color: #2980b9;
+}
+
+.submit-btn:disabled {
+  background-color: #95c8e8;
+  cursor: not-allowed;
+}
+
+/* Loading spinner */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #ffffff40;
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error message */
+.error-message {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-message::before {
+  content: "⚠️";
 }
 
 .booking-actions {
@@ -97,8 +168,13 @@
   transition: background-color 0.3s;
 }
 
-.clear-btn:hover {
+.clear-btn:hover:not(:disabled) {
   background-color: #c0392b;
+}
+
+.clear-btn:disabled {
+  background-color: #f1a9a0;
+  cursor: not-allowed;
 }
 
 .booking-history h3 {
@@ -113,6 +189,21 @@
   color: #7f8c8d;
   font-style: italic;
   padding: 20px;
+}
+
+/* Loading placeholder */
+.loading-placeholder {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+}
+
+.loading-placeholder .spinner {
+  width: 32px;
+  height: 32px;
+  border-color: #e5e7eb;
+  border-top-color: #3498db;
+  margin: 0 auto 12px;
 }
 
 .bookings-list {
@@ -136,6 +227,11 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.booking-item.deleting {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 .booking-details {
   flex: 1;
 }
@@ -143,6 +239,47 @@
 .booking-info {
   margin-bottom: 5px;
   word-break: break-word;
+  font-size: 14px;
+  color: #374151;
+}
+
+.booking-info strong {
+  color: #1f2937;
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-badge.scheduled {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-badge.confirmed {
+  background-color: #d1fae5;
+  color: #047857;
+}
+
+.status-badge.completed {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.status-badge.cancelled {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.status-badge.pending {
+  background-color: #fef3c7;
+  color: #d97706;
 }
 
 .delete-btn {
@@ -150,14 +287,20 @@
   color: white;
   border: none;
   border-radius: 4px;
-  padding: 5px 10px;
+  padding: 6px 12px;
   cursor: pointer;
   align-self: flex-start;
   transition: background-color 0.3s;
+  font-size: 13px;
 }
 
-.delete-btn:hover {
+.delete-btn:hover:not(:disabled) {
   background-color: #c0392b;
+}
+
+.delete-btn:disabled {
+  background-color: #f1a9a0;
+  cursor: not-allowed;
 }
 
 @media (max-width: 600px) {
@@ -168,5 +311,10 @@
   
   .booking-actions {
     flex-direction: column;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0;
   }
 }

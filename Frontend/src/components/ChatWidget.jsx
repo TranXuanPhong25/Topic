@@ -133,7 +133,8 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
 
   const sendMessageToAPI = async (message) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/ma/chat`, {
+      // Use SSE streaming endpoint
+      const response = await fetch(`${API_BASE_URL}/ma/chat/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -149,8 +150,42 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      return data.response;
+      // Read SSE stream
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let finalResponse = '';
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              if (data.type === 'intermediate') {
+                // Show intermediate message immediately
+                setIsTyping(false);
+                addMessage(data.content, 'bot');
+                setIsTyping(true);
+              } else if (data.type === 'final') {
+                finalResponse = data.content;
+              } else if (data.type === 'error') {
+                throw new Error(data.content);
+              }
+            } catch (parseError) {
+              // Ignore parse errors for incomplete chunks
+              console.debug('SSE parse skip:', parseError);
+            }
+          }
+        }
+      }
+      
+      return finalResponse;
     } catch (error) {
       console.error('Error sending message:', error);
       throw error;

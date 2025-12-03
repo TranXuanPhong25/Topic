@@ -33,6 +33,9 @@ class GraphState(TypedDict):
     # Final output
     final_response: str  # Message to be sent to user
     
+    # Streaming support
+    intermediate_messages: Optional[List[str]]  # Intermediate messages for streaming (e.g., "checking availability...")
+    
     plan: List[Dict[str, Any]]  # Added for plan storage
     current_step: int  # Added for tracking current step in the plan
     next_step: Optional[str]  # Added for next step identification

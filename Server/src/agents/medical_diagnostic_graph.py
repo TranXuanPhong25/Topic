@@ -86,7 +86,7 @@ class MedicalDiagnosticGraph:
         workflow.add_edge("symptom_extractor","supervisor")
         workflow.add_edge("conversation_agent", END)
         workflow.add_edge("image_analyzer", "supervisor")
-        workflow.add_edge("appointment_scheduler", "supervisor")
+        workflow.add_edge("appointment_scheduler", END)  # Standalone agent, goes directly to END
         workflow.add_edge("investigation_generator", "supervisor")
         workflow.add_edge("document_retriever", "supervisor")
         workflow.add_edge("recommender", "supervisor")
@@ -167,5 +167,69 @@ class MedicalDiagnosticGraph:
             return {
                 "success": False,
                 "final_response": "Xin lỗi, đã xảy ra lỗi khi xử lý yêu cầu của bạn. Vui lòng thử lại hoặc liên hệ phòng khám.",
+                "error": str(e),
+            }
+
+    async def analyze_stream(
+            self,
+            user_input: str,
+            image: Optional[str] = None,
+            chat_history: Optional[list] = None,
+            on_intermediate=None,
+    ) -> Dict[str, Any]:
+        """
+        Analyze user input with streaming support for intermediate messages.
+        
+        Args:
+            user_input: User's text input
+            image: Optional base64 encoded image
+            chat_history: Optional chat history
+            on_intermediate: Callback for intermediate messages (not used, messages collected in state)
+        
+        Returns:
+            Dictionary containing final_response, intermediate_messages, and full state
+        """
+        print(f"Starting streaming analysis for input: {user_input[:100]}...")
+        
+        # Initialize state with intermediate_messages list
+        initial_state: GraphState = {
+            "input": user_input,
+            "chat_history": chat_history or [],
+            "symptom_extractor_input": "",
+            "image": image,
+            "symptoms": {},
+            "image_analysis_result": {},
+            "diagnosis": {},
+            "risk_assessment": {},
+            "information_needed": None,
+            "revision_count": 0,
+            "max_revisions": 2,
+            "revision_requirements": None,
+            "detailed_review": None,
+            "investigation_plan": [],
+            "retrieved_documents": [],
+            "recommendation": "",
+            "final_response": "",
+            "plan": [],
+            "current_step": 0,
+            "next_step": None,
+            "intermediate_messages": [],  # Track intermediate messages for streaming
+        }
+
+        try:
+            final_state = await self.graph.ainvoke(initial_state, config={"recursion_limit": 20})
+
+            return {
+                "success": True,
+                "final_response": final_state["final_response"],
+                "intermediate_messages": final_state.get("intermediate_messages", []),
+            }
+
+        except Exception as e:
+            print(f"Graph execution error: {str(e)}")
+            return {
+                "success": False,
+                "final_response": "Xin lỗi, đã xảy ra lỗi khi xử lý yêu cầu của bạn. Vui lòng thử lại hoặc liên hệ phòng khám.",
+                "intermediate_messages": [],
                 "error": str(e),
             }

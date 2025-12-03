@@ -72,3 +72,58 @@ def extract_text_from_gemini_message(msg: Dict[str, Any]) -> str:
     """
     text_parts = [part.get("text", "") for part in msg.get("parts", [])]
     return " ".join(text_parts).strip()
+
+
+def extract_text_from_content(content: Any) -> str:
+    """
+    Extract text from various content formats (Gemini 2.5 style).
+    
+    Handles:
+    - Plain string: "Hello world"
+    - List of content blocks: [{'type': 'text', 'text': '...', 'extras': {...}}]
+    - Dict with 'text' key: {'type': 'text', 'text': '...'}
+    - None or empty
+    
+    Args:
+        content: Content in various formats
+        
+    Returns:
+        Extracted text string
+        
+    Example:
+        >>> extract_text_from_content([{'type': 'text', 'text': 'Hello', 'extras': {'signature': '...'}}])
+        'Hello'
+        >>> extract_text_from_content("Hello world")
+        'Hello world'
+    """
+    if content is None:
+        return ""
+    
+    # Plain string
+    if isinstance(content, str):
+        return content.strip()
+    
+    # List of content blocks (Gemini 2.5 format)
+    if isinstance(content, list):
+        text_parts = []
+        for block in content:
+            if isinstance(block, dict):
+                # Content block with 'text' key
+                if 'text' in block:
+                    text_parts.append(block['text'])
+                # Fallback to other common keys
+                elif 'content' in block:
+                    text_parts.append(str(block['content']))
+            elif isinstance(block, str):
+                text_parts.append(block)
+        return " ".join(text_parts).strip()
+    
+    # Dict with 'text' key
+    if isinstance(content, dict):
+        if 'text' in content:
+            return str(content['text']).strip()
+        if 'content' in content:
+            return str(content['content']).strip()
+    
+    # Fallback: convert to string
+    return str(content).strip()

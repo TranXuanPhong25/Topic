@@ -1,8 +1,11 @@
 from . import chat_router
 from src.agents.medical_diagnostic_graph import MedicalDiagnosticGraph
 import uuid
+import json
+import asyncio
 from datetime import datetime
 from fastapi import HTTPException
+from fastapi.responses import StreamingResponse
 from src.models.chat import ChatRequest, ImageChatRequest, ChatResponse
 
 # Reuse a single graph instance to avoid re-initializing models every request
@@ -127,4 +130,79 @@ async def ma_chat_with_image(request: ImageChatRequest):
         )
 
 
+@chat_router.post("/ma/chat/stream", tags=["Chat"])
+async def ma_chat_stream(request: ChatRequest):
+    """
+    Streaming multi-agent chat endpoint using Server-Sent Events (SSE).
+    
+    Sends intermediate messages (e.g., "checking availability...") as they happen,
+    then sends the final response.
+    
+    Event types:
+    - intermediate: Partial response while processing (e.g., tool acknowledgment)
+    - final: Complete response
+    - error: Error occurred
+    """
+    session_id = request.session_id or str(uuid.uuid4())
+    
+    async def event_generator():
+        try:
+            # Convert chat_history
+            chat_history = None
+            if request.chat_history:
+                chat_history = [
+                    {
+                        "role": msg.role,
+                        "parts": [{"text": part.text} for part in msg.parts]
+                    }
+                    for msg in request.chat_history[-20:]
+                ]
+            
+            # Run analysis with streaming callback
+            result = await diagnostic_graph.analyze_stream(
+                user_input=request.message,
+                chat_history=chat_history,
+                on_intermediate=lambda msg: None  # Callback will be handled via queue
+            )
+            
+            # Check if we have intermediate messages
+            intermediate_messages = result.get('intermediate_messages', [])
+            for msg in intermediate_messages:
+                event_data = json.dumps({
+                    "type": "intermediate",
+                    "content": msg,
+                    "timestamp": datetime.now().isoformat()
+                })
+                yield f"data: {event_data}\n\n"
+                await asyncio.sleep(0.01)  # Small delay to ensure delivery
+            
+            # Send final response
+            final_data = json.dumps({
+                "type": "final",
+                "session_id": session_id,
+                "content": result['final_response'],
+                "timestamp": datetime.now().isoformat()
+            })
+            yield f"data: {final_data}\n\n"
+            
+        except Exception as e:
+            print(f"❌ Stream error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            error_data = json.dumps({
+                "type": "error",
+                "content": f"Error: {str(e)}",
+                "timestamp": datetime.now().isoformat()
+            })
+            yield f"data: {error_data}\n\n"
+    
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+        }
+    )
 

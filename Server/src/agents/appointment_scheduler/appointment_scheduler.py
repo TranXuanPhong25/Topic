@@ -5,7 +5,7 @@ from langchain_core.language_models import BaseChatModel
 from .prompts import APPOINTMENT_SCHEDULER_SYSTEM_PROMPT
 from .tools import check_appointment_availability, book_appointment, get_available_time_slots, get_current_datetime
 from ..medical_diagnostic_graph import GraphState
-from ..utils.message_builder import build_messages_with_history, extract_text_from_gemini_message
+from ..utils.message_builder import build_messages_with_history, extract_text_from_gemini_message, extract_text_from_content
 from src.configs.agent_config import HumanMessage, AIMessage
 
 class AppointmentSchedulerNode:
@@ -83,6 +83,7 @@ class AppointmentSchedulerNode:
     async def __call__(self, state: "GraphState") -> "GraphState":
         
         user_input = state.get("input", "")
+        intermediate_messages = state.get("intermediate_messages", []) or []
         
         try:
             # Inject current datetime directly into user prompt
@@ -99,7 +100,7 @@ class AppointmentSchedulerNode:
             print(f"📅 AppointmentScheduler: Processing {len(agent_messages)} messages")
             print("=" * 80)
             
-            # Trace all messages for debugging
+            # Trace all messages and collect intermediate messages for streaming
             from langchain_core.messages import AIMessage as LangChainAIMessage, ToolMessage
             
             for i, msg in enumerate(agent_messages):
@@ -117,8 +118,17 @@ class AppointmentSchedulerNode:
                             print(f"     - {tc['name']}({tc.get('args', {})})")
                     
                     if hasattr(msg, 'content') and msg.content:
-                        content_preview = msg.content[:150] if len(msg.content) > 150 else msg.content
+                        # Extract text from content (handles both string and list formats)
+                        content_text = extract_text_from_content(msg.content)
+                        content_preview = content_text[:150] if len(content_text) > 150 else content_text
                         print(f"  💬 AI Response: {content_preview}...")
+                        
+                        # Collect intermediate messages (AI responses before tool calls)
+                        # These are messages where AI acknowledges and explains what it's doing
+                        if hasattr(msg, 'tool_calls') and msg.tool_calls and content_text:
+                            # This is an intermediate message - AI is explaining before calling tool
+                            intermediate_messages.append(content_text)
+                            print(f"  📨 Added intermediate message for streaming")
                     else:
                         print(f"  💬 AI Response: {msg}")
                 else:
@@ -138,13 +148,14 @@ class AppointmentSchedulerNode:
                     
                 # Look for AI messages with content
                 if isinstance(msg, LangChainAIMessage):
-                    if hasattr(msg, 'content') and msg.content and msg.content.strip():
-                        # Make sure it's not a tool call response (which might be JSON)
-                        content = msg.content.strip()
-                        # Check if content looks like JSON tool output
-                        if not (content.startswith('{') and content.endswith('}')):
-                            final_response = content
-                            break
+                    if hasattr(msg, 'content') and msg.content:
+                        # Extract text from content (handles both string and list formats)
+                        content = extract_text_from_content(msg.content)
+                        if content:
+                            # Check if content looks like JSON tool output
+                            if not (content.startswith('{') and content.endswith('}')):
+                                final_response = content
+                                break
             
             # If no valid final response found, generate one based on tool output
             if not final_response:
@@ -219,11 +230,13 @@ class AppointmentSchedulerNode:
                     final_response = "Để hoàn tất đặt lịch, tôi cần thực hiện đặt lịch trong hệ thống. Xin vui lòng xác nhận lại thông tin: tên, ngày giờ, lý do khám và số điện thoại để tôi đặt lịch cho bạn."
             
             state["final_response"] = final_response
+            state["intermediate_messages"] = intermediate_messages
             state["current_step"] += 1
         except Exception as e:
             print(f"❌ AppointmentScheduler error: {str(e)}")
             import traceback
             traceback.print_exc()
             state["final_response"] = "Xin lỗi, tôi gặp sự cố khi xử lý yêu cầu đặt lịch của bạn. Vui lòng cung cấp thông tin: tên, ngày, giờ, và lý do khám."
+            state["intermediate_messages"] = intermediate_messages
         
         return state

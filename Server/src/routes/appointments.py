@@ -1,80 +1,82 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Any, Dict, List, Optional
-from bson import ObjectId
-from src.database import get_collection 
-import traceback
+from typing import List, Optional
+from src.handlers.appointment import AppointmentHandler
 
 router = APIRouter(prefix="/appointments", tags=["Appointments"])
-collection = get_collection("appointments")
 
 # --- PYDANTIC MODELS ---
 
 class AppointmentRequest(BaseModel):
     patient_name: str
     reason: str
-    time: str      # Format: "YYYY-MM-DD HH:MM"
+    date: str       # Format: "YYYY-MM-DD"
+    time: str       # Format: "HH:MM"
     phone: str
+    provider: Optional[str] = None
 
-class AppointmentResponse(AppointmentRequest):
-    id: str        # Trả về ID dạng string cho Frontend dễ dùng
+class AppointmentResponse(BaseModel):
+    id: str
+    patient_name: str
+    reason: str
+    date: str
+    time: str
+    phone: str
+    provider: str
+    status: str
 
 # --- HELPER FUNCTIONS ---
 
 def map_appointment(appointment: dict) -> dict:
-    """Chuyển đổi document MongoDB sang dict chuẩn cho API (đổi _id -> id)"""
+    """Chuyển đổi document MongoDB sang dict chuẩn cho API"""
     return {
-        "id": str(appointment["_id"]),
+        "id": appointment.get("id", str(appointment.get("_id", ""))),
         "patient_name": appointment["patient_name"],
-        "reason": appointment["reason"],
+        "reason": appointment.get("reason", ""),
+        "date": appointment["date"],
         "time": appointment["time"],
-        "phone": appointment.get("phone", "")
+        "phone": appointment.get("phone", ""),
+        "provider": appointment.get("provider", ""),
+        "status": appointment.get("status", "scheduled")
     }
 
-async def is_duplicate_time(time_str: str, ignore_id_str: str = "") -> bool:
-    """Kiểm tra trùng lịch (có hỗ trợ loại trừ ID khi update)"""
-    query :Dict[str, Any]= {"time": time_str}
-    
-    if ignore_id_str:
-        try:
-            # Loại trừ chính document đang sửa
-            query["_id"] = {"$ne": ObjectId(ignore_id_str)}
-        except Exception:
-            pass # Nếu ID không hợp lệ thì bỏ qua filter này
-
-    existing_appointment = await collection.find_one(query)
-    return existing_appointment is not None
 
 # --- AI FUNCTION (Dành riêng cho Bot/Agent) ---
 
-async def book_appointment_internal(patient_name: str, reason: str, time: str, phone: str) -> dict:
+async def book_appointment_internal(patient_name: str, reason: str, date: str, time: str, phone: str, provider: str = None) -> dict:
+    """Internal async function for AI/Agent to book appointments"""
     try:
-        # 1. Validate
-        if not time or not patient_name:
-            return {"success": False, "message": "Thiếu tên hoặc thời gian."}
+        handler = AppointmentHandler()
+        
+        # Validate inputs
+        if not patient_name or not date or not time:
+            return {"success": False, "message": "Thiếu thông tin bắt buộc (tên, ngày, giờ)."}
 
-        # 2. Check trùng
-        if await is_duplicate_time(time):
-            return {"success": False, "message": f"Giờ {time} đã có người đặt."}
+        # Use handler's schedule_appointment (async)
+        result = await handler.schedule_appointment(
+            patient_name=patient_name,
+            date=date,
+            time=time,
+            reason=reason,
+            phone=phone,
+            provider=provider
+        )
 
-        # 3. Insert
-        new_data = {
-            "patient_name": patient_name,
-            "reason": reason,
-            "time": time,
-            "phone": phone
-        }
-        result = await collection.insert_one(new_data)
-
-        return {
-            "success": True,
-            "message": f"Đã đặt lịch thành công cho {patient_name} lúc {time}.",
-            "data": {
-                "id": str(result.inserted_id),
-                "patient_name": patient_name,
-                "time": time
+        if result["success"]:
+            apt = result["appointment"]
+            return {
+                "success": True,
+                "message": f"Đã đặt lịch thành công cho {patient_name} ngày {date} lúc {time}.",
+                "data": {
+                    "id": apt["id"],
+                    "patient_name": patient_name,
+                    "date": date,
+                    "time": time
+                }
             }
-        }
+        else:
+            return {"success": False, "message": result.get("error", "Không thể đặt lịch.")}
+            
     except Exception as e:
         print(f"AI Booking Error: {e}")
         return {"success": False, "message": "Lỗi hệ thống khi lưu lịch."}
@@ -82,93 +84,80 @@ async def book_appointment_internal(patient_name: str, reason: str, time: str, p
 
 @router.post("/create", response_model=AppointmentResponse)
 async def create_appointment(request: AppointmentRequest):
-    # 1. Kiểm tra trùng giờ
-    if await is_duplicate_time(request.time):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Đã có lịch khám lúc {request.time}. Vui lòng chọn thời gian khác."
-        )
-
-    # 2. Tạo dữ liệu (Chuyển Pydantic -> Dict)
-    new_appointment_dict = request.model_dump()
-
-    result = await collection.insert_one(new_appointment_dict)
-
-    # 4. Gán lại _id vừa sinh ra để map dữ liệu trả về
-    new_appointment_dict["_id"] = result.inserted_id
-
-    return map_appointment(new_appointment_dict)
+    """Create a new appointment"""
+    handler = AppointmentHandler()
+    
+    result = await handler.schedule_appointment(
+        patient_name=request.patient_name,
+        date=request.date,
+        time=request.time,
+        reason=request.reason,
+        phone=request.phone,
+        provider=request.provider
+    )
+    
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    
+    return map_appointment(result["appointment"])
 
 
 @router.get("/list", response_model=List[AppointmentResponse])
 async def list_appointments():
-    appointments = []
-    # Lấy tất cả, không cần {"_id": 0} nữa vì ta cần lấy ID
-    cursor = collection.find()
-    
-    async for document in cursor:
-        appointments.append(map_appointment(document))
-
-    return appointments
+    """List all appointments"""
+    handler = AppointmentHandler()
+    appointments = await handler.get_appointments()
+    return [map_appointment(apt) for apt in appointments]
 
 
 @router.get("/{appointment_id}", response_model=AppointmentResponse)
 async def get_appointment(appointment_id: str):
-    try:
-        oid = ObjectId(appointment_id)
-    except Exception:
-        raise HTTPException(status_code=400, detail="ID không hợp lệ")
-
-    appointment = await collection.find_one({"_id": oid})
-
-    if not appointment:
-        raise HTTPException(status_code=404, detail="Không tìm thấy lịch khám")
+    """Get a specific appointment by ID"""
+    handler = AppointmentHandler()
+    appointments = await handler.get_appointments()
     
-    return map_appointment(appointment)
+    # Find the appointment with matching ID
+    for apt in appointments:
+        if apt.get("id") == appointment_id:
+            return map_appointment(apt)
+    
+    raise HTTPException(status_code=404, detail="Không tìm thấy lịch khám")
 
 
 @router.put("/{appointment_id}", response_model=AppointmentResponse)
 async def update_appointment(appointment_id: str, request: AppointmentRequest):
-    try:
-        oid = ObjectId(appointment_id)
-    except Exception:
-        raise HTTPException(status_code=400, detail="ID không hợp lệ")
-
-    # 1. Kiểm tra tồn tại
-    existing_ppt = await collection.find_one({"_id": oid})
-    if not existing_ppt:
-        raise HTTPException(status_code=404, detail="Không tìm thấy lịch khám")
-
-    # 2. Kiểm tra trùng giờ (trừ chính ID này)
-    if await is_duplicate_time(request.time, ignore_id_str=appointment_id):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Đã có lịch khám lúc {request.time}. Vui lòng chọn thời gian khác."
-        )
-
-    # 3. Thực hiện update
-    update_data = request.dict()
+    """Update an existing appointment"""
+    handler = AppointmentHandler()
     
-    await collection.update_one(
-        {"_id": oid},
-        {"$set": update_data}
+    # First cancel the old appointment
+    cancel_result = await handler.cancel_appointment(appointment_id)
+    if not cancel_result["success"]:
+        raise HTTPException(status_code=404, detail=cancel_result["error"])
+    
+    # Then create a new one with updated info
+    result = await handler.schedule_appointment(
+        patient_name=request.patient_name,
+        date=request.date,
+        time=request.time,
+        reason=request.reason,
+        phone=request.phone,
+        provider=request.provider
     )
-
-    # Trả về dữ liệu mới (kèm ID cũ)
-    update_data["_id"] = oid
-    return map_appointment(update_data)
+    
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    
+    return map_appointment(result["appointment"])
 
 
 @router.delete("/{appointment_id}")
 async def delete_appointment(appointment_id: str):
-    try:
-        oid = ObjectId(appointment_id)
-    except Exception:
-        raise HTTPException(status_code=400, detail="ID không hợp lệ")
-
-    result = await collection.delete_one({"_id": oid})
-
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Không tìm thấy lịch khám")
-
-    return {"message": "Đã xóa lịch khám thành công"}
+    """Delete/cancel an appointment"""
+    handler = AppointmentHandler()
+    
+    result = await handler.cancel_appointment(appointment_id)
+    
+    if not result["success"]:
+        raise HTTPException(status_code=404, detail=result["error"])
+    
+    return {"message": result["message"]}

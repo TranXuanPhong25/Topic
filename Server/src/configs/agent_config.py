@@ -27,10 +27,10 @@ if not GOOGLE_API_KEY:
 # ============================================================================
 
 # Primary model for text-based reasoning and conversation
-GEMINI_MODEL_NAME = "gemini-2.5-flash-lite"
+GEMINI_MODEL_NAME = "gemini-2.5-flash"
 
 # Vision model for image analysis (can be same as primary)
-GEMINI_VISION_MODEL_NAME = "gemini-2.5-flash-lite"
+GEMINI_VISION_MODEL_NAME = "gemini-2.5-flash"
 
 # ============================================================================
 # GENERATION PARAMETERS
