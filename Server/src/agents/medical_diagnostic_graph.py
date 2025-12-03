@@ -86,7 +86,7 @@ class MedicalDiagnosticGraph:
         workflow.add_edge("symptom_extractor","supervisor")
         workflow.add_edge("conversation_agent", END)
         workflow.add_edge("image_analyzer", "supervisor")
-        workflow.add_edge("appointment_scheduler", END)
+        workflow.add_edge("appointment_scheduler", "supervisor")
         workflow.add_edge("investigation_generator", "supervisor")
         workflow.add_edge("document_retriever", "supervisor")
         workflow.add_edge("recommender", "supervisor")
@@ -107,7 +107,7 @@ class MedicalDiagnosticGraph:
     # PUBLIC API
     # ========================================================================
 
-    def analyze(
+    async def analyze(
             self,
             user_input: str,
             image: Optional[str] = None,
@@ -154,8 +154,8 @@ class MedicalDiagnosticGraph:
         }
 
         try:
-            # Execute the graph (returns final state only, not streaming)
-            final_state = self.graph.invoke(initial_state, config={"recursion_limit": 20})
+            # Execute the graph asynchronously (required for async nodes like appointment_scheduler)
+            final_state = await self.graph.ainvoke(initial_state, config={"recursion_limit": 20})
 
             return {
                 "success": True,

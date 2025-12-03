@@ -38,7 +38,7 @@ def get_current_datetime() -> str:
 
 
 @tool
-def check_appointment_availability(date: str, time: str, provider: str | None = None) -> str:
+async def check_appointment_availability(date: str, time: str, provider: str | None = None) -> str:
     """
     Check if an appointment slot is available at the specified date and time.
 
@@ -50,7 +50,6 @@ def check_appointment_availability(date: str, time: str, provider: str | None = 
     Returns:
         JSON string with availability status and details
     """
-
     handler = AppointmentHandler()
 
     # Validate date
@@ -71,8 +70,8 @@ def check_appointment_availability(date: str, time: str, provider: str | None = 
             "suggestion": "Please choose a time between 09:00-17:00 on 15-minute intervals"
         })
 
-    # Check availability
-    available, message = handler.check_availability(date, time, provider)
+    # Check availability (async)
+    available, message = await handler.check_availability(date, time, provider)
 
     if available:
         return json.dumps({
@@ -83,8 +82,8 @@ def check_appointment_availability(date: str, time: str, provider: str | None = 
             "message": "Slot is available"
         })
     else:
-        # Get alternative times
-        alternatives = handler.get_available_slots(date, provider)
+        # Get alternative times (async)
+        alternatives = await handler.get_available_slots(date, provider)
         return json.dumps({
             "available": False,
             "error": message,
@@ -94,7 +93,7 @@ def check_appointment_availability(date: str, time: str, provider: str | None = 
 
 
 @tool
-def book_appointment(
+async def book_appointment(
         patient_name: str,
         date: str,
         time: str,
@@ -116,11 +115,10 @@ def book_appointment(
     Returns:
         JSON string with booking confirmation or error details
     """
-
     handler = AppointmentHandler()
 
-    # Use schedule_appointment method which includes all validation
-    result = handler.schedule_appointment(
+    # Use schedule_appointment method which includes all validation (async)
+    result = await handler.schedule_appointment(
         patient_name=patient_name,
         date=date,
         time=time,
@@ -153,7 +151,7 @@ def book_appointment(
 
 
 @tool
-def get_available_time_slots(date: str, limit: int = 5) -> str:
+async def get_available_time_slots(date: str, limit: int = 5) -> str:
     """
     Get available appointment time slots for a specific date.
 
@@ -164,7 +162,6 @@ def get_available_time_slots(date: str, limit: int = 5) -> str:
     Returns:
         JSON string with list of available time slots
     """
-
     handler = AppointmentHandler()
 
     # Validate date
@@ -175,8 +172,8 @@ def get_available_time_slots(date: str, limit: int = 5) -> str:
             "error": date_error
         })
 
-    # Get available slots
-    all_slots = handler.get_available_slots(date)
+    # Get available slots (async)
+    all_slots = await handler.get_available_slots(date)
     limited_slots = all_slots[:limit]
 
     return json.dumps({

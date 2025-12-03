@@ -60,7 +60,7 @@ async def ma_chat(request: ChatRequest):
             print(f"📝 Chat history: {len(chat_history)} messages")
         
         # Run multi-agent diagnostic pipeline (single shared instance)
-        result = diagnostic_graph.analyze(user_input=request.message, chat_history=chat_history)
+        result = await diagnostic_graph.analyze(user_input=request.message, chat_history=chat_history)
     
         return {
             "session_id": session_id,
@@ -81,7 +81,7 @@ async def ma_chat(request: ChatRequest):
 
 
 @chat_router.post("/ma/chat/image", tags=["Chat"])
-def ma_chat_with_image(request: ImageChatRequest):
+async def ma_chat_with_image(request: ImageChatRequest):
     """
     Multi-agent chat with image analysis.
     
@@ -107,7 +107,7 @@ def ma_chat_with_image(request: ImageChatRequest):
             ]
             print(f"📝 Image chat history: {len(chat_history)} messages")
         
-        result = diagnostic_graph.analyze(request.message, request.image, chat_history=chat_history)
+        result = await diagnostic_graph.analyze(request.message, request.image, chat_history=chat_history)
         
         return {
             "session_id": session_id,

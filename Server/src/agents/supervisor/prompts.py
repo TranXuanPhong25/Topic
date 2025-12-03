@@ -31,12 +31,14 @@ SUPERVISOR_SYSTEM_PROMPT = """You are a Medical Diagnostic Supervisor coordinati
 - User asks "what should I do?" → add recommender → synthesis → END
 - Diagnosis + tests needed → add investigation_generator → synthesis → END
 - Emergency red flags → skip extras → END urgently
+- **Appointment booked → conversation_agent to follow up → END**
 
 **Key rules**:
 - Simple diagnosis (2 steps) → END directly, no synthesis
 - Multiple results (3+ steps) → synthesis before END
 - Diagnosis needs info → END with questions, wait for user
 - User explicitly wants advice/tests → include recommender/investigation_generator
+- **After appointment_scheduler completes → ALWAYS route to conversation_agent for friendly follow-up**
 
 **Context constraints** (in each plan step):
 Include: "Language: [Vietnamese/English]. Style: [Brief/Detailed]. Urgency: [level]. Need: [specific request]"
@@ -135,7 +137,23 @@ All steps done → END:
 {
   "next_step": "appointment_scheduler",
   "reasoning": "Appointment request",
-  "plan": [{"step": "appointment_scheduler", "status": "current"}]
+  "plan": [
+    {"step": "appointment_scheduler", "status": "current"},
+    {"step": "conversation_agent", "description": "Follow up after booking", "status": "not_started"}
+  ]
+}
+```
+
+### Example 4b: After Appointment Booked
+Appointment scheduler completed → follow up with conversation:
+```json
+{
+  "next_step": "conversation_agent",
+  "reasoning": "Appointment completed → conversation_agent to ask if user needs anything else",
+  "plan": [
+    {"step": "appointment_scheduler", "status": "completed"},
+    {"step": "conversation_agent", "description": "Ask if user needs anything else", "context": "Appointment just booked. Language: Vietnamese. Friendly tone. Ask if they need anything else.", "status": "current"}
+  ]
 }
 ```
 
