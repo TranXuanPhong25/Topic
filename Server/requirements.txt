@@ -5,10 +5,8 @@ fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 
 # Database
-sqlalchemy>=2.0.0
-alembic>=1.12.0  # For database migrations
-openpyxl>=3.1.0  # For Excel file handling
 motor>=3.1.1  # Async MongoDB driver
+openpyxl>=3.1.0  # For Excel file handling
 
 # Environment variables
 python-dotenv>=1.0.0

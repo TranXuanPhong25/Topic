@@ -1,3 +1,1 @@
-from sqlalchemy.ext.declarative import declarative_base
-
-Base = declarative_base()
+# Models package - using MongoDB, no SQLAlchemy Base needed
