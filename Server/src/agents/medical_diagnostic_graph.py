@@ -88,16 +88,46 @@ class MedicalDiagnosticGraph:
         workflow.add_edge("image_analyzer", "supervisor")
         workflow.add_edge("appointment_scheduler", END)  # Standalone agent, goes directly to END
         workflow.add_edge("investigation_generator", "supervisor")
-        workflow.add_edge("document_retriever", "supervisor")
-        workflow.add_edge("recommender", "supervisor")
+        
+        # Document retriever returns to the agent that called it
+        workflow.add_conditional_edges(
+            "document_retriever",
+            lambda s: s.get("retriever_caller", "supervisor"),
+            {
+                "supervisor": "supervisor",
+                "diagnosis_engine": "diagnosis_engine",
+                "diagnosis_critic": "diagnosis_critic",
+                "recommender": "recommender",
+            }
+        )
+        
+        # Recommender and diagnosis_engine can call document_retriever
+        workflow.add_conditional_edges(
+            "recommender",
+            lambda s: s.get("next_step", "supervisor"),
+            {
+                "supervisor": "supervisor",
+                "document_retriever": "document_retriever",
+            }
+        )
+        
+        workflow.add_conditional_edges(
+            "diagnosis_engine",
+            lambda s: s.get("next_step", "diagnosis_critic"),
+            {
+                "diagnosis_critic": "diagnosis_critic",
+                "document_retriever": "document_retriever",
+            }
+        )
+        
         workflow.add_edge("synthesis", END)
-        workflow.add_edge("diagnosis_engine", "diagnosis_critic")
         workflow.add_conditional_edges(
             "diagnosis_critic",
             lambda s: s["next_step"],
             {
                 "supervisor": "supervisor",
                 "diagnosis_engine": "diagnosis_engine",
+                "document_retriever": "document_retriever",
             }
         )
         # Compile the graph
@@ -134,6 +164,9 @@ class MedicalDiagnosticGraph:
             "chat_history": chat_history or [],
             "symptom_extractor_input" : "",
             "image": image,
+            "image_type": None,
+            "is_diagnostic_image": None,
+            "image_analysis_intent": None,
             "symptoms": {},
             "image_analysis_result": {},
             "diagnosis": {},
@@ -146,6 +179,14 @@ class MedicalDiagnosticGraph:
             "detailed_review": None,
             "investigation_plan": [],
             "retrieved_documents": [],
+            "rag_answer": "",
+            "rag_english_query": "",
+            "document_synthesis": {},
+            # Document retrieval tracking
+            "retriever_caller": None,
+            "retriever_query": None,
+            "retriever_call_counts": {},
+            "max_retriever_calls_per_agent": 2,
             "recommendation": "",
             "final_response": "",
             "plan": [],
@@ -155,7 +196,7 @@ class MedicalDiagnosticGraph:
 
         try:
             # Execute the graph asynchronously (required for async nodes like appointment_scheduler)
-            final_state = await self.graph.ainvoke(initial_state, config={"recursion_limit": 20})
+            final_state = await self.graph.ainvoke(initial_state, config={"recursion_limit": 25})
 
             return {
                 "success": True,
@@ -197,6 +238,9 @@ class MedicalDiagnosticGraph:
             "chat_history": chat_history or [],
             "symptom_extractor_input": "",
             "image": image,
+            "image_type": None,
+            "is_diagnostic_image": None,
+            "image_analysis_intent": None,
             "symptoms": {},
             "image_analysis_result": {},
             "diagnosis": {},
@@ -208,6 +252,14 @@ class MedicalDiagnosticGraph:
             "detailed_review": None,
             "investigation_plan": [],
             "retrieved_documents": [],
+            "rag_answer": "",
+            "rag_english_query": "",
+            "document_synthesis": {},
+            # Document retrieval tracking
+            "retriever_caller": None,
+            "retriever_query": None,
+            "retriever_call_counts": {},
+            "max_retriever_calls_per_agent": 2,
             "recommendation": "",
             "final_response": "",
             "plan": [],
@@ -217,7 +269,7 @@ class MedicalDiagnosticGraph:
         }
 
         try:
-            final_state = await self.graph.ainvoke(initial_state, config={"recursion_limit": 20})
+            final_state = await self.graph.ainvoke(initial_state, config={"recursion_limit": 25})
 
             return {
                 "success": True,

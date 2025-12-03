@@ -4,6 +4,12 @@ import re
 import requests
 from typing import Dict, Any, TYPE_CHECKING
 from src.configs.agent_config import SystemMessage, HumanMessage
+from src.agents.document_retriever.helpers import (
+    can_call_retriever,
+    request_document_retrieval,
+    has_retrieved_documents,
+    get_document_synthesis
+)
 from .prompts import build_diagnosis_prompt, DIAGNOSIS_SYSTEM_PROMPT, COMPACT_DIAGNOSIS_PROMPT
 
 if TYPE_CHECKING:
@@ -158,6 +164,25 @@ class DiagnosisEngineNode:
             # Store final_response if provided
             if "final_response" in diagnosis:
                 state["final_response"] = diagnosis["final_response"]
+            
+            # Check if we need more information from documents
+            # Request document retrieval if confidence is low and we haven't retrieved yet
+            needs_more_info = confidence < 0.7 and not has_retrieved_documents(state)
+            
+            if needs_more_info and can_call_retriever(state, "diagnosis_engine"):
+                # Build a specific query for document retrieval
+                primary_condition = diagnosis.get("primary_diagnosis", {}).get("condition", "")
+                diff_diagnoses = [d.get("condition", "") for d in diagnosis.get("differential_diagnoses", [])[:3]]
+                query = f"Chẩn đoán và điều trị {primary_condition}. Chẩn đoán phân biệt: {', '.join(diff_diagnoses)}"
+                
+                state, success = request_document_retrieval(state, "diagnosis_engine", query)
+                if success:
+                    state["next_step"] = "document_retriever"
+                    print(f"📚 DiagnosisEngine: Requesting document retrieval for low confidence ({confidence:.2f})")
+                    return state
+            
+            # Default: proceed to diagnosis_critic
+            state["next_step"] = "diagnosis_critic"
             
             # Check if we should ask for more information instead of proceeding
 

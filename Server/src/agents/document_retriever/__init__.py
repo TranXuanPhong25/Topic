@@ -1,9 +1,33 @@
-"""Document Retriever Agent - Retrieve relevant medical documents"""
-from src.agents.document_retriever.config import get_document_retriever_model
-from .document_retriever import DocumentRetrieverNode
+"""Document Retriever Agent - Retrieve relevant medical documents using RAG pipeline"""
+from .document_retriever import DocumentRetrieverNode, new_document_retriever_node
+from .config import get_document_retriever_model, DocumentRetrieverModelSingleton
+from .prompts import (
+    DOCUMENT_RETRIEVER_SYSTEM_PROMPT,
+    build_document_retrieval_prompt,
+    QUERY_REFINEMENT_PROMPT,
+    SYNTHESIS_PROMPT
+)
+from .helpers import (
+    can_call_retriever,
+    request_document_retrieval,
+    get_retriever_call_count,
+    has_retrieved_documents,
+    get_document_synthesis
+)
 
-def new_document_retriever_node():
-    model = get_document_retriever_model()
-    return DocumentRetrieverNode(model)
-
-__all__ = ["DocumentRetrieverNode", "new_document_retriever_node"]
+__all__ = [
+    "DocumentRetrieverNode",
+    "new_document_retriever_node",
+    "get_document_retriever_model",
+    "DocumentRetrieverModelSingleton",
+    "DOCUMENT_RETRIEVER_SYSTEM_PROMPT",
+    "build_document_retrieval_prompt",
+    "QUERY_REFINEMENT_PROMPT",
+    "SYNTHESIS_PROMPT",
+    # Helper functions
+    "can_call_retriever",
+    "request_document_retrieval",
+    "get_retriever_call_count",
+    "has_retrieved_documents",
+    "get_document_synthesis",
+]

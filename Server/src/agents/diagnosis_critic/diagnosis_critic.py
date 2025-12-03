@@ -7,6 +7,12 @@ from collections import Counter
 
 from src.models.state import GraphState
 from src.configs.agent_config import SystemMessage, HumanMessage
+from src.agents.document_retriever.helpers import (
+    can_call_retriever,
+    request_document_retrieval,
+    has_retrieved_documents,
+    get_document_synthesis
+)
 from .prompts import DIAGNOSIS_CRITIC_SYSTEM_PROMPT, DIAGNOSIS_CRITIC_PROMPT
 
 class DiagnosisCriticNode:
@@ -121,6 +127,20 @@ class DiagnosisCriticNode:
             requires_revision = routing_decision.get("requires_revision", False)
             revision_count = state.get("revision_count", 0)
             max_revisions = state.get("max_revisions", 2)
+            
+            # Check if we need document retrieval for better review
+            needs_evidence = critic_result.get("needs_evidence", False)
+            evidence_query = critic_result.get("evidence_query", "")
+            
+            if needs_evidence and can_call_retriever(state, "diagnosis_critic"):
+                # Request document retrieval to support the review
+                query = evidence_query or f"Evidence for {diagnosis.get('primary_diagnosis', {}).get('condition', 'diagnosis')}"
+                state, success = request_document_retrieval(state, "diagnosis_critic", query)
+                if success:
+                    state["next_step"] = "document_retriever"
+                    print(f"📚 DiagnosisCritic: Requesting document retrieval for evidence")
+                    return state
+            
             if requires_revision:
                 if revision_count >= max_revisions:
                     # Force accept after max attempts to prevent infinite loop

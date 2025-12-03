@@ -15,15 +15,15 @@ class ImageAnalyzerModelSingleton:
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            print("🔬 Initializing Investigation Generator LLM model...")
+            print("🔬 Initializing Image Analyzer LLM model...")
             
             model = ChatGoogleGenerativeAI(
                 model=GEMINI_MODEL_NAME,
                 google_api_key=GOOGLE_API_KEY,
-                temperature=0.3,  # Conservative for medical tests
+                temperature=0.3,  # Conservative for medical analysis
                 top_p=0.9,
                 top_k=40,
-                max_tokens=1536,
+                max_tokens=4096,  # Increased for document analysis (reasoning + output)
             )
             cls._instance = GeminiVisionAnalyzer(model)
         return cls._instance

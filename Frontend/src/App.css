@@ -522,6 +522,36 @@ body {
   padding: 2rem;
   margin-bottom: 2rem;
   box-shadow: var(--shadow-lg);
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Quick Actions Scrollbar - Neubrutalism Style */
+.quick-actions::-webkit-scrollbar {
+  width: 10px;
+}
+
+.quick-actions::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 5px;
+  border: 2px solid #1a1a2e;
+}
+
+.quick-actions::-webkit-scrollbar-thumb {
+  background: #4ECDC4;
+  border-radius: 5px;
+  border: 2px solid #1a1a2e;
+  box-shadow: 2px 2px 0px #1a1a2e;
+}
+
+.quick-actions::-webkit-scrollbar-thumb:hover {
+  background: #3dbdb5;
+}
+
+/* Firefox scrollbar */
+.quick-actions {
+  scrollbar-width: thin;
+  scrollbar-color: #4ECDC4 #f1f1f1;
 }
 
 .quick-actions h3 {
@@ -974,9 +1004,19 @@ body {
 
 .message {
   display: flex;
-  /* flex-direction: w; */
   gap: 0.5rem;
   animation: slideIn 0.3s ease-out;
+  max-width: 75%;
+}
+
+/* Bot message aligns left */
+.message.bot-message {
+  align-self: flex-start;
+}
+
+/* User message aligns right */
+.message.user-message {
+  align-self: flex-end;
 }
 
 @keyframes slideIn {
@@ -992,8 +1032,21 @@ body {
 }
 
 .message-avatar {
-  font-size: 1.2rem;
   flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 3px solid #1a1a2e;
+  border-radius: 50%;
+  box-shadow: 3px 3px 0px #1a1a2e;
+}
+
+.message-avatar .bot-icon {
+  width: 22px;
+  height: 22px;
 }
 
 .message-content {
@@ -1035,10 +1088,17 @@ body {
   border-radius: 0 12px 12px 12px;
   border: 3px solid #1a1a2e;
   box-shadow: 4px 4px 0px #1a1a2e;
+  max-width: 1000px;
 }
 
 .user-message {
   flex-direction: row-reverse;
+}
+
+/* User message image container - align right */
+.user-message .message-image {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .user-message .message-content {
@@ -1048,6 +1108,9 @@ body {
   border-radius: 12px 0 12px 12px;
   border: 3px solid #1a1a2e;
   box-shadow: 4px 4px 0px #1a1a2e;
+  width: fit-content;
+  max-width: 600px;
+  margin-left: auto;
 }
 
 /* Markdown Content Styling */

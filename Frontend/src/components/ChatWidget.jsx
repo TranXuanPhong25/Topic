@@ -6,7 +6,7 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
   const [messages, setMessages] = useState([
     {
       id: 1,
-      content: 'Hello! I\'m your virtual assistant for Happy Health Clinic. How can I help you today?',
+      content: 'Hello! I\'m Gemidical, your AI medical assistant. How can I help you today?',
       sender: 'bot',
       time: 'Just now'
     }
@@ -115,7 +115,7 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
       image: imageData  // Store image data with message
     };
     setMessages(prev => [...prev, newMessage]);
-    
+
     // Update chat history in Gemini format
     const role = sender === 'user' ? 'user' : 'model';
     setChatHistory(prev => [
@@ -154,19 +154,19 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let finalResponse = '';
-      
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        
+
         const chunk = decoder.decode(value);
         const lines = chunk.split('\n');
-        
+
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6));
-              
+
               if (data.type === 'intermediate') {
                 // Show intermediate message immediately
                 setIsTyping(false);
@@ -184,7 +184,7 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
           }
         }
       }
-      
+
       return finalResponse;
     } catch (error) {
       console.error('Error sending message:', error);
@@ -342,11 +342,11 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
       <div className={`chat-header ${isOpen ? '' : 'minimized'}`}>
         <div className="chat-header-content ">
           <span className="status-indicator"></span>
-          <span className="chat-title">Chat with Assistant</span>
+          <span className="chat-title">Chat with Gemidical</span>
         </div>
         {
-          isOpen ?         <button className={`minimize-btn`}  aria-label="Minimize chat" onClick={toggleChat}>−</button>
-           : <span className="chat-icon" onClick={toggleChat}>💬</span>
+          isOpen ? <button className={`minimize-btn`} aria-label="Minimize chat" onClick={toggleChat}>−</button>
+            : <span className="chat-icon" onClick={toggleChat}>💬</span>
         }
       </div>
 
@@ -380,7 +380,7 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
                 {/* Appointment Tests */}
                 <div className="sidebar-section">
                   <div className="sidebar-section-title" style={{ color: '#0066cc' }}>📅 Appointment Tests ({appointmentTests.length})</div>
-                  
+
                   {/* Group by category */}
                   {Object.entries(
                     appointmentTests.reduce((acc, item) => {
@@ -400,7 +400,7 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
                             key={`appt-${category}-${index}`}
                             onClick={() => handleClickQuickMessage(item.message)}
                             className="sidebar-item"
-                            style={{ 
+                            style={{
                               borderLeft: '3px solid #0066cc',
                               paddingLeft: '8px'
                             }}
@@ -416,7 +416,7 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
                 {/* Symptom Tests */}
                 <div className="sidebar-section">
                   <div className="sidebar-section-title">Symptom Tests ({symptomTests.length})</div>
-                  
+
                   {/* Group by category */}
                   {Object.entries(
                     symptomTests.reduce((acc, item) => {
@@ -473,7 +473,18 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
               <div className="chat-messages" id="chatMessages">
                 {messages.map((message) => (
                   <div key={message.id} className={`message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}>
-                    <div className="message-avatar">{message.sender === 'user' ? '👤' : '🤖'}</div>
+                    {message.sender === 'bot' && (
+                      <div className="message-avatar">
+                        <svg className="bot-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect x="4" y="8" width="16" height="12" rx="2" stroke="#1a1a2e" strokeWidth="2" fill="#4ECDC4" />
+                          <circle cx="9" cy="14" r="2" fill="#1a1a2e" />
+                          <circle cx="15" cy="14" r="2" fill="#1a1a2e" />
+                          <path d="M10 17.5C10 17.5 11 18.5 12 18.5C13 18.5 14 17.5 14 17.5" stroke="#1a1a2e" strokeWidth="1.5" strokeLinecap="round" />
+                          <path d="M12 4V8" stroke="#1a1a2e" strokeWidth="2" strokeLinecap="round" />
+                          <circle cx="12" cy="3" r="2" fill="#FFD93D" stroke="#1a1a2e" strokeWidth="1.5" />
+                        </svg>
+                      </div>
+                    )}
                     <div className="message-content">
                       {message.image && (
                         <div className="message-image">
@@ -487,7 +498,16 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
                 ))}
                 {isTyping && (
                   <div className="message bot-message typing-message">
-                    <div className="message-avatar">🤖</div>
+                    <div className="message-avatar">
+                      <svg className="bot-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="4" y="8" width="16" height="12" rx="2" stroke="#1a1a2e" strokeWidth="2" fill="#4ECDC4" />
+                        <circle cx="9" cy="14" r="2" fill="#1a1a2e" />
+                        <circle cx="15" cy="14" r="2" fill="#1a1a2e" />
+                        <path d="M10 17.5C10 17.5 11 18.5 12 18.5C13 18.5 14 17.5 14 17.5" stroke="#1a1a2e" strokeWidth="1.5" strokeLinecap="round" />
+                        <path d="M12 4V8" stroke="#1a1a2e" strokeWidth="2" strokeLinecap="round" />
+                        <circle cx="12" cy="3" r="2" fill="#FFD93D" stroke="#1a1a2e" strokeWidth="1.5" />
+                      </svg>
+                    </div>
 
                     <div className="typing-indicator">
                       <div className="typing-dot"></div>
@@ -526,7 +546,12 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
               title="Upload image"
               aria-label="Upload image"
             >
-              📷
+              <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.0" id="Layer_1" width="20px" height="20px" viewBox="0 0 64 64" enable-background="new 0 0 64 64" xml:space="preserve" style={{ width: '60px', height: '20px', fill: '#666' }}>
+                <g>
+                  <path fill="#231F20" d="M60,10H49.656l-6.828-6.828C42.078,2.422,41.062,2,40,2H24c-1.062,0-2.078,0.422-2.828,1.172L14.344,10H4   c-2.211,0-4,1.789-4,4v44c0,2.211,1.789,4,4,4h56c2.211,0,4-1.789,4-4V14C64,11.789,62.211,10,60,10z M32,50   c-8.836,0-16-7.164-16-16s7.164-16,16-16s16,7.164,16,16S40.836,50,32,50z" />
+                  <circle fill="#231F20" cx="32" cy="34" r="8" />
+                </g>
+              </svg>
             </button>
             <textarea
               ref={textareaRef}
@@ -545,7 +570,7 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
           </div>
         </>
       )}
-  </div>
+    </div>
   );
 };
 

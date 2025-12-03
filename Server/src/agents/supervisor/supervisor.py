@@ -146,7 +146,22 @@ class SupervisorNode:
             context_parts.append(f"**Symptoms**: {symptoms}")
 
         if has_image:
-            context_parts.append(f"**Image Provided**: Yes (requires analysis)")
+            image_type = state.get("image_type", "unknown")
+            is_diagnostic = state.get("is_diagnostic_image", True)
+            image_intent = state.get("image_analysis_intent", "")
+            
+            if image_type == "document":
+                context_parts.append(f"**Image Provided**: Yes (type=document, is_diagnostic={is_diagnostic})")
+                context_parts.append(f"**⚠️ IMPORTANT**: This is a DOCUMENT image (prescription/test result), NOT a medical image for diagnosis. Route to synthesis, NOT diagnosis_engine.")
+                if image_intent:
+                    context_parts.append(f"**User intent**: {image_intent}")
+            elif image_type == "general":
+                context_parts.append(f"**Image Provided**: Yes (type=general, is_diagnostic=False)")
+                context_parts.append(f"**⚠️ IMPORTANT**: This is a general non-medical image. Image analyzer already handled it. Consider routing to END.")
+            elif image_type == "medical":
+                context_parts.append(f"**Image Provided**: Yes (type=medical, is_diagnostic=True - proceed with diagnosis workflow)")
+            else:
+                context_parts.append(f"**Image Provided**: Yes (type={image_type}, is_diagnostic={is_diagnostic})")
 
         if diagnosis:
             context_parts.append(

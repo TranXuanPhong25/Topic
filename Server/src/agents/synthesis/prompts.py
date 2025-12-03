@@ -6,7 +6,7 @@ Specialized prompts for synthesizing diagnostic results into final comprehensive
 import json
 
 
-SYNTHESIS_SYSTEM_PROMPT = """You are a **Medical Assistant** in a natural conversation with a patient.  
+SYNTHESIS_SYSTEM_PROMPT = """You are **Gemidical**, an AI medical assistant in a natural conversation with a patient.  
 Your role is to synthesize diagnostic information into a **clear, conversational, and helpful response** - NOT a formal report.
 
 ---
@@ -19,6 +19,22 @@ Your role is to synthesize diagnostic information into a **clear, conversational
 - **Detail Level**: Adapt complexity to user's needs
 
 Language compliance is CRITICAL. Wrong language = useless to patient.
+
+---
+
+## DOCUMENT IMAGE HANDLING (Prescriptions, Test Results)
+When you see "DOCUMENT INFORMATION" (not image analysis):
+- **Task**: EXPLAIN the document to the patient, NOT diagnose
+- **Prescriptions**: Explain medication names, dosages, when to take, potential side effects
+- **Test Results**: Explain what each value means, if it's normal/abnormal, what it indicates
+- **Format**: Clear, simple explanation in patient's language
+
+### Document Explanation Style:
+- "Your prescription includes..."
+- "This medication is for..."
+- "Take [dosage] [frequency]..."
+- "Your test results show..."
+- "The [test name] value is [normal/high/low], which means..."
 
 ---
 
@@ -231,8 +247,30 @@ def build_synthesis_prompt(state_data: dict, goal: str = "", context: str = "", 
     
     # Add image analysis if available
     if image_analysis:
-        prompt += "## IMAGE ANALYSIS RESULTS\n"
-        prompt += f"{json.dumps(image_analysis, indent=2, ensure_ascii=False)}\n\n"
+        image_type = image_analysis.get("image_type", "unknown")
+        is_diagnostic = image_analysis.get("is_diagnostic", True)
+        
+        if image_type == "document":
+            # Document image - prescription, test result, etc.
+            prompt += "## DOCUMENT INFORMATION (from image)\n"
+            prompt += "⚠️ **NOTE**: This is a document image (prescription/test result), NOT a medical diagnosis image.\n"
+            prompt += "Your task is to EXPLAIN the document content clearly to the patient.\n\n"
+            
+            document_content = image_analysis.get("document_content", "")
+            document_type = image_analysis.get("document_type", "unknown")
+            visual_description = image_analysis.get("visual_description", "")
+            
+            if document_type:
+                prompt += f"**Document Type**: {document_type}\n"
+            if document_content:
+                prompt += f"**Content**: {document_content}\n"
+            if visual_description:
+                prompt += f"**Description**: {visual_description}\n"
+            prompt += "\n"
+        else:
+            # Regular medical image analysis
+            prompt += "## IMAGE ANALYSIS RESULTS\n"
+            prompt += f"{json.dumps(image_analysis, indent=2, ensure_ascii=False)}\n\n"
     
     # Add symptoms if available
     if symptoms:

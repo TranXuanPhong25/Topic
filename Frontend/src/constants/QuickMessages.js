@@ -28,35 +28,76 @@ const quickMessages = [
 export { quickMessages };
 
 export const imageActions = [
+  // Medical/Diagnostic images
   { 
     text: '📸 Vitiligo Sample', 
     imagePath: '/src/public/12419-vitiligo.jpg',
-    message: 'Please analyze this vitiligo (bạch biến) image and provide diagnosis'
+    message: 'Please analyze this vitiligo (bạch biến) image and provide diagnosis',
+    category: 'medical'
   },
   { 
     text: '📸 Jaundice Sample', 
     imagePath: '/src/public/350--trieu-chung-vang-da-la-dau-hieu-cua-nhung-benh-gi1_41181.jpg',
-    message: 'My hand looks like this. What could be the issue?'
+    message: 'My hand looks like this. What could be the issue?',
+    category: 'medical'
   },
   { 
     text: '📸 Skin Rash', 
     imagePath: '/src/public/rash-sample.jpg',
-    message: 'I have this rash on my arm for 3 days. What could it be?'
+    message: 'I have this rash on my arm for 3 days. What could it be?',
+    category: 'medical'
   },
   { 
     text: '📸 Mole Check', 
     imagePath: '/src/public/mole-sample.jpg',
-    message: 'This mole has been changing color and size. Should I be concerned?'
+    message: 'This mole has been changing color and size. Should I be concerned?',
+    category: 'medical'
   },
   { 
     text: '📸 Acne Problem', 
     imagePath: '/src/public/acne-sample.jpg',
-    message: 'I have severe acne. What treatment do you recommend?'
+    message: 'I have severe acne. What treatment do you recommend?',
+    category: 'medical'
   },
   { 
     text: '📸 Eczema', 
     imagePath: '/src/public/eczema-sample.jpg',
-    message: 'My skin is very dry, itchy and red. Is this eczema?'
+    message: 'My skin is very dry, itchy and red. Is this eczema?',
+    category: 'medical'
+  },
+  
+  // Document images (prescriptions, test results)
+  { 
+    text: '📄 Prescription', 
+    imagePath: '/src/public/prescription-sample.jpg',
+    message: 'Can you help me understand this prescription?',
+    category: 'document'
+  },
+  { 
+    text: '📄 Test Result', 
+    imagePath: '/src/public/test-result-sample.jpg',
+    message: 'What do these test results mean?',
+    category: 'document'
+  },
+  { 
+    text: '📄 Blood Test', 
+    imagePath: '/src/public/blood-test-sample.jpg',
+    message: 'Can you explain my blood test results?',
+    category: 'document'
+  },
+  
+  // Non-medical images (to test classification)
+  { 
+    text: '🖼️ General Photo', 
+    imagePath: '/src/public/general-photo-sample.jpg',
+    message: 'What do you see in this image?',
+    category: 'general'
+  },
+  { 
+    text: '🖼️ Food Photo', 
+    imagePath: '/src/public/food-sample.jpg',
+    message: 'Is this food healthy?',
+    category: 'general'
   }
 ];
 
@@ -519,5 +560,113 @@ export const appointmentTests = [
     text: '💬 Brief', 
     message: 'Appointment Dec 15, 2pm, checkup. John Doe, 0901234789.',
     category: 'natural'
+  }
+];
+
+// Document Retrieval Tests - Test RAG pipeline for medical information
+export const documentRetrievalTests = [
+  // Disease information queries
+  { 
+    text: '📚 Tiểu đường', 
+    message: 'Bệnh tiểu đường type 2 có những triệu chứng gì và cách điều trị như thế nào?',
+    category: 'disease-info'
+  },
+  { 
+    text: '📚 Cao huyết áp', 
+    message: 'Nguyên nhân và biến chứng của bệnh cao huyết áp là gì?',
+    category: 'disease-info'
+  },
+  { 
+    text: '📚 Viêm gan B', 
+    message: 'Viêm gan B lây qua đường nào và có vaccine phòng ngừa không?',
+    category: 'disease-info'
+  },
+  { 
+    text: '📚 Hen suyễn', 
+    message: 'Cách phòng ngừa và kiểm soát cơn hen suyễn như thế nào?',
+    category: 'disease-info'
+  },
+  
+  // Treatment queries
+  { 
+    text: '💊 Điều trị eczema', 
+    message: 'Các phương pháp điều trị bệnh chàm (eczema) hiện nay là gì?',
+    category: 'treatment'
+  },
+  { 
+    text: '💊 Thuốc hạ sốt', 
+    message: 'Khi nào nên dùng paracetamol và khi nào dùng ibuprofen để hạ sốt?',
+    category: 'treatment'
+  },
+  { 
+    text: '💊 Kháng sinh', 
+    message: 'Tại sao không nên tự ý dùng kháng sinh và các tác dụng phụ của việc lạm dụng kháng sinh?',
+    category: 'treatment'
+  },
+  { 
+    text: '💊 Điều trị mụn', 
+    message: 'Các loại thuốc và phương pháp điều trị mụn trứng cá hiệu quả?',
+    category: 'treatment'
+  },
+  
+  // Symptom-based queries
+  { 
+    text: '🔍 Đau đầu kéo dài', 
+    message: 'Đau đầu kéo dài nhiều ngày có thể là dấu hiệu của bệnh gì?',
+    category: 'symptom-query'
+  },
+  { 
+    text: '🔍 Mệt mỏi kinh niên', 
+    message: 'Mệt mỏi kéo dài dù ngủ đủ giấc có thể do nguyên nhân gì?',
+    category: 'symptom-query'
+  },
+  { 
+    text: '🔍 Đau bụng dưới', 
+    message: 'Đau bụng dưới bên phải có thể là triệu chứng của những bệnh gì?',
+    category: 'symptom-query'
+  },
+  { 
+    text: '🔍 Khó thở', 
+    message: 'Khó thở khi nằm xuống là dấu hiệu của vấn đề gì về sức khỏe?',
+    category: 'symptom-query'
+  },
+  
+  // Preventive care queries
+  { 
+    text: '🛡️ Vaccine COVID', 
+    message: 'Các loại vaccine COVID-19 hiện có và hiệu quả của từng loại?',
+    category: 'prevention'
+  },
+  { 
+    text: '🛡️ Tầm soát ung thư', 
+    message: 'Nên tầm soát ung thư từ độ tuổi nào và những loại nào cần kiểm tra?',
+    category: 'prevention'
+  },
+  { 
+    text: '🛡️ Dinh dưỡng', 
+    message: 'Chế độ ăn uống phòng ngừa bệnh tim mạch như thế nào?',
+    category: 'prevention'
+  },
+  
+  // Dermatology specific (for skin image diagnosis support)
+  { 
+    text: '🩺 Bạch biến', 
+    message: 'Bệnh bạch biến (vitiligo) có chữa được không và phương pháp điều trị hiện tại?',
+    category: 'dermatology'
+  },
+  { 
+    text: '🩺 Vảy nến', 
+    message: 'Bệnh vảy nến có lây không và cách kiểm soát triệu chứng?',
+    category: 'dermatology'
+  },
+  { 
+    text: '🩺 Nấm da', 
+    message: 'Cách phân biệt các loại nấm da và phương pháp điều trị cho từng loại?',
+    category: 'dermatology'
+  },
+  { 
+    text: '🩺 Ung thư da', 
+    message: 'Dấu hiệu nhận biết nốt ruồi có khả năng là ung thư da (melanoma)?',
+    category: 'dermatology'
   }
 ];

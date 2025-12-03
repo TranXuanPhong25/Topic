@@ -88,9 +88,23 @@ class SynthesisNode:
         
         try:
             # Gather all available information
+            image_analysis_result = state.get("image_analysis_result", {})
+            
+            # Debug logging for document images
+            if image_analysis_result:
+                image_type = image_analysis_result.get("image_type", "unknown")
+                print(f"📊 Image type: {image_type}")
+                if image_type == "document":
+                    doc_content = image_analysis_result.get("document_content", "")
+                    print(f"📊 Document content length: {len(doc_content)} chars")
+                    if doc_content:
+                        print(f"📊 Document content preview: {doc_content[:200]}...")
+                    else:
+                        print("⚠️ WARNING: No document content in image_analysis_result!")
+            
             state_data = {
                 "symptoms": state.get("symptoms", ""),
-                "image_analysis_result": state.get("image_analysis_result", {}),
+                "image_analysis_result": image_analysis_result,
                 "diagnosis": state.get("diagnosis", {}),
                 "risk_assessment": state.get("risk_assessment", {}),
                 "investigation_plan": state.get("investigation_plan", []),

@@ -1,7 +1,7 @@
 {
   "name": "happy-health-clinic-frontend",
   "version": "1.0.0",
-  "description": "React frontend for Happy Health Clinic virtual assistant",
+  "description": "React frontend for Gemidical AI medical assistant",
   "main": "index.js",
   "scripts": {
     "start": "vite",

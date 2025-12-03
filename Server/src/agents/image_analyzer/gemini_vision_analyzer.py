@@ -423,3 +423,269 @@ class GeminiVisionAnalyzer:
                 "confidence": 0.0,
                 "error": str(e)
             }
+
+    def classify_image_type(
+        self, 
+        image_data: str, 
+        user_input: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Classify the type of image and determine if it's for diagnostic purposes.
+        
+        Args:
+            image_data: Base64 encoded image string
+            user_input: User's text input for context
+        
+        Returns:
+            Dictionary containing:
+            - image_type: "medical", "document", "general", "unclear"
+            - is_diagnostic: Whether the image is for medical diagnosis
+            - intent: Detected user intent for the image
+            - confidence: Classification confidence
+        """
+        try:
+            image = self._decode_base64_image(image_data)
+            
+            context_hint = f"\n**Ngữ cảnh từ người dùng:** {user_input}" if user_input else ""
+            
+            prompt = f"""Bạn là chuyên gia phân loại hình ảnh y tế. Hãy xác định loại hình ảnh.
+{context_hint}
+
+**QUAN TRỌNG - Phân loại hình ảnh thành MỘT trong các loại sau:**
+
+1. **document** - Tài liệu y tế bao gồm:
+   - Đơn thuốc (có tên thuốc, liều lượng, hướng dẫn sử dụng)
+   - Kết quả xét nghiệm (có số liệu, chỉ số, giá trị)
+   - Giấy khám bệnh, phiếu khám
+   - Hóa đơn y tế, biên lai
+   - Toa thuốc viết tay hoặc in
+   - Bất kỳ giấy tờ/văn bản nào liên quan y tế
+   - **DẤU HIỆU NHẬN BIẾT**: có chữ viết, bảng biểu, logo bệnh viện/phòng khám, format giấy tờ
+
+2. **medical** - Ảnh y tế để chẩn đoán:
+   - Ảnh da, vết thương, phát ban, mụn
+   - Vùng cơ thể bị đau, sưng, viêm
+   - Triệu chứng nhìn thấy được trên cơ thể
+   - **DẤU HIỆU NHẬN BIẾT**: ảnh chụp trực tiếp cơ thể người
+
+3. **general** - Ảnh chung không liên quan y tế:
+   - Ảnh chân dung, selfie bình thường
+   - Phong cảnh, đồ vật, thức ăn
+   - Ảnh không liên quan đến sức khỏe
+
+4. **unclear** - CHỈ dùng khi THỰC SỰ không thể xác định
+
+**⚠️ LƯU Ý QUAN TRỌNG:**
+- Nếu thấy CHỮ VIẾT hoặc FORMAT GIẤY TỜ → ưu tiên phân loại là **document**
+- Nếu người dùng hỏi về "đơn thuốc", "toa thuốc", "kết quả xét nghiệm" → phân loại là **document**
+- TRÁNH phân loại là "unclear" trừ khi thật sự không nhìn thấy gì
+
+**Trả lời theo định dạng sau (CHÍNH XÁC):**
+LOẠI: [medical/document/general/unclear]
+CHẨN_ĐOÁN: [có/không]
+Ý_ĐỊNH: [mô tả ngắn gọn mục đích của người dùng khi gửi ảnh]
+ĐỘ_TIN_CẬY: [cao/trung bình/thấp]
+
+**Phân loại:**"""
+            
+            print(f"🔍 Classifying image with user context: {user_input[:50] if user_input else 'None'}...")
+            
+            image_base64 = self._pil_image_to_base64(image)
+            message = HumanMessage(
+                content=[
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
+                ]
+            )
+            response = self.model.invoke([message])
+            result_text = response.content.strip()
+            
+            print(f"🔍 Classification raw response: {result_text[:200]}...")
+            
+            # Parse the response
+            image_type = "unclear"
+            is_diagnostic = False
+            intent = ""
+            confidence = 0.5
+            
+            lines = result_text.split("\n")
+            for line in lines:
+                line_lower = line.lower().strip()
+                if line_lower.startswith("loại:"):
+                    type_value = line.split(":", 1)[1].strip().lower()
+                    # Handle variations in response
+                    if "document" in type_value or "tài liệu" in type_value:
+                        image_type = "document"
+                    elif "medical" in type_value or "y tế" in type_value:
+                        image_type = "medical"
+                    elif "general" in type_value or "chung" in type_value:
+                        image_type = "general"
+                    elif type_value in ["medical", "document", "general", "unclear"]:
+                        image_type = type_value
+                elif line_lower.startswith("chẩn_đoán:"):
+                    diag_value = line.split(":", 1)[1].strip().lower()
+                    is_diagnostic = diag_value in ["có", "yes", "true", "1"]
+                elif line_lower.startswith("ý_định:"):
+                    intent = line.split(":", 1)[1].strip()
+                elif line_lower.startswith("độ_tin_cậy:"):
+                    conf_value = line.split(":", 1)[1].strip().lower()
+                    if conf_value == "cao" or "cao" in conf_value:
+                        confidence = 0.9
+                    elif conf_value == "trung bình" or "trung" in conf_value:
+                        confidence = 0.7
+                    else:
+                        confidence = 0.5
+            
+            # Fallback: check for document keywords in response if still unclear
+            if image_type == "unclear":
+                result_lower = result_text.lower()
+                if any(kw in result_lower for kw in ["đơn thuốc", "toa thuốc", "prescription", "kết quả xét nghiệm", "test result", "giấy khám", "phiếu khám"]):
+                    print("🔍 Fallback: Detected document keywords in response, changing type to document")
+                    image_type = "document"
+            
+            # Force correct diagnostic status based on image type
+            # Only medical images can be diagnostic
+            if image_type == "medical":
+                is_diagnostic = True
+            elif image_type in ["document", "general"]:
+                # Documents and general images are NOT for medical diagnosis
+                is_diagnostic = False
+            # For unclear, keep whatever LLM returned
+            
+            print(f"🔍 Image classification: type={image_type}, diagnostic={is_diagnostic}, confidence={confidence}")
+            
+            return {
+                "image_type": image_type,
+                "is_diagnostic": is_diagnostic,
+                "intent": intent,
+                "confidence": confidence,
+                "raw_response": result_text
+            }
+            
+        except Exception as e:
+            print(f"Image classification error: {str(e)}")
+            # Default to medical/diagnostic on error to be safe
+            return {
+                "image_type": "medical",
+                "is_diagnostic": True,
+                "intent": "Không thể xác định",
+                "confidence": 0.3,
+                "error": str(e)
+            }
+
+    def analyze_document(
+        self, 
+        image_data: str, 
+        user_input: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Analyze a document image (prescription, test result, etc.)
+        
+        Args:
+            image_data: Base64 encoded image string
+            user_input: User's text input for context
+        
+        Returns:
+            Dictionary containing document analysis results
+        """
+        try:
+            image = self._decode_base64_image(image_data)
+            
+            context_hint = f"\n**Yêu cầu từ người dùng:** {user_input}" if user_input else ""
+            
+            prompt = f"""Bạn là chuyên gia đọc và trích xuất thông tin từ tài liệu y tế. Hãy phân tích CHI TIẾT hình ảnh tài liệu này.
+{context_hint}
+
+**QUAN TRỌNG - Nhiệm vụ của bạn:**
+1. **Xác định loại tài liệu**: Đơn thuốc, kết quả xét nghiệm, giấy khám bệnh, hay loại khác?
+
+2. **Nếu là ĐƠN THUỐC - Trích xuất TỪNG THUỐC với format sau:**
+   - Tên thuốc: [tên đầy đủ]
+   - Liều lượng: [số lượng, mg/ml nếu có]
+   - Cách dùng: [ngày mấy lần, uống/bôi/tiêm...]
+   - Thời gian: [trước/sau ăn, sáng/trưa/tối]
+   - Số lượng: [bao nhiêu viên/lọ/...]
+
+3. **Nếu là KẾT QUẢ XÉT NGHIỆM - Trích xuất từng chỉ số:**
+   - Tên xét nghiệm: [tên]
+   - Kết quả: [giá trị]
+   - Đơn vị: [đơn vị đo]
+   - Phạm vi bình thường: [nếu có]
+
+4. **Thông tin bổ sung:**
+   - Tên bệnh nhân (nếu có)
+   - Tên bác sĩ/cơ sở y tế (nếu có)
+   - Ngày kê đơn/xét nghiệm (nếu có)
+   - Chẩn đoán/ghi chú (nếu có)
+
+**Lưu ý:**
+- Trích xuất TẤT CẢ thông tin có thể đọc được
+- Ghi rõ "[không đọc được]" cho phần mờ/không rõ
+- KHÔNG đưa ra lời khuyên y tế hay chẩn đoán
+- Viết CHI TIẾT và CỤ THỂ
+
+**Phân tích tài liệu:**"""
+            
+            image_base64 = self._pil_image_to_base64(image)
+            
+            print(f"📄 Sending document to LLM for analysis...")
+            print(f"📄 Image base64 length: {len(image_base64)} chars")
+            
+            message = HumanMessage(
+                content=[
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
+                ]
+            )
+            
+            try:
+                response = self.model.invoke([message])
+                print(f"📄 Raw response type: {type(response)}")
+                print(f"📄 Raw response: {response}")
+                
+                if hasattr(response, 'content'):
+                    content = response.content.strip() if response.content else ""
+                else:
+                    content = str(response).strip()
+                    
+            except Exception as invoke_error:
+                print(f"❌ LLM invoke error: {invoke_error}")
+                import traceback
+                traceback.print_exc()
+                content = ""
+            
+            print(f"📄 Document analysis response length: {len(content)} chars")
+            if content:
+                print(f"📄 Document analysis preview: {content[:300]}...")
+            else:
+                print("⚠️ Document analysis returned empty content!")
+            
+            # Try to detect document type from response
+            doc_type = "unknown"
+            content_lower = content.lower()
+            if "đơn thuốc" in content_lower or "prescription" in content_lower:
+                doc_type = "prescription"
+            elif "xét nghiệm" in content_lower or "kết quả" in content_lower or "test" in content_lower:
+                doc_type = "test_result"
+            elif "giấy khám" in content_lower or "phiếu khám" in content_lower:
+                doc_type = "medical_record"
+            elif "hóa đơn" in content_lower:
+                doc_type = "invoice"
+            
+            return {
+                "description": "Phân tích tài liệu y tế",
+                "content": content,
+                "type": doc_type,
+                "confidence": 0.8 if len(content) > 100 else 0.5,
+                "error": None
+            }
+            
+        except Exception as e:
+            print(f"Document analysis error: {str(e)}")
+            return {
+                "description": "",
+                "content": "",
+                "type": "unknown",
+                "confidence": 0.0,
+                "error": str(e)
+            }
