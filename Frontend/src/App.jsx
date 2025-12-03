@@ -1,10 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
 import Header from './components/Header';
 import WelcomeCard from './components/WelcomeCard';
-import QuickActions from './components/QuickActions';
 import ChatWidget from './components/ChatWidget';
-import Footer from './components/Footer';
 import Booking from './components/Booking';
 import FloatingBookingIcon from './components/FloatingBookingIcon';
 
@@ -15,6 +13,20 @@ const App = () => {
   });
 
   const chatWidgetRef = useRef();
+
+  // Lock body scroll when chat widget is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   const handleQuickMessage = (message, imageData = null) => {
     if (chatWidgetRef.current && chatWidgetRef.current.sendMessage) {
@@ -27,8 +39,7 @@ const App = () => {
       <Header />
       <main className="main-content">
         <div className="container">
-          <WelcomeCard />
-          <QuickActions onQuickMessage={handleQuickMessage} setIsOpen={setIsOpen} />
+          <WelcomeCard setIsOpen={setIsOpen} />
           <ChatWidget
             onQuickMessage={handleQuickMessage}
             ref={chatWidgetRef}
@@ -38,7 +49,6 @@ const App = () => {
           />
         </div>
       </main>
-      <Footer />
       <FloatingBookingIcon bookingComponent={<Booking />} />
     </div>
   );

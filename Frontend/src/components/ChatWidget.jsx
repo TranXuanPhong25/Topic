@@ -340,11 +340,14 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
   return (
     <div className={`chat-widget ${isOpen ? '' : 'minimized'}`} id="chatWidget">
       <div className={`chat-header ${isOpen ? '' : 'minimized'}`}>
-        <div className="chat-header-content">
+        <div className="chat-header-content ">
           <span className="status-indicator"></span>
           <span className="chat-title">Chat with Assistant</span>
         </div>
-        <button className="minimize-btn" onClick={toggleChat} aria-label="Minimize chat">−</button>
+        {
+          isOpen ?         <button className={`minimize-btn`}  aria-label="Minimize chat" onClick={toggleChat}>−</button>
+           : <span className="chat-icon" onClick={toggleChat}>💬</span>
+        }
       </div>
 
       {isOpen && (
@@ -542,14 +545,7 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
           </div>
         </>
       )}
-
-      {/* Chat Toggle Button (for mobile) */}
-      {!isOpen && (
-        <button className="chat-toggle-btn" onClick={toggleChat} aria-label="Open chat">
-          💬
-        </button>
-      )}
-    </div>
+  </div>
   );
 };
 
