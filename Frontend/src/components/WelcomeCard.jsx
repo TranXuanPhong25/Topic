@@ -1,3 +1,4 @@
+import { BotMessageSquare } from "lucide-react";
 import React from "react";
 
 const WelcomeCard = ({ setIsOpen }) => {
@@ -62,7 +63,7 @@ const WelcomeCard = ({ setIsOpen }) => {
             schedule appointments, and access reliable health information.
           </p>
           <button className="cta-button neu-button" onClick={() => setIsOpen(true)}>
-              <span className="chat-icon" >💬 Make Your first question</span>
+              <span className="chat-icon" >Make Your first question <BotMessageSquare size={34}/> </span>
           </button>
         </div>
         <div className="hero-shapes">

@@ -9,7 +9,7 @@ import FloatingBookingIcon from './components/FloatingBookingIcon';
 const App = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [sessionId] = useState(() => {
-    return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    return 'session_' + Date.now() + '_' + Math.random().toString(36);
   });
 
   const chatWidgetRef = useRef();

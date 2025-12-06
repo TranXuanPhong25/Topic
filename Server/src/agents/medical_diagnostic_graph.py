@@ -162,21 +162,25 @@ class MedicalDiagnosticGraph:
         initial_state: GraphState = {
             "input": user_input,
             "chat_history": chat_history or [],
-            "symptom_extractor_input" : "",
+            
             "image": image,
             "image_type": None,
             "is_diagnostic_image": None,
             "image_analysis_intent": None,
+            "symptom_extractor_input" : "",
             "symptoms": {},
+            
             "image_analysis_result": {},
+            
             "diagnosis": {},
-            "risk_assessment": {},
             "information_needed": None,
+            "risk_assessment": {},
             # Revision tracking
             "revision_count": 0,
             "max_revisions": 2,  # Default: allow up to 2 revisions
             "revision_requirements": None,
             "detailed_review": None,
+            
             "investigation_plan": [],
             "retrieved_documents": [],
             "rag_answer": "",
@@ -187,8 +191,11 @@ class MedicalDiagnosticGraph:
             "retriever_query": None,
             "retriever_call_counts": {},
             "max_retriever_calls_per_agent": 2,
+            
             "recommendation": "",
+            
             "final_response": "",
+            "intermediate_messages": [],  # Track intermediate messages for streaming
             "plan": [],
             "current_step": 0,
             "next_step": None,

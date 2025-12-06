@@ -43,11 +43,6 @@ async def ma_chat(request: ChatRequest):
             return {
                 "session_id": session_id,
                 "response": "Hello! I'm your virtual assistant. How can I help you today (appointments, symptoms, FAQs)?",
-                "analysis": None,
-                "diagnosis": None,
-                "risk_assessment": None,
-                "investigation_plan": None,
-                "recommendation": None,
                 "timestamp": datetime.now().isoformat()
             }
          # Convert chat_history to dict format if provided
@@ -60,7 +55,6 @@ async def ma_chat(request: ChatRequest):
                 }
                 for msg in request.chat_history[-20:]
             ]
-            print(f"📝 Chat history: {len(chat_history)} messages")
         
         # Run multi-agent diagnostic pipeline (single shared instance)
         result = await diagnostic_graph.analyze(user_input=request.message, chat_history=chat_history)
