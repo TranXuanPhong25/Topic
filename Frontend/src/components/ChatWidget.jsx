@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { MemoizedMarkdown } from './MemoizedMarkdown';
 import { quickMessages, imageActions, symptomTests, appointmentTests } from '../constants/QuickMessages';
-
+import { Bot, BotMessageSquare } from 'lucide-react'
 const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
   const [messages, setMessages] = useState(() => {
     const savedMessages = sessionStorage.getItem(`chat_messages`);
@@ -369,7 +369,9 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
         </div>
         {
           isOpen ? <button className={`minimize-btn`} aria-label="Minimize chat" onClick={toggleChat}>−</button>
-            : <span className="chat-icon" onClick={toggleChat}>💬</span>
+            : <span className="chat-iconn" onClick={toggleChat}>
+                  <BotMessageSquare />
+            </span>
         }
       </div>
 
@@ -498,14 +500,7 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
                   <div key={message.id} className={`message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}>
                     {message.sender === 'bot' && (
                       <div className="message-avatar">
-                        <svg className="bot-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <rect x="4" y="8" width="16" height="12" rx="2" stroke="#1a1a2e" strokeWidth="2" fill="#4ECDC4" />
-                          <circle cx="9" cy="14" r="2" fill="#1a1a2e" />
-                          <circle cx="15" cy="14" r="2" fill="#1a1a2e" />
-                          <path d="M10 17.5C10 17.5 11 18.5 12 18.5C13 18.5 14 17.5 14 17.5" stroke="#1a1a2e" strokeWidth="1.5" strokeLinecap="round" />
-                          <path d="M12 4V8" stroke="#1a1a2e" strokeWidth="2" strokeLinecap="round" />
-                          <circle cx="12" cy="3" r="2" fill="#FFD93D" stroke="#1a1a2e" strokeWidth="1.5" />
-                        </svg>
+                        <Bot/>
                       </div>
                     )}
                     <div className="message-content">
