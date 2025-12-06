@@ -3,26 +3,49 @@ import { MemoizedMarkdown } from './MemoizedMarkdown';
 import { quickMessages, imageActions, symptomTests, appointmentTests } from '../constants/QuickMessages';
 
 const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      content: 'Hello! I\'m Gemidical, your AI medical assistant. How can I help you today?',
-      sender: 'bot',
-      time: 'Just now'
+  const [messages, setMessages] = useState(() => {
+    const savedMessages = sessionStorage.getItem(`chat_messages`);
+    if (savedMessages) {
+      return JSON.parse(savedMessages);
     }
-  ]);
+
+    return [
+      {
+        id: 1,
+        content: 'Hello! I\'m Gemidical, your AI medical assistant. How can I help you today?',
+        sender: 'bot',
+        time: 'Just now'
+      }
+    ];
+  });
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  // Chat history in Gemini API format
-  const [chatHistory, setChatHistory] = useState([]);
+
+  const [chatHistory, setChatHistory] = useState(() => {
+    const savedHistory = sessionStorage.getItem(`chat_history`);
+    return savedHistory ? JSON.parse(savedHistory) : [];
+  });
+
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [isResizing, setIsResizing] = useState(false);
 
   const API_BASE_URL = 'http://localhost:8000';
+
+  useEffect(() => {
+    console.log('ChatWidget mounted');
+  }, []);
+
+  useEffect(() => {
+    if (sessionId) {
+      sessionStorage.setItem(`chat_messages`, JSON.stringify(messages));
+      sessionStorage.setItem(`chat_history`, JSON.stringify(chatHistory));
+    }
+    console.log('Chat history updated:', chatHistory);
+  }, [messages, chatHistory, sessionId]);
 
   const handleMouseDown = () => {
     setIsResizing(true);
@@ -546,7 +569,7 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
               title="Upload image"
               aria-label="Upload image"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.0" id="Layer_1" width="20px" height="20px" viewBox="0 0 64 64" enable-background="new 0 0 64 64" xml:space="preserve" style={{ width: '60px', height: '20px', fill: '#666' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" version="1.0" id="Layer_1" width="20px" height="20px" viewBox="0 0 64 64" enableBackground="new 0 0 64 64" xmlSpace="preserve" style={{ width: '60px', height: '20px', fill: '#666' }}>
                 <g>
                   <path fill="#231F20" d="M60,10H49.656l-6.828-6.828C42.078,2.422,41.062,2,40,2H24c-1.062,0-2.078,0.422-2.828,1.172L14.344,10H4   c-2.211,0-4,1.789-4,4v44c0,2.211,1.789,4,4,4h56c2.211,0,4-1.789,4-4V14C64,11.789,62.211,10,60,10z M32,50   c-8.836,0-16-7.164-16-16s7.164-16,16-16s16,7.164,16,16S40.836,50,32,50z" />
                   <circle fill="#231F20" cx="32" cy="34" r="8" />
