@@ -1,6 +1,6 @@
 from . import chat_router
 from src.agents.medical_diagnostic_graph import MedicalDiagnosticGraph
-from src.middleware.guardrails import apply_guardrails, refusal_message
+from src.middleware.guardrails import apply_guardrails, refusal_message, refusal_message_llm
 import uuid
 from datetime import datetime
 from fastapi import HTTPException
@@ -64,7 +64,7 @@ async def ma_chat(request: ChatRequest):
             session_id = request.session_id or str(uuid.uuid4())
             return {
                 "session_id": session_id,
-                "response": refusal_message(action, text=request.message),
+                "response": refusal_message_llm(action, text=request.message),
                 "analysis": None,
                 "diagnosis": None,
                 "risk_assessment": None,
@@ -121,7 +121,7 @@ def ma_chat_with_image(request: ImageChatRequest):
             session_id = request.session_id or str(uuid.uuid4())
             return {
                 "session_id": session_id,
-                "response": refusal_message(action, text=request.message),
+                "response": refusal_message_llm(action, text=request.message),
                 "analysis": None,
                 "diagnosis": None,
                 "risk_assessment": None,

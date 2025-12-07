@@ -66,68 +66,6 @@ def detect_self_harm(text: str) -> bool:
 def detect_emergency(text: str) -> bool:
     return _contains_any(text, EMERGENCY_KEYWORDS)
 
-REFUSALS = {
-    'non_medical': (
-        "I can only help with medical or health-related questions. "
-        "Please ask about symptoms, general health guidance, or clinic services."
-    ),
-    'prescription': (
-        "I can't provide prescriptions, specific medication dosages, or treatment schedules. "
-        "Please consult a licensed healthcare professional for medication guidance."
-    ),
-    'self_harm': (
-        "If you're thinking about self-harm or suicide, please seek immediate help. "
-        "Contact local emergency services or a trusted professional right now. You matter. "
-        "If you're in immediate danger, call your local emergency number (for example, 115 in Vietnam)."
-    ),
-    'emergency': (
-        "Your description may indicate a medical emergency. Please seek immediate medical attention or call emergency services."
-    ),
-}
-
-# Localized refusal messages (English default + Vietnamese)
-REFUSALS_L10N: Dict[str, Dict[str, str]] = {
-    'non_medical': {
-        'en': (
-            "I can only help with medical or health-related questions. "
-            "Please ask about symptoms, general health guidance, or clinic services."
-        ),
-        'vi': (
-            "Mình chỉ hỗ trợ các câu hỏi liên quan đến y tế/sức khỏe. "
-            "Vui lòng hỏi về triệu chứng, hướng dẫn sức khỏe chung, hoặc dịch vụ của phòng khám."
-        ),
-    },
-    'prescription': {
-        'en': (
-            "I can't provide prescriptions, specific medication dosages, or treatment schedules. "
-            "Please consult a licensed healthcare professional for medication guidance."
-        ),
-        'vi': (
-            "Mình không thể kê đơn, cung cấp liều lượng thuốc hay lịch điều trị. "
-            "Vui lòng trao đổi với bác sĩ/nhân viên y tế được cấp phép để được hướng dẫn về thuốc."
-        ),
-    },
-    'self_harm': {
-        'en': (
-            "If you're thinking about self-harm or suicide, please seek immediate help. "
-            "Contact local emergency services or a trusted professional right now. You matter. "
-            "If you're in immediate danger, call your local emergency number (for example, 115 in Vietnam)."
-        ),
-        'vi': (
-            "Nếu bạn đang nghĩ đến việc tự hại hoặc tự tử, hãy tìm sự giúp đỡ ngay lập tức. "
-            "Hãy liên hệ dịch vụ khẩn cấp hoặc một chuyên gia đáng tin cậy ngay bây giờ. Bạn rất quan trọng. "
-            "Nếu bạn đang trong tình huống nguy cấp, hãy gọi số khẩn cấp địa phương (ví dụ: 115 tại Việt Nam)."
-        ),
-    },
-    'emergency': {
-        'en': (
-            "Your description may indicate a medical emergency. Please seek immediate medical attention or call emergency services."
-        ),
-        'vi': (
-            "Mô tả của bạn có thể cho thấy tình huống khẩn cấp. Hãy tìm trợ giúp y tế ngay hoặc gọi dịch vụ khẩn cấp."
-        ),
-    },
-}
 
 _VI_CHARS = set("ăâêôơưđáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ")
 _VI_WORDS = {"tôi", "muốn", "không", "có", "bác", "sĩ", "thuốc", "đau", "ngực", "khó", "thở", "vẫn", "tự", "sát"}
@@ -163,14 +101,93 @@ def apply_guardrails(text: str) -> Tuple[bool, Optional[str], str, Dict[str, any
     is_safe = action is None
     return is_safe, action, sanitized, meta
 
-def refusal_message(action: str, text: Optional[str] = None, lang: Optional[str] = None) -> str:
-    # Prefer new localized set; fall back to legacy defaults
-    chosen_lang = lang or (detect_language(text) if text else 'en')
-    if action in REFUSALS_L10N:
-        return REFUSALS_L10N[action].get(chosen_lang, REFUSALS_L10N[action]['en'])
-    return REFUSALS.get(action, "I'm unable to process this request.")
+
+def build_refusal_prompt(action: str, text: Optional[str] = None, lang: Optional[str] = None) -> str:
+    """
+    Build a localized, safety-focused prompt for an LLM to generate a refusal/assistive message.
+
+    The LLM should:
+    - Respond in the requested language (default English, supports Vietnamese 'vi')
+    - Avoid prescribing medications, dosages, or treatment schedules
+    - Provide crisis guidance for self-harm; emergency guidance for emergencies
+    - Be empathetic, concise, and include clear next steps
+    - Not add medical diagnoses; encourage seeking professional help
+
+    Returns the prompt string. Use with an LLM: model.generate_content(prompt).
+    """
+    chosen_lang = lang or (detect_language(text or "") if text is not None else 'en')
+    user_text = (text or "").strip()
+
+    # Language headers
+    if chosen_lang == 'vi':
+        header = (
+            "Bạn là trợ lý phòng khám. Hãy trả lời bằng tiếng Việt, ngắn gọn, đồng cảm, an toàn.\n"
+            "KHÔNG kê đơn, KHÔNG nêu liều lượng thuốc, KHÔNG chẩn đoán.\n"
+        )
+        emergency_line = "Nếu nguy cấp, hãy gọi số khẩn cấp địa phương (ví dụ: 115 tại Việt Nam)."
+        general_next = "Khuyến khích liên hệ bác sĩ hoặc cơ sở y tế để được hướng dẫn phù hợp."
+    else:
+        header = (
+            "You are a clinic assistant. Reply in English, concise, empathetic, and safe.\n"
+            "Do NOT prescribe, mention dosages, or provide treatment schedules.\n"
+        )
+        emergency_line = "If in immediate danger, call your local emergency number (e.g., 115 in Vietnam)."
+        general_next = "Encourage contacting a licensed healthcare professional or local clinic for guidance."
+
+    # Action-specific guidance
+    if action == 'self_harm':
+        guidance = (
+            "Focus on crisis support: advise seeking immediate help, contacting emergency services, "
+            "hotlines, or trusted professionals. Reinforce that the user matters. "
+            f"{emergency_line}"
+        )
+    elif action == 'emergency':
+        guidance = (
+            "Indicate potential medical emergency: advise immediate medical attention or calling emergency services. "
+            "Avoid diagnosis; encourage seeking urgent professional care."
+        )
+    elif action == 'prescription':
+        guidance = (
+            "Politely refuse to provide prescriptions, dosages, or treatment schedules. "
+            f"{general_next}"
+        )
+    elif action == 'non_medical':
+        guidance = (
+            "Explain you can only help with medical or health-related questions. "
+            "Invite the user to ask about symptoms, general health guidance, or clinic services."
+        )
+    else:
+        guidance = (
+            "Provide a safe, general message aligned with clinic assistant role. "
+            f"{general_next}"
+        )
+
+    prompt = (
+        f"{header}\n\n"
+        f"User message:\n{user_text}\n\n"
+        f"Your task:\n{guidance}\n"
+        "Respond in 1–3 sentences, no lists, no medical dosages."
+    )
+
+    return prompt
+
+def refusal_message_llm(model, action: str, text: Optional[str] = None, lang: Optional[str] = None) -> str:
+    """
+    Generate a refusal/assistive message via an LLM using the built prompt.
+    Falls back to static localized message if generation fails.
+    """
+    try:
+        prompt = build_refusal_prompt(action, text=text, lang=lang)
+        resp = model.generate_content(prompt)
+        msg = getattr(resp, 'text', '') or ''
+        # Basic sanitation: trim and fallback if empty
+        msg = msg.strip()
+        if msg:
+            return msg
+    except Exception:
+        pass
 
 __all__ = [
-    'apply_guardrails', 'refusal_message', 'scrub_pii', 'detect_emergency',
-    'detect_self_harm', 'detect_prescription_request', 'classify_intent', 'detect_language'
+    'apply_guardrails', 'refusal_message', 'build_refusal_prompt', 'refusal_message_llm',
+    'scrub_pii', 'detect_emergency', 'detect_self_harm', 'detect_prescription_request', 'classify_intent', 'detect_language'
 ]
