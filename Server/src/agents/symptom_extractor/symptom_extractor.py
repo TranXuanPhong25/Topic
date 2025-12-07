@@ -1,13 +1,12 @@
-"""
-Symptom Extractor Agent Node
+"""Symptom Extractor Agent Node
 Extracts and structures symptoms from patient conversations
 """
 import json
-import time
 from typing import Dict, Any, List, Optional
 from src.models.state import GraphState
+from src.configs.agent_config import SystemMessage, HumanMessage
 from .config import get_symptom_extractor_model
-from .prompts import build_symptom_extraction_prompt
+from .prompts import build_symptom_extraction_prompt, SYMPTOM_EXTRACTOR_SYSTEM_PROMPT
 
 
 class SymptomExtractorNode:
@@ -32,6 +31,57 @@ class SymptomExtractorNode:
         self.llm = llm_model or get_symptom_extractor_model()
         print("✅ SymptomExtractorNode initialized")
     
+    def _get_current_goal(self, state: GraphState) -> str:
+        """
+        Extract the goal for the current step from the plan
+        
+        Args:
+            state: Current graph state
+            
+        Returns:
+            Goal string or empty string if not found
+        """
+        plan = state.get("plan", [])
+        current_step_index = state.get("current_step", 0)
+        
+        if not plan or current_step_index >= len(plan):
+            return ""
+        
+        current_plan_step = plan[current_step_index]
+        goal = current_plan_step.get("goal", "")
+        
+        if goal:
+            print(f"🎯 Current Goal: {goal}")
+        
+        return goal
+    
+    def _get_current_context(self, state: GraphState) -> Dict[str, str]:
+        """
+        Extract context and user_context for the current step from the plan
+        
+        Args:
+            state: Current graph state
+            
+        Returns:
+            Dict with 'context' and 'user_context' keys (empty strings if not found)
+        """
+        plan = state.get("plan", [])
+        current_step_index = state.get("current_step", 0)
+        
+        if not plan or current_step_index >= len(plan):
+            return {"context": "", "user_context": ""}
+        
+        current_plan_step = plan[current_step_index]
+        context = current_plan_step.get("context", "")
+        user_context = current_plan_step.get("user_context", "")
+        
+        if context:
+            print(f"📝 Context: {context[:100]}...")
+        if user_context:
+            print(f"👤 User Context: {user_context[:100]}...")
+        
+        return {"context": context, "user_context": user_context}
+    
     def __call__(self, state: GraphState) -> GraphState:
         """
         Extract symptoms from user input and conversation history
@@ -44,7 +94,15 @@ class SymptomExtractorNode:
         """
         print("\n🩺 === SYMPTOM EXTRACTION STARTED ===")
         
-        user_input = state.get("input", "")
+        # Check if supervisor specified specific input for extraction
+        symptom_extractor_input = state.get("symptom_extractor_input")
+        if symptom_extractor_input:
+            user_input = symptom_extractor_input
+            print(f"📝 Using supervisor-specified input: {user_input[:100]}...")
+        else:
+            user_input = state.get("input", "")
+            print(f"📝 Using default user input: {user_input[:100]}...")
+        
         conversation_history = self._build_conversation_history(state)
         
         if not user_input:
@@ -56,13 +114,27 @@ class SymptomExtractorNode:
             return state
         
         try:
-            # Build extraction prompt
-            prompt = build_symptom_extraction_prompt(user_input, conversation_history)
+            # Get goal and context from current plan step
+            goal = self._get_current_goal(state)
+            context_data = self._get_current_context(state)
+            
+            # Build extraction prompt with goal and context
+            prompt = build_symptom_extraction_prompt(
+                user_input, 
+                conversation_history, 
+                goal, 
+                context_data.get("context", ""), 
+                context_data.get("user_context", "")
+            )
             
             # Generate symptom extraction
-            response = self._generate_with_retries(prompt)
+            messages = [
+                SystemMessage(content=SYMPTOM_EXTRACTOR_SYSTEM_PROMPT),
+                HumanMessage(content=prompt)
+            ]
+            response = self.llm.invoke(messages)
             # Parse JSON response
-            symptom_data = self._parse_response(response.text)
+            symptom_data = self._parse_response(response.content)
             
             # # Log extracted information
             self._log_extraction_results(symptom_data)
@@ -194,26 +266,14 @@ class SymptomExtractorNode:
         """
         try:
             prompt = build_symptom_extraction_prompt(text)
-            response = self._generate_with_retries(prompt)
-            return self._parse_response(response.text)
+            messages = [
+                SystemMessage(content=SYMPTOM_EXTRACTOR_SYSTEM_PROMPT),
+                HumanMessage(content=prompt)
+            ]
+            response = self.llm.invoke(messages)
+            return self._parse_response(response.content)
         except Exception as e:
             return {
                 "error": str(e),
                 "extracted_symptoms": []
             }
-
-    def _generate_with_retries(self, prompt: str, retries: int = 3, base_delay: float = 0.75):
-        last_err = None
-        for attempt in range(retries):
-            try:
-                return self.llm.generate_content(prompt)
-            except Exception as e:
-                msg = str(e).lower()
-                if "429" in msg or "rate" in msg or "quota" in msg or "exhaust" in msg:
-                    delay = base_delay * (2 ** attempt)
-                    print(f"⏳ SymptomExtractor retry {attempt+1}/{retries} after {delay:.2f}s due to rate limit...")
-                    time.sleep(delay)
-                    last_err = e
-                    continue
-                raise
-        raise last_err if last_err else RuntimeError("LLM generate failed without exception")

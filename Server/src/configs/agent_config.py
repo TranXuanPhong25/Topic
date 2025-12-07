@@ -4,6 +4,8 @@ This module provides shared settings for model names, API keys, and generation p
 """
 import os
 from dotenv import load_dotenv
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, BaseMessage
 
 # Load environment variables
 load_dotenv()
@@ -25,10 +27,10 @@ if not GOOGLE_API_KEY:
 # ============================================================================
 
 # Primary model for text-based reasoning and conversation
-GEMINI_MODEL_NAME = "gemini-2.5-flash-lite"
+GEMINI_MODEL_NAME = "gemini-2.5-flash"
 
 # Vision model for image analysis (can be same as primary)
-GEMINI_VISION_MODEL_NAME = "gemini-2.5-flash-lite"
+GEMINI_VISION_MODEL_NAME = "gemini-2.5-flash"
 
 # ============================================================================
 # GENERATION PARAMETERS
@@ -210,4 +212,11 @@ __all__ = [
     
     # Helpers
     "get_model_config",
+    
+    # LangChain imports
+    "ChatGoogleGenerativeAI",
+    "SystemMessage",
+    "HumanMessage",
+    "AIMessage",
+    "BaseMessage",
 ]

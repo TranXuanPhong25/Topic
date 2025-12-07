@@ -1,24 +1,104 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { MemoizedMarkdown } from './MemoizedMarkdown';
-
-const ChatWidget = ({ sessionId }, ref) => {
-  const [isOpen, setIsOpen] = useState(true);
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      content: 'Hello! I\'m your virtual assistant for Happy Health Clinic. How can I help you today?',
-      sender: 'bot',
-      time: 'Just now'
+import { quickMessages, imageActions, symptomTests, appointmentTests } from '../constants/QuickMessages';
+import { Bot, BotMessageSquare } from 'lucide-react'
+const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
+  const [messages, setMessages] = useState(() => {
+    const savedMessages = sessionStorage.getItem(`chat_messages`);
+    if (savedMessages) {
+      return JSON.parse(savedMessages);
     }
-  ]);
+
+    return [
+      {
+        id: 1,
+        content: 'Hello! I\'m Gemidical, your AI medical assistant. How can I help you today?',
+        sender: 'bot',
+        time: 'Just now'
+      }
+    ];
+  });
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+
+  const [chatHistory, setChatHistory] = useState(() => {
+    const savedHistory = sessionStorage.getItem(`chat_history`);
+    return savedHistory ? JSON.parse(savedHistory) : [];
+  });
+
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+  const [sidebarWidth, setSidebarWidth] = useState(280);
+  const [isResizing, setIsResizing] = useState(false);
 
   const API_BASE_URL = 'http://localhost:8000';
+
+  useEffect(() => {
+    console.log('ChatWidget mounted');
+  }, []);
+
+  useEffect(() => {
+    if (sessionId) {
+      sessionStorage.setItem(`chat_messages`, JSON.stringify(messages));
+      sessionStorage.setItem(`chat_history`, JSON.stringify(chatHistory));
+    }
+    console.log('Chat history updated:', chatHistory);
+  }, [messages, chatHistory, sessionId]);
+
+  const handleMouseDown = () => {
+    setIsResizing(true);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (isResizing) {
+        const newWidth = Math.min(Math.max(e.clientX, 200), 400);
+        setSidebarWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing]);
+
+  const handleClickQuickMessage = (message) => {
+    if (onQuickMessage) {
+      onQuickMessage(message);
+    }
+  };
+
+  const handleImageClick = async (imageAction) => {
+    try {
+      // Fetch the image file
+      const response = await fetch(imageAction.imagePath);
+      const blob = await response.blob();
+
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onload = () => {
+        const imageData = reader.result;
+        // Send image with message to parent
+        if (onQuickMessage) {
+          onQuickMessage(imageAction.message, imageData);
+        }
+      };
+      reader.readAsDataURL(blob);
+    } catch (error) {
+      console.error('Error loading image:', error);
+      alert('Failed to load image. Please try again.');
+    }
+  };
 
   // Expose sendMessage function to parent component
   useImperativeHandle(ref, () => ({
@@ -49,14 +129,25 @@ const ChatWidget = ({ sessionId }, ref) => {
     return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
-  const addMessage = (content, sender) => {
+  const addMessage = (content, sender, imageData = null) => {
     const newMessage = {
       id: Date.now(),
       content,
       sender,
-      time: getCurrentTime()
+      time: getCurrentTime(),
+      image: imageData  // Store image data with message
     };
     setMessages(prev => [...prev, newMessage]);
+
+    // Update chat history in Gemini format
+    const role = sender === 'user' ? 'user' : 'model';
+    setChatHistory(prev => [
+      ...prev,
+      {
+        role: role,
+        parts: [{ text: content }]
+      }
+    ]);
   };
 
   const setTypingIndicator = (show) => {
@@ -65,14 +156,16 @@ const ChatWidget = ({ sessionId }, ref) => {
 
   const sendMessageToAPI = async (message) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/ma/chat`, {
+      // Use SSE streaming endpoint
+      const response = await fetch(`${API_BASE_URL}/ma/chat/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           message: message,
-          session_id: sessionId
+          session_id: sessionId,
+          chat_history: chatHistory.length > 0 ? chatHistory : null
         })
       });
 
@@ -80,8 +173,42 @@ const ChatWidget = ({ sessionId }, ref) => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      return data.response;
+      // Read SSE stream
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let finalResponse = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+
+              if (data.type === 'intermediate') {
+                // Show intermediate message immediately
+                setIsTyping(false);
+                addMessage(data.content, 'bot');
+                setIsTyping(true);
+              } else if (data.type === 'final') {
+                finalResponse = data.content;
+              } else if (data.type === 'error') {
+                throw new Error(data.content);
+              }
+            } catch (parseError) {
+              // Ignore parse errors for incomplete chunks
+              console.debug('SSE parse skip:', parseError);
+            }
+          }
+        }
+      }
+
+      return finalResponse;
     } catch (error) {
       console.error('Error sending message:', error);
       throw error;
@@ -98,7 +225,8 @@ const ChatWidget = ({ sessionId }, ref) => {
         body: JSON.stringify({
           message: message || 'Vui lòng phân tích ảnh này',
           image: imageData,
-          session_id: sessionId
+          session_id: sessionId,
+          chat_history: chatHistory.length > 0 ? chatHistory : null
         })
       });
       if (!response.ok) {
@@ -128,7 +256,7 @@ const ChatWidget = ({ sessionId }, ref) => {
 
     // Add user message to chat
     if (hasImage) {
-      addMessage(`📸 [Image] ${message || 'Analyzing image...'}`, 'user');
+      addMessage(`📸 ${message || 'Analyzing image...'}`, 'user', imageToSend);
     } else {
       addMessage(message, 'user');
     }
@@ -234,38 +362,181 @@ const ChatWidget = ({ sessionId }, ref) => {
 
   return (
     <div className={`chat-widget ${isOpen ? '' : 'minimized'}`} id="chatWidget">
-      <div className="chat-header">
-        <div className="chat-header-content">
+      <div className={`chat-header ${isOpen ? '' : 'minimized'}`}>
+        <div className="chat-header-content ">
           <span className="status-indicator"></span>
-          <span className="chat-title">Chat with Assistant</span>
+          <span className="chat-title">Chat with Gemidical</span>
         </div>
-        <button className="minimize-btn" onClick={toggleChat} aria-label="Minimize chat">−</button>
+        {
+          isOpen ? <button className={`minimize-btn`} aria-label="Minimize chat" onClick={toggleChat}>−</button>
+            : <span className="chat-iconn" onClick={toggleChat}>
+                  <BotMessageSquare />
+            </span>
+        }
       </div>
 
       {isOpen && (
         <>
-          <div className="chat-messages" id="chatMessages">
-            {messages.map((message) => (
-              <div key={message.id} className={`message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}>
-                <div className="message-avatar">{message.sender === 'user' ? '👤' : '🤖'}</div>
-                <div className="message-content">
-                  <MemoizedMarkdown content={message.content} id={`msg-${message.id}`} />
-                  <span className="message-time">{message.time}</span>
-                </div>
+          <div className="chat-body">
+            <div
+              className="chat-sidebar"
+              style={{ width: sidebarWidth }}
+            >
+              <div className="sidebar-header-sticky">
+                <div className="sidebar-header">Quick Questions</div>
               </div>
-            ))}
-            {isTyping && (
-              <div className="message bot-message typing-message">
-                <div className="message-avatar">🤖</div>
+              <div className="sidebar-content">
+                {/* Quick Messages */}
+                <div className="sidebar-section">
+                  <div className="sidebar-section-title">Quick Messages</div>
+                  <ul className="sidebar-list">
+                    {quickMessages.map((item, index) => (
+                      <li
+                        key={index}
+                        onClick={() => handleClickQuickMessage(item.message)}
+                        className="sidebar-item"
+                      >
+                        {item.text}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
-                <div className="typing-indicator">
-                  <div className="typing-dot"></div>
-                  <div className="typing-dot"></div>
-                  <div className="typing-dot"></div>
+                {/* Appointment Tests */}
+                <div className="sidebar-section">
+                  <div className="sidebar-section-title" style={{ color: '#0066cc' }}>📅 Appointment Tests ({appointmentTests.length})</div>
+
+                  {/* Group by category */}
+                  {Object.entries(
+                    appointmentTests.reduce((acc, item) => {
+                      const category = item.category || 'other';
+                      if (!acc[category]) acc[category] = [];
+                      acc[category].push(item);
+                      return acc;
+                    }, {})
+                  ).map(([category, items]) => (
+                    <div key={`appt-${category}`} className="symptom-category">
+                      <div className="category-label" style={{ color: '#0066cc' }}>
+                        📅 {category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' ')} ({items.length})
+                      </div>
+                      <ul className="sidebar-list">
+                        {items.map((item, index) => (
+                          <li
+                            key={`appt-${category}-${index}`}
+                            onClick={() => handleClickQuickMessage(item.message)}
+                            className="sidebar-item"
+                            style={{
+                              borderLeft: '3px solid #0066cc',
+                              paddingLeft: '8px'
+                            }}
+                          >
+                            {item.text}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Symptom Tests */}
+                <div className="sidebar-section">
+                  <div className="sidebar-section-title">Symptom Tests ({symptomTests.length})</div>
+
+                  {/* Group by category */}
+                  {Object.entries(
+                    symptomTests.reduce((acc, item) => {
+                      const category = item.category || 'other';
+                      if (!acc[category]) acc[category] = [];
+                      acc[category].push(item);
+                      return acc;
+                    }, {})
+                  ).map(([category, items]) => (
+                    <div key={category} className="symptom-category">
+                      <div className="category-label">
+                        {category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' ')} ({items.length})
+                      </div>
+                      <ul className="sidebar-list">
+                        {items.map((item, index) => (
+                          <li
+                            key={`symptom-${category}-${index}`}
+                            onClick={() => handleClickQuickMessage(item.message)}
+                            className="sidebar-item"
+                          >
+                            {item.text}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Image Actions */}
+                <div className="sidebar-section">
+                  <div className="sidebar-section-title">Image Actions</div>
+                  <ul className="sidebar-list">
+                    {imageActions.map((item, index) => (
+                      <li
+                        key={`img-${index}`}
+                        onClick={() => handleImageClick(item)}
+                        className="sidebar-item"
+                      >
+                        {item.text}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
-            )}
-            <div ref={messagesEndRef} />
+
+            </div>
+
+            <div
+              className="sidebar-resizer"
+              onMouseDown={handleMouseDown}
+            ></div>
+
+            <div className="chat-main">
+              <div className="chat-messages" id="chatMessages">
+                {messages.map((message) => (
+                  <div key={message.id} className={`message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}>
+                    {message.sender === 'bot' && (
+                      <div className="message-avatar">
+                        <Bot/>
+                      </div>
+                    )}
+                    <div className="message-content">
+                      {message.image && (
+                        <div className="message-image">
+                          <img src={message.image} alt="User uploaded" style={{ maxWidth: '200px', borderRadius: '8px', marginBottom: '8px' }} />
+                        </div>
+                      )}
+                      <MemoizedMarkdown content={message.content} id={`msg-${message.id}`} />
+                      <span className="message-time">{message.time}</span>
+                    </div>
+                  </div>
+                ))}
+                {isTyping && (
+                  <div className="message bot-message typing-message">
+                    <div className="message-avatar">
+                      <svg className="bot-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="4" y="8" width="16" height="12" rx="2" stroke="#1a1a2e" strokeWidth="2" fill="#4ECDC4" />
+                        <circle cx="9" cy="14" r="2" fill="#1a1a2e" />
+                        <circle cx="15" cy="14" r="2" fill="#1a1a2e" />
+                        <path d="M10 17.5C10 17.5 11 18.5 12 18.5C13 18.5 14 17.5 14 17.5" stroke="#1a1a2e" strokeWidth="1.5" strokeLinecap="round" />
+                        <path d="M12 4V8" stroke="#1a1a2e" strokeWidth="2" strokeLinecap="round" />
+                        <circle cx="12" cy="3" r="2" fill="#FFD93D" stroke="#1a1a2e" strokeWidth="1.5" />
+                      </svg>
+                    </div>
+
+                    <div className="typing-indicator">
+                      <div className="typing-dot"></div>
+                      <div className="typing-dot"></div>
+                      <div className="typing-dot"></div>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
           </div>
 
           {/* Image Preview Area */}
@@ -293,7 +564,12 @@ const ChatWidget = ({ sessionId }, ref) => {
               title="Upload image"
               aria-label="Upload image"
             >
-              📷
+              <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" version="1.0" id="Layer_1" width="20px" height="20px" viewBox="0 0 64 64" enableBackground="new 0 0 64 64" xmlSpace="preserve" style={{ width: '60px', height: '20px', fill: '#666' }}>
+                <g>
+                  <path fill="#231F20" d="M60,10H49.656l-6.828-6.828C42.078,2.422,41.062,2,40,2H24c-1.062,0-2.078,0.422-2.828,1.172L14.344,10H4   c-2.211,0-4,1.789-4,4v44c0,2.211,1.789,4,4,4h56c2.211,0,4-1.789,4-4V14C64,11.789,62.211,10,60,10z M32,50   c-8.836,0-16-7.164-16-16s7.164-16,16-16s16,7.164,16,16S40.836,50,32,50z" />
+                  <circle fill="#231F20" cx="32" cy="34" r="8" />
+                </g>
+              </svg>
             </button>
             <textarea
               ref={textareaRef}
@@ -311,13 +587,6 @@ const ChatWidget = ({ sessionId }, ref) => {
             </button>
           </div>
         </>
-      )}
-
-      {/* Chat Toggle Button (for mobile) */}
-      {!isOpen && (
-        <button className="chat-toggle-btn" onClick={toggleChat} aria-label="Open chat">
-          💬
-        </button>
       )}
     </div>
   );

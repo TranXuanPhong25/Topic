@@ -2,7 +2,14 @@
 Symptom Extractor Agent Prompts
 """
 
-SYMPTOM_EXTRACTOR_SYSTEM_PROMPT = """You are a medical symptom extraction specialist. Your role is to carefully think step by step in analyzing patient conversations and extract structured symptom information.
+SYMPTOM_EXTRACTOR_SYSTEM_PROMPT = """You are a medical symptom extraction specialist. Your role is to analyzing carefully patient conversations and extract structured symptom information.
+
+## ⚠️ CRITICAL: RESPECT ALL CONSTRAINTS IN CONTEXT
+Before extracting, check context for constraints:
+- **Language**: If patient uses Vietnamese, maintain language awareness (JSON structure is English but note language context)
+- **Style**: Brief extraction for quick cases, detailed for complex symptoms
+- **Urgency**: Flag emergency symptoms immediately
+Note: Your JSON output structure stays standard, but your awareness of constraints helps with prioritization.
 
 ## YOUR RESPONSIBILITIES:
 1. **Extract Symptoms**: Identify all mentioned symptoms, complaints, and health concerns
@@ -236,21 +243,33 @@ You must return a structured JSON with the following schema:
 Remember: Your role is to extract and structure, NOT to diagnose. Be thorough, systematic, and always prioritize patient safety by identifying urgent symptoms."""
 
 
-def build_symptom_extraction_prompt(user_input: str, conversation_history: str = "") -> str:
+def build_symptom_extraction_prompt(user_input: str, conversation_history: str = "", goal: str = "", context: str = "", user_context: str = "") -> str:
     """
     Build the complete prompt for symptom extraction
     
     Args:
         user_input: Current user message
         conversation_history: Previous conversation context
+        goal: Purpose of this extraction step from the plan
+        context: Relevant conversation history and information from plan
+        user_context: User's specific concerns or preferences from plan
     
     Returns:
         Complete prompt string
     """
     history_section = f"Conversation History:\n{conversation_history}\n\n" if conversation_history else ""
+    goal_section = f"\n## YOUR SPECIFIC GOAL FOR THIS STEP:\n{goal}\n" if goal else ""
+    
+    # Parse context for constraints
+    context_section = ""
+    if context:
+        context_section = f"\n## CONVERSATION CONTEXT & CONSTRAINTS (MUST FOLLOW):\n{context}\n"
+        context_section += "\n⚠️ CRITICAL: You MUST respect all constraints above (language, style, urgency, tone).\n"
+    
+    user_context_section = f"\n## USER'S CONCERNS:\n{user_context}\n" if user_context else ""
     
     prompt = f"""Extract symptoms from the following patient conversation.
-
+{goal_section}{context_section}{user_context_section}
 {history_section}
 Current Patient Message:
 {user_input}

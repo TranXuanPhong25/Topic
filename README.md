@@ -2,8 +2,9 @@
 **Make sure set the google api key in .env at root**
 ```bash
 cd Server
+docker-compose up -d
 python -m venv .venv
-.\.venv/bin/activate
+.\.venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn src.main:app
 ```

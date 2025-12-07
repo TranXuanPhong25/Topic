@@ -1,12 +1,10 @@
 """Appointment scheduling handler with validation"""
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
-import re
+from bson import ObjectId
 
-from src.knowledges.database import get_db_context
-from src.models.appointment import Appointment
+from src.database import get_collection
 from src.configs.config import CLINIC_CONFIG
-from src.todo_manager import todo_manager
 
 
 class AppointmentHandler:
@@ -20,6 +18,7 @@ class AppointmentHandler:
         self.clinic_hours_end = "17:00"
         self.appointment_duration = CLINIC_CONFIG.get("appointment_duration", 30)
         self.providers = CLINIC_CONFIG.get("providers", [])
+        self.collection = get_collection("appointments")
     
     def validate_date(self, date_str: str) -> tuple[bool, str]:
         """
@@ -90,7 +89,7 @@ class AppointmentHandler:
             return False, f"Provider not found. Available: {', '.join(self.providers)}"
         return True, ""
     
-    def check_availability(self, date: str, time: str, provider: Optional[str] = None) -> tuple[bool, str]:
+    async def check_availability(self, date: str, time: str, provider: Optional[str] = None) -> tuple[bool, str]:
         """
         Check if appointment slot is available.
         
@@ -102,27 +101,26 @@ class AppointmentHandler:
         Returns:
             (is_available, message)
         """
-        with get_db_context() as db:
-            query = db.query(Appointment).filter_by(
-                date=date,
-                time=time,
-                status="scheduled"
-            )
-            
+        query = {
+            "date": date,
+            "time": time,
+            "status": "scheduled"
+        }
+        
+        if provider:
+            query["provider"] = provider
+        
+        existing = await self.collection.find_one(query)
+        
+        if existing:
             if provider:
-                query = query.filter_by(provider=provider)
-            
-            existing = query.first()
-            
-            if existing:
-                if provider:
-                    return False, f"{provider} is not available at that time"
-                else:
-                    return False, "That time slot is already booked"
-            
-            return True, ""
+                return False, f"{provider} is not available at that time"
+            else:
+                return False, "That time slot is already booked"
+        
+        return True, ""
     
-    def schedule_appointment(
+    async def schedule_appointment(
         self,
         patient_name: str,
         date: str,
@@ -163,51 +161,51 @@ class AppointmentHandler:
             if not valid:
                 return {"success": False, "error": error}
         
-        # Check availability
-        available, error = self.check_availability(date, time, provider)
+        # Check availability (async)
+        available, error = await self.check_availability(date, time, provider)
         if not available:
             return {"success": False, "error": error}
         
-        # Create appointment
+        # Create appointment document
         try:
-            with get_db_context() as db:
-                appointment = Appointment(
-                    patient_name=patient_name,
-                    date=date,
-                    time=time,
-                    reason=reason,
-                    provider=provider or self.providers[0],  # Default to first provider
-                    phone=phone,
-                    email=email,
-                    status="scheduled"
-                )
-                
-                db.add(appointment)
-                db.commit()
-                db.refresh(appointment)
-
-                # Auto-create reminder todo for receptionist
-                reminder_result = todo_manager.create_appointment_reminder(
-                    appointment_id=appointment.id, # type: ignore
-                    appointment_date=date,
-                    appointment_time=time,
-                    patient_name=patient_name,
-                )
-                
-                message = f"Appointment scheduled for {patient_name} on {date} at {time}"
-                if reminder_result["success"]:
-                    message += " (Reminder created for staff)"
-                
-                return {
-                    "success": True,
-                    "appointment": appointment.to_dict(),
-                    "message": message,
-                }
+            now = datetime.utcnow()
+            appointment_doc = {
+                "patient_name": patient_name,
+                "date": date,
+                "time": time,
+                "reason": reason,
+                "provider": provider or self.providers[0],  # Default to first provider
+                "phone": phone or "",
+                "email": email or "",
+                "status": "scheduled",
+                "notes": "",
+                "created_at": now,
+                "updated_at": now
+            }
+            
+            result = await self.collection.insert_one(appointment_doc)
+            appointment_id = str(result.inserted_id)
+            
+            message = f"Appointment scheduled for {patient_name} on {date} at {time}"
+            
+            # Prepare appointment data for response
+            appointment_data = {
+                "id": appointment_id,
+                **appointment_doc,
+                "created_at": appointment_doc["created_at"].isoformat(),
+                "updated_at": appointment_doc["updated_at"].isoformat()
+            }
+            
+            return {
+                "success": True,
+                "appointment": appointment_data,
+                "message": message,
+            }
                 
         except Exception as e:
             return {"success": False, "error": f"Database error: {str(e)}"}
     
-    def get_appointments(
+    async def get_appointments(
         self,
         patient_name: Optional[str] = None,
         date: Optional[str] = None,
@@ -224,51 +222,77 @@ class AppointmentHandler:
         Returns:
             List of appointment dictionaries
         """
-        with get_db_context() as db:
-            query = db.query(Appointment)
-            
-            if patient_name:
-                query = query.filter(Appointment.patient_name.ilike(f"%{patient_name}%"))
-            if date:
-                query = query.filter_by(date=date)
-            if status:
-                query = query.filter_by(status=status)
-            
-            appointments = query.order_by(Appointment.date, Appointment.time).all()
-            return [apt.to_dict() for apt in appointments]
+        query: Dict[str, Any] = {}
+        
+        if patient_name:
+            query["patient_name"] = {"$regex": patient_name, "$options": "i"}
+        if date:
+            query["date"] = date
+        if status:
+            query["status"] = status
+        
+        cursor = self.collection.find(query).sort([("date", 1), ("time", 1)])
+        appointments = []
+        
+        async for doc in cursor:
+            appointment_data = {
+                "id": str(doc["_id"]),
+                "patient_name": doc["patient_name"],
+                "date": doc["date"],
+                "time": doc["time"],
+                "reason": doc.get("reason", ""),
+                "provider": doc.get("provider", ""),
+                "status": doc["status"],
+                "phone": doc.get("phone", ""),
+                "email": doc.get("email", ""),
+                "notes": doc.get("notes", ""),
+                "created_at": doc["created_at"].isoformat(),
+                "updated_at": doc["updated_at"].isoformat(),
+            }
+            appointments.append(appointment_data)
+        
+        return appointments
     
-    def cancel_appointment(self, appointment_id: int) -> Dict[str, Any]:
+    async def cancel_appointment(self, appointment_id: str) -> Dict[str, Any]:
         """
         Cancel an appointment.
         
         Args:
-            appointment_id: ID of appointment to cancel
+            appointment_id: ID of appointment to cancel (MongoDB ObjectId as string)
             
         Returns:
             Success status and message
         """
         try:
-            with get_db_context() as db:
-                appointment = db.query(Appointment).filter_by(id=appointment_id).first()
-                
-                if not appointment:
-                    return {"success": False, "error": "Appointment not found"}
-                
-                if appointment.status == "cancelled": # type: ignore
-                    return {"success": False, "error": "Appointment already cancelled"}
-                
-                appointment.status = "cancelled" # pyright: ignore[reportAttributeAccessIssue]
-                db.commit()
-                
-                return {
-                    "success": True,
-                    "message": f"Appointment for {appointment.patient_name} cancelled"
-                }
+            # Convert string ID to ObjectId
+            try:
+                obj_id = ObjectId(appointment_id)
+            except:
+                return {"success": False, "error": "Invalid appointment ID"}
+            
+            appointment = await self.collection.find_one({"_id": obj_id})
+            
+            if not appointment:
+                return {"success": False, "error": "Appointment not found"}
+            
+            if appointment.get("status") == "cancelled":
+                return {"success": False, "error": "Appointment already cancelled"}
+            
+            # Update status to cancelled
+            await self.collection.update_one(
+                {"_id": obj_id},
+                {"$set": {"status": "cancelled", "updated_at": datetime.utcnow()}}
+            )
+            
+            return {
+                "success": True,
+                "message": f"Appointment for {appointment['patient_name']} cancelled"
+            }
                 
         except Exception as e:
             return {"success": False, "error": f"Error cancelling appointment: {str(e)}"}
     
-    def get_available_slots(self, date: str, provider: Optional[str] = None) -> List[str]:
+    async def get_available_slots(self, date: str, provider: Optional[str] = None) -> List[str]:
         """
         Get available appointment slots for a given date.
         
@@ -290,17 +314,19 @@ class AppointmentHandler:
             current += timedelta(minutes=15)
         
         # Get booked slots
-        with get_db_context() as db:
-            query = db.query(Appointment).filter_by(
-                date=date,
-                status="scheduled"
-            )
-            
-            if provider:
-                query = query.filter_by(provider=provider)
-            
-            booked = query.all()
-            booked_times = {apt.time for apt in booked}
+        query = {
+            "date": date,
+            "status": "scheduled"
+        }
+        
+        if provider:
+            query["provider"] = provider
+        
+        cursor = self.collection.find(query)
+        booked_times = set()
+        
+        async for doc in cursor:
+            booked_times.add(doc["time"])
         
         # Return available slots
         return [slot for slot in all_slots if slot not in booked_times]
@@ -347,13 +373,13 @@ SCHEDULE_APPOINTMENT_DECLARATION = {
 }
 
 
-def schedule_appointment_function(patient_name: str, date: str, time: str, reason: str,
+async def schedule_appointment_function(patient_name: str, date: str, time: str, reason: str,
                                   phone: str = "", provider: str = "") -> str:
     """
     Function that Gemini can call to schedule appointments.
     Returns a string response to be shown to the user.
     """
-    result = appointment_handler.schedule_appointment(
+    result = await appointment_handler.schedule_appointment(
         patient_name=patient_name,
         date=date,
         time=time,

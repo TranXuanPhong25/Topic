@@ -1,59 +1,55 @@
-import operator
 from typing import Literal, Optional, Dict, TypedDict, Any, List, Annotated, TypeAlias
-# ============================================================================
-# GRAPH STATE DEFINITION (As specified in requirements)
-# ============================================================================
-Intention: TypeAlias = Literal[
-    "normal_conversation",
-    "needs_examiner",
-    "image_and_symptoms",
-    "symptoms_only",
-    "not_classified",
-]
+
 class GraphState(TypedDict):
-    """
-    Comprehensive state for the medical AI system graph.
-    All data flows through this shared state according to the diagram.
-    """
-    # Input and routing
     input: str  # Initial user query
-    intent: Intention # normal_conversation, needs_examiner, symptoms_only, image_and_symptoms
+    chat_history: Optional[List[Dict[str, Any]]]  # Chat history in Gemini format
     
     # Image and symptoms
     image: Optional[str]  # Base64 encoded image
+    image_type: Optional[str]  # Type of image: "medical", "document", "general", "unclear"
+    is_diagnostic_image: Optional[bool]  # Whether the image is for diagnostic purposes
+    image_analysis_intent: Optional[str]  # User's intent for the image (extracted by analyzer)
+    symptom_extractor_input: Optional[str]  # Specific input for symptom extraction (decided by supervisor)
     symptoms: Dict[str, Any]  # Extracted symptoms from input
     
     # Vision analysis
-    image_analysis_result: Dict[str, Any]  # Output from ImageAnalyzerF
-    
-    # Combined analysis
-    combined_analysis: str  # Merged symptoms and image analysis
-    
+    image_analysis_result: Dict[str, Any]  # Output from ImageAnalyzer
+        
     # Diagnosis and risk
     diagnosis: Dict[str, Any]  # Output from DiagnosisEngine
-    risk_assessment: Dict[str, Any]  # Output from RiskAssessor
     information_needed: Optional[Dict[str, Any]]  # Missing info for accurate diagnosis
+    risk_assessment: Dict[str, Any]  # Risk details from DiagnosisEngine
+    
+    # Revision tracking (to prevent infinite loops)
+    revision_count: int  # Number of revision attempts for current diagnosis
+    max_revisions: int  # Maximum allowed revisions (default: 2)
+    revision_requirements: Optional[str]  # Feedback from DiagnosisCritic
+    detailed_review: Optional[str]  # Detailed review from DiagnosisCritic
     
     # Investigation and retrieval
     investigation_plan: List[Dict[str, Any]]  # Generated list of investigations
     retrieved_documents: List[Dict[str, Any]]  # Context from Vector DB and KG
+    rag_answer: Optional[str]  # RAG-generated answer from document retriever
+    rag_english_query: Optional[str]  # English query used for RAG retrieval
+    document_synthesis: Optional[Dict[str, Any]]  # LLM synthesis of retrieved documents
+    
+    # Document retrieval tracking
+    retriever_caller: Optional[str]  # Agent that called document_retriever (to return after retrieval)
+    retriever_query: Optional[str]  # Query sent to document_retriever
+    retriever_call_counts: Optional[Dict[str, int]]  # Track how many times each agent called retriever
+    max_retriever_calls_per_agent: int  # Maximum retriever calls per agent (default: 2)
     
     # Recommendations
     recommendation: str  # Final actionable advice
-    
-    # Conversation and appointment
-    conversation_output: str  # Result from ConversationAgent
-    appointment_details: Dict[str, Any]  # Result from AppointmentScheduler
-    
+        
     # Final output
     final_response: str  # Message to be sent to user
     
-    # Logging and metadata
-    messages: Annotated[List[str], operator.add]  # Append-only log
-    metadata: Dict[str, Any]  # Additional context
-
+    # Streaming support
+    intermediate_messages: Optional[List[str]]  # Intermediate messages for streaming (e.g., "checking availability...")
+    
     plan: List[Dict[str, Any]]  # Added for plan storage
     current_step: int  # Added for tracking current step in the plan
     next_step: Optional[str]  # Added for next step identification
 
-
+    

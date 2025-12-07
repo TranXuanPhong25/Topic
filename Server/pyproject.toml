@@ -1,0 +1,35 @@
+[project]
+name = "server"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = "==3.11.13"
+dependencies = [
+    "black>=23.0.0",
+    "fastapi[standard]>=0.104.0",
+    "grandalf>=0.8",
+    "httpx>=0.25.0",
+    "huggingface-hub>=0.20.0",
+    "jsonschema>=4.25.0",
+    "pillow>=10.0.0",
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "python-dateutil>=2.8.0",
+    "python-dotenv>=1.0.0",
+    "ruff>=0.1.0",
+    "torch>=2.2.0",
+    "transformers>=4.40.0",
+    "uvicorn[standard]>=0.24.0",
+    "pinecone>=7.0.1",
+    "langgraph>=1.0.1",
+    "langchain-core==1.1.0",
+    "langchain-community>=0.3.16",
+    "langchain==1.0.0",
+    "langchain-pinecone>=0.2.13",
+    "langchain-google-genai==3.0.3",
+    "flashrank>=0.2.10",
+    "openpyxl>=3.1.5",
+    "bson>=0.5.10",
+    "motor>=3.7.1",
+    "kaggle>=1.8.2",
+]

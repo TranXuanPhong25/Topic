@@ -6,12 +6,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 CLINIC_CONFIG = {
-    "name": "Happy Health Clinic",
+    "name": "Gemidical",
     "hours": "Mon-Fri 9AM-5PM, Sat 9AM-12PM",
-    "phone": "(555) 123-4567",
-    "address": "123 Main Street, Anytown, USA",
+    "phone": "19001836",
+    "address": "120 Yên Lãng, Kiến An, Nhật Bản",
     "appointment_duration": 30,  # minutes
-    "providers": ["Dr. Smith", "Dr. Johnson", "Dr. Williams"],
+    "providers": ["Dr. Phong", "Dr. Đông", "Dr. Mạnh", "Dr. Phước", "Dr. Quang"],
 }
-# Database Configuration
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./clinic.db")

@@ -1,10 +1,7 @@
-"""
-ConversationAgent Node: Handles normal conversations using clinic information and FAQs.
-"""
+"""ConversationAgent Node: Handles normal conversations using clinic information and FAQs."""
 from typing import TYPE_CHECKING
-import time
-from .prompts import build_conversation_prompt
-
+from .prompts import build_conversation_prompt, CONVERSATION_SYSTEM_PROMPT
+from ..utils import build_messages_with_history
 if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
 
@@ -18,6 +15,57 @@ class ConversationAgentNode:
     def __init__(self, gemini_model, knowledge_base):
         self.gemini_model = gemini_model
         self.knowledge_base = knowledge_base
+    
+    def _get_current_goal(self, state: "GraphState") -> str:
+        """
+        Extract the goal for the current step from the plan
+        
+        Args:
+            state: Current graph state
+            
+        Returns:
+            Goal string or empty string if not found
+        """
+        plan = state.get("plan", [])
+        current_step_index = state.get("current_step", 0)
+        
+        if not plan or current_step_index >= len(plan):
+            return ""
+        
+        current_plan_step = plan[current_step_index]
+        goal = current_plan_step.get("goal", "")
+        
+        if goal:
+            print(f"🎯 Current Goal: {goal}")
+        
+        return goal
+    
+    def _get_current_context(self, state: "GraphState") -> dict:
+        """
+        Extract context and user_context for the current step from the plan
+        
+        Args:
+            state: Current graph state
+            
+        Returns:
+            Dict with 'context' and 'user_context' keys (empty strings if not found)
+        """
+        plan = state.get("plan", [])
+        current_step_index = state.get("current_step", 0)
+        
+        if not plan or current_step_index >= len(plan):
+            return {"context": "", "user_context": ""}
+        
+        current_plan_step = plan[current_step_index]
+        context = current_plan_step.get("context", "")
+        user_context = current_plan_step.get("user_context", "")
+        
+        if context:
+            print(f"📝 Context: {context[:100]}...")
+        if user_context:
+            print(f"👤 User Context: {user_context[:100]}...")
+        
+        return {"context": context, "user_context": user_context}
     
     def __call__(self, state: "GraphState") -> "GraphState":
         print("💬 ConversationAgent: Handling conversation...")
@@ -41,45 +89,37 @@ class ConversationAgentNode:
             
             knowledge_base_info = "\n\n".join(kb_info_parts)
             
+            # Get goal and context from current plan step
+            goal = self._get_current_goal(state)
+            context_data = self._get_current_context(state)
+            
             # Build prompt using optimized template
             conversation_prompt = build_conversation_prompt(
                 user_input=user_input,
-                knowledge_base_info=knowledge_base_info
+                knowledge_base_info=knowledge_base_info,
+                goal=goal,
+                context=context_data.get("context", ""),
+                user_context=context_data.get("user_context", "")
             )
             
-            # Use Gemini to generate response with simple backoff on rate limits
-            response = self._generate_with_retries(conversation_prompt)
-            conversation_output = response.text.strip()
+            # Build messages with chat history for full context
+            messages = build_messages_with_history(
+                system_prompt=CONVERSATION_SYSTEM_PROMPT,
+                current_prompt=conversation_prompt,
+                chat_history=state.get("chat_history", [])
+            )
             
-            state["conversation_output"] = conversation_output
+            # Use Gemini to generate response
+            response = self.gemini_model.invoke(messages)
+            conversation_output = response.content.strip()
+            
             state["final_response"] = conversation_output
-            state["messages"].append("✅ ConversationAgent: Response generated")
             state["current_step"] +=1
 
             print(f"Conversation response: {conversation_output[:100]}...")
             
         except Exception as e:
             print(f"ConversationAgent error: {str(e)}")
-            state["conversation_output"] = "Xin lỗi, tôi đang gặp sự cố. Vui lòng gọi phòng khám để được hỗ trợ."
-            state["final_response"] = state["conversation_output"]
-            state["messages"].append(f"❌ ConversationAgent: Error - {str(e)}")
+            state["final_response"] = "Xin lỗi, tôi đang gặp sự cố. Vui lòng gọi phòng khám để được hỗ trợ."
         
         return state
-
-    def _generate_with_retries(self, prompt: str, retries: int = 3, base_delay: float = 0.75):
-        last_err = None
-        for attempt in range(retries):
-            try:
-                return self.gemini_model.generate_content(prompt)
-            except Exception as e:
-                msg = str(e).lower()
-                # naive detection of rate limiting or quota issues
-                if "429" in msg or "rate" in msg or "quota" in msg or "exhaust" in msg:
-                    delay = base_delay * (2 ** attempt)
-                    print(f"⏳ ConversationAgent retry {attempt+1}/{retries} after {delay:.2f}s due to rate limit...")
-                    time.sleep(delay)
-                    last_err = e
-                    continue
-                raise
-        # If all retries failed
-        raise last_err if last_err else RuntimeError("LLM generate failed without exception")

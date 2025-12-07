@@ -5,8 +5,9 @@ Synthesizes all diagnostic results into comprehensive final report
 import json
 from typing import Dict, Any
 from src.models.state import GraphState
+from src.configs.agent_config import SystemMessage, HumanMessage
 from .config import get_synthesis_model
-from .prompts import build_synthesis_prompt
+from .prompts import build_synthesis_prompt, SYNTHESIS_SYSTEM_PROMPT
 
 
 class SynthesisNode:
@@ -31,27 +32,103 @@ class SynthesisNode:
         self.llm = llm_model or get_synthesis_model()
         print("✅ SynthesisNode initialized")
     
+    def _get_current_goal(self, state: GraphState) -> str:
+        """
+        Extract the goal for the current step from the plan
+        
+        Args:
+            state: Current graph state
+            
+        Returns:
+            Goal string or empty string if not found
+        """
+        plan = state.get("plan", [])
+        current_step_index = state.get("current_step", 0)
+        
+        if not plan or current_step_index >= len(plan):
+            return ""
+        
+        current_plan_step = plan[current_step_index]
+        goal = current_plan_step.get("goal", "")
+        
+        if goal:
+            print(f"🎯 Current Goal: {goal}")
+        
+        return goal
+    
+    def _get_current_context(self, state: GraphState) -> Dict[str, str]:
+        """
+        Extract context and user_context for the current step from the plan
+        
+        Args:
+            state: Current graph state
+            
+        Returns:
+            Dict with 'context' and 'user_context' keys (empty strings if not found)
+        """
+        plan = state.get("plan", [])
+        current_step_index = state.get("current_step", 0)
+        
+        if not plan or current_step_index >= len(plan):
+            return {"context": "", "user_context": ""}
+        
+        current_plan_step = plan[current_step_index]
+        context = current_plan_step.get("context", "")
+        user_context = current_plan_step.get("user_context", "")
+        
+        if context:
+            print(f"📝 Context: {context[:100]}...")
+        if user_context:
+            print(f"👤 User Context: {user_context[:100]}...")
+        
+        return {"context": context, "user_context": user_context}
+    
     def __call__(self, state: GraphState) -> GraphState:
         print("\n📊 ============= SYNTHESIS STARTED ===========")
         
         try:
             # Gather all available information
+            image_analysis_result = state.get("image_analysis_result", {})
+            
+            # Debug logging for document images
+            if image_analysis_result:
+                image_type = image_analysis_result.get("image_type", "unknown")
+                print(f"📊 Image type: {image_type}")
+                if image_type == "document":
+                    doc_content = image_analysis_result.get("document_content", "")
+                    print(f"📊 Document content length: {len(doc_content)} chars")
+                    if doc_content:
+                        print(f"📊 Document content preview: {doc_content[:200]}...")
+                    else:
+                        print("⚠️ WARNING: No document content in image_analysis_result!")
+            
             state_data = {
                 "symptoms": state.get("symptoms", ""),
-                "image_analysis_result": state.get("image_analysis_result", {}),
-                "combined_analysis": state.get("combined_analysis", ""),
+                "image_analysis_result": image_analysis_result,
                 "diagnosis": state.get("diagnosis", {}),
                 "risk_assessment": state.get("risk_assessment", {}),
                 "investigation_plan": state.get("investigation_plan", []),
                 "recommendation": state.get("recommendation", ""),
-                "intent": state.get("intent", ""),
             }
             
+            # Get goal and context from current plan step
+            goal = self._get_current_goal(state)
+            context_data = self._get_current_context(state)
+            
             # Build synthesis prompt
-            synthesis_prompt = build_synthesis_prompt(state_data)
+            synthesis_prompt = build_synthesis_prompt(
+                state_data,
+                goal=goal,
+                context=context_data.get("context", ""),
+                user_context=context_data.get("user_context", "")
+            )
             # Generate synthesis
-            response = self.llm.generate_content(synthesis_prompt)
-            final_report = response.text.strip()
+            messages = [
+                SystemMessage(content=SYNTHESIS_SYSTEM_PROMPT),
+                HumanMessage(content=synthesis_prompt)
+            ]
+            response = self.llm.invoke(messages)
+            final_report = response.content.strip()
             
             # Log report sections
             self._log_synthesis_results(final_report)
@@ -59,25 +136,15 @@ class SynthesisNode:
             # Store in state
             state["final_response"] = final_report
 
-            # Add metadata
-            if "metadata" not in state:
-                state["metadata"] = {}
-            
-            state["metadata"]["synthesis_completed"] = True
-            state["metadata"]["report_length"] = len(final_report)
-            
             # Check for emergency indicators in report
             if "🚨" in final_report or "URGENT" in final_report.upper():
-                state["metadata"]["emergency_detected"] = True
                 print("🚨 EMERGENCY INDICATORS DETECTED IN FINAL REPORT")
             state["current_step"] += 1
-            state["messages"].append("✅ Synthesis: Comprehensive report generated")
 
         except Exception as e:
             print(f"❌ Error during synthesis: {e}")
             # Fallback to basic response
             state["final_response"] = self._create_fallback_response(state)
-            state["messages"].append(f"❌ Synthesis: Error - {str(e)}, using fallback")
         
         print("📊 =========== SYNTHESIS ENDED ============\n")
         return state
@@ -171,18 +238,14 @@ class SynthesisNode:
         return response
     
     def synthesize_directly(self, state_data: Dict[str, Any]) -> str:
-        """
-        Direct synthesis without state management (for testing/utilities)
-        
-        Args:
-            state_data: Dictionary with diagnostic information
-            
-        Returns:
-            Synthesized report
-        """
         try:
-            prompt = build_synthesis_prompt(state_data)
-            response = self.llm.generate_content(prompt)
-            return response.text.strip()
+            # No plan context available in direct synthesis
+            prompt = build_synthesis_prompt(state_data, goal="", context="", user_context="")
+            messages = [
+                SystemMessage(content=SYNTHESIS_SYSTEM_PROMPT),
+                HumanMessage(content=prompt)
+            ]
+            response = self.llm.invoke(messages)
+            return response.content.strip()
         except Exception as e:
             return f"Error in synthesis: {str(e)}"
