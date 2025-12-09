@@ -23,10 +23,10 @@ class DiagnosisModelSingleton:
             cls._instance = ChatGoogleGenerativeAI(
                 model=GEMINI_MODEL_NAME,
                 google_api_key=GOOGLE_API_KEY,
-                temperature=0.3,  # Conservative for medical diagnosis
+                temperature=0.24,  # Conservative for medical diagnosis
                 top_p=0.9,
                 top_k=40,
-                max_tokens=2048,
+                max_tokens=3048,
             )
             print(f"✅ Diagnosis model initialized: {GEMINI_MODEL_NAME}")
         return cls._instance

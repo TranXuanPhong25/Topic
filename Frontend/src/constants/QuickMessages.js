@@ -133,11 +133,14 @@ export const symptomTests = [
     message: 'I have excessive thirst, frequent urination, and unexplained weight loss. Could this be diabetes?',
     category: 'common'
   },
-  
-  // Emergency symptoms
   { 
     text: '🚨 Severe Chest Pain', 
     message: 'Sudden severe chest pain radiating to left arm, sweating, difficulty breathing. Male 55 years old.',
+    category: 'emergency'
+  },
+  {
+    text: '🆘 Tôi bị đau ngực dữ dội và khó thở',
+    message: 'Tôi bị đau ngực dữ dội và khó thở',
     category: 'emergency'
   },
   { 
