@@ -119,23 +119,14 @@ class DiagnosisEngineNode:
                 context=context_data.get("context", ""),
                 user_context=context_data.get("user_context", "")
             )
+            
+            # Call LLM for diagnosis (single call)
             messages = [
                 SystemMessage(content=COMPACT_DIAGNOSIS_PROMPT),
                 HumanMessage(content=diagnosis_context)
             ]
             response = self.gemini_model.invoke(messages)
-            # TODO: None if True else
-            meditron_text = None if True else self._call_meditron(diagnosis_context)
-            if meditron_text:
-                print("Meditron response received.")
-                result_text = meditron_text.strip()
-            else:
-                messages = [
-                    SystemMessage(content=COMPACT_DIAGNOSIS_PROMPT),
-                    HumanMessage(content=diagnosis_context)
-                ]
-                response = self.gemini_model.invoke(messages)
-                result_text = response.content.strip()
+            result_text = response.content.strip()
 
             result_text = re.sub(r'```json\s*|\s*```', '', result_text)
             diagnosis = json.loads(result_text)
