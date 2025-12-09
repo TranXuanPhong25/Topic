@@ -120,7 +120,7 @@ class DiagnosisEngineNode:
                 user_context=context_data.get("user_context", "")
             )
             messages = [
-                SystemMessage(content=DIAGNOSIS_SYSTEM_PROMPT),
+                SystemMessage(content=COMPACT_DIAGNOSIS_PROMPT),
                 HumanMessage(content=diagnosis_context)
             ]
             response = self.gemini_model.invoke(messages)
@@ -131,7 +131,7 @@ class DiagnosisEngineNode:
                 result_text = meditron_text.strip()
             else:
                 messages = [
-                    SystemMessage(content=DIAGNOSIS_SYSTEM_PROMPT),
+                    SystemMessage(content=COMPACT_DIAGNOSIS_PROMPT),
                     HumanMessage(content=diagnosis_context)
                 ]
                 response = self.gemini_model.invoke(messages)

@@ -4,12 +4,34 @@ from typing import Any, List
 from src.models.state import GraphState
 from src.configs.agent_config import SystemMessage, HumanMessage, AIMessage, BaseMessage
 from src.agents.supervisor.prompts import (
+    COMPACT_SUPERVISOR_PROMPT,
     SUPERVISOR_RESPONSE_SCHEMA,
     SUPERVISOR_SYSTEM_PROMPT
 )
 from src.agents.utils import build_messages_with_history
 from src.agents.utils.message_builder import extract_text_from_gemini_message
 from jsonschema import validate, ValidationError
+
+# Emergency keywords for fast-path routing (Vietnamese & English)
+EMERGENCY_KEYWORDS = {
+    # Vietnamese
+    "đau ngực", "khó thở", "không thở được", "ngất", "bất tỉnh", "co giật", 
+    "chảy máu nhiều", "đột quỵ", "liệt", "tê nửa người", "sốc phản vệ",
+    "ngộ độc", "tự tử", "muốn chết", "cấp cứu", "khẩn cấp", "nguy hiểm",
+    "đau dữ dội", "không cử động được", "mất ý thức",
+    # English  
+    "chest pain", "can't breathe", "difficulty breathing", "unconscious",
+    "seizure", "stroke", "paralysis", "severe bleeding", "anaphylaxis",
+    "poisoning", "suicide", "want to die", "emergency", "heart attack",
+    "severe pain", "loss of consciousness", "can't move"
+}
+
+def _is_emergency_input(text: str) -> bool:
+    """Check if user input contains emergency keywords"""
+    if not text:
+        return False
+    text_lower = text.lower()
+    return any(keyword in text_lower for keyword in EMERGENCY_KEYWORDS)
 
 class SupervisorNode:
     """
@@ -23,6 +45,24 @@ class SupervisorNode:
     def __call__(self, state: "GraphState") -> "GraphState":
         print("================== SUPERVISOR TURN ======================")
         response_text = ""
+        
+        # FAST PATH: Emergency keyword detection - skip LLM, route directly
+        user_input = state.get("input", "")
+        if _is_emergency_input(user_input) and not state.get("plan"):
+            print("🚨 EMERGENCY DETECTED - Fast-path routing to symptom_extractor → diagnosis_engine")
+            state["next_step"] = "symptom_extractor"
+            state["plan"] = [
+                {"step": "symptom_extractor", "description": "Extract emergency symptoms", "status": "not_started", 
+                 "goal": "Extract all symptoms from emergency situation", "context": "EMERGENCY - prioritize severity assessment"},
+                {"step": "diagnosis_engine", "description": "Emergency diagnosis and risk assessment", "status": "not_started",
+                 "goal": "Assess emergency severity and provide immediate guidance", "context": "EMERGENCY case - be conservative, recommend immediate care"},
+                {"step": "synthesis", "description": "Generate emergency response", "status": "not_started",
+                 "goal": "Provide clear emergency instructions", "context": "EMERGENCY - include 115/911 guidance"}
+            ]
+            state["current_step"] = 0
+            print("🚨 Emergency plan created - bypassing LLM supervisor")
+            return state
+        
         try:
             # Build optimized prompt with full context
             if len(state.get("plan", [])) != 0:
@@ -37,7 +77,7 @@ class SupervisorNode:
             
             # Build messages with chat history for full context
             messages = build_messages_with_history(
-                system_prompt=SUPERVISOR_SYSTEM_PROMPT,
+                system_prompt=COMPACT_SUPERVISOR_PROMPT,
                 current_prompt=supervisor_prompt,
                 chat_history=state.get("chat_history", [])
             )

@@ -135,25 +135,34 @@ class ImageAnalyzerNode:
                     print(f"📄 Document content extracted: {len(doc_content)} chars")
                     if doc_content:
                         print(f"📄 Preview: {doc_content[:200]}...")
+                    # Set final_response for document
+                    if "message" in analysis_result:
+                        state["final_response"] = analysis_result["message"]
                 elif image_type == self.IMAGE_TYPE_GENERAL:
                     # General photo - acknowledge but don't analyze medically
+                    general_message = "Hình ảnh này không phải là ảnh y tế. Nếu bạn muốn được tư vấn về vấn đề sức khỏe, vui lòng gửi ảnh vùng da/bộ phận cơ thể cần kiểm tra."
                     analysis_result = {
                         "visual_description": "Hình ảnh không phải là ảnh y tế để chẩn đoán.",
                         "image_type": image_type,
                         "is_diagnostic": False,
-                        "message": "Hình ảnh này không phải là ảnh y tế. Nếu bạn muốn được tư vấn về vấn đề sức khỏe, vui lòng gửi ảnh vùng da/bộ phận cơ thể cần kiểm tra.",
+                        "message": general_message,
                         "confidence": 0.0
                     }
+                    # Set final_response for general images
+                    state["final_response"] = general_message
                 else:
                     # Unclear - ask for clarification
+                    unclear_message = "Tôi không chắc chắn về mục đích của hình ảnh này. Bạn có thể cho tôi biết bạn muốn tôi giúp gì với hình ảnh này không?"
                     analysis_result = {
                         "visual_description": "Không thể xác định mục đích của hình ảnh.",
                         "image_type": image_type,
                         "is_diagnostic": False,
-                        "message": "Tôi không chắc chắn về mục đích của hình ảnh này. Bạn có thể cho tôi biết bạn muốn tôi giúp gì với hình ảnh này không?",
+                        "message": unclear_message,
                         "confidence": 0.0,
                         "needs_clarification": True
                     }
+                    # Set final_response for unclear images
+                    state["final_response"] = unclear_message
             else:
                 # Diagnostic image - proceed with medical analysis
                 if self.lesion_classifier is not None:

@@ -7,7 +7,7 @@ from typing import Dict, Any
 from src.models.state import GraphState
 from src.configs.agent_config import SystemMessage, HumanMessage
 from .config import get_synthesis_model
-from .prompts import build_synthesis_prompt, SYNTHESIS_SYSTEM_PROMPT
+from .prompts import build_synthesis_prompt, SYNTHESIS_SYSTEM_PROMPT, COMPACT_SYNTHESIS_PROMPT
 
 
 class SynthesisNode:
@@ -124,7 +124,7 @@ class SynthesisNode:
             )
             # Generate synthesis
             messages = [
-                SystemMessage(content=SYNTHESIS_SYSTEM_PROMPT),
+                SystemMessage(content=COMPACT_SYNTHESIS_PROMPT),
                 HumanMessage(content=synthesis_prompt)
             ]
             response = self.llm.invoke(messages)
@@ -242,7 +242,7 @@ class SynthesisNode:
             # No plan context available in direct synthesis
             prompt = build_synthesis_prompt(state_data, goal="", context="", user_context="")
             messages = [
-                SystemMessage(content=SYNTHESIS_SYSTEM_PROMPT),
+                SystemMessage(content=COMPACT_SYNTHESIS_PROMPT),
                 HumanMessage(content=prompt)
             ]
             response = self.llm.invoke(messages)

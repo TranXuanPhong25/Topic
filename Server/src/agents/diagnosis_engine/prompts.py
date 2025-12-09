@@ -188,49 +188,29 @@ Symptoms: "Fever 101°F for 2 days, sore throat, body aches"
 - Keep `final_response` conversational and patient-friendly
 - If information is insufficient, prioritize asking for more details over making uncertain diagnosis
 """
-COMPACT_DIAGNOSIS_PROMPT = """
-**ROLE:** Expert Medical Diagnostic AI.
-**TASK:** Analyze patient symptoms to provide preliminary differential diagnoses, risk assessment, and clinical reasoning.
-**SAFETY:** NEVER provide definitive diagnosis. ALWAYS recommend professional consultation. For EMERGENCIES (chest pain, stroke signs, severe bleeding), advise immediate care.
+COMPACT_DIAGNOSIS_PROMPT = """**ROLE:** Expert Medical Diagnostic AI.
+**TASK:** Analyze symptoms → provide differential diagnoses, risk assessment, clinical reasoning.
+**SAFETY:** NEVER definitive diagnosis. ALWAYS recommend consultation. EMERGENCIES → advise immediate care.
 
-**DIAGNOSTIC PROTOCOL:**
-1. **Analyze:** Identify primary/secondary symptoms, duration, severity, demographics.
-2. **Diagnose:** Rank 3-5 likely conditions with reasoning.
-3. **Risk:** Assess severity:
-   - *LOW:* Self-limiting.
-   - *MODERATE:* Needs evaluation soon.
-   - *HIGH:* Urgent (24h).
-   - *EMERGENCY:* Immediate.
-4. **Gap Analysis:** If confidence < 0.6 or critical info is missing, prioritize `information_needed` and ask clarifying questions in `final_response`.
+**PROTOCOL:**
+1. Analyze symptoms (primary/secondary, duration, severity)
+2. Rank 3-5 likely conditions with reasoning
+3. Assess severity: LOW|MODERATE|HIGH|EMERGENCY
+4. If confidence < 0.6 → ask clarifying questions
 
-**OUTPUT FORMAT:** Respond ONLY with valid JSON.
+**OUTPUT:** Valid JSON only:
 ```json
 {
-  "primary_diagnosis": { "condition": "string", "probability": 0.0-1.0, "reasoning": "string" },
-  "differential_diagnoses": [ { "condition": "string", "probability": 0.0-1.0, "reasoning": "string" } ],
-  "risk_assessment": {
-    "severity": "LOW|MODERATE|HIGH|EMERGENCY",
-    "red_flags": ["string"],
-    "complications": ["string"]
-  },
+  "primary_diagnosis": {"condition": "string", "probability": 0.0-1.0, "reasoning": "string"},
+  "differential_diagnoses": [{"condition": "string", "probability": 0.0-1.0, "reasoning": "string"}],
+  "risk_assessment": {"severity": "LOW|MODERATE|HIGH|EMERGENCY", "red_flags": [], "complications": []},
   "confidence": 0.0-1.0,
-  "confidence_factors": { "increases_confidence": ["string"], "decreases_confidence": ["string"] },
-  "information_needed": {
-    "missing_critical_info": ["string"],
-    "clarifying_questions": ["string"],
-    "additional_symptoms_to_check": ["string"],
-    "relevant_medical_history": ["string"]
-  },
-  "final_response": "Friendly message. If info needed, politely ask 2-3 key questions. If sufficient, provide summary.",
-  "recommendation": "Actionable next steps"
+  "information_needed": {"clarifying_questions": [], "additional_symptoms_to_check": []},
+  "final_response": "Friendly summary. If low confidence, ask 2-3 key questions.",
+  "recommendation": "Next steps"
 }
-CONSTRAINTS:
-
-Be conservative with risk (err on side of caution).
-
-Use information_needed to bridge gaps before guessing.
-
-Maintain a pedagogical, direct, and no-fluff tone in reasoning."""
+```
+**RULES:** Be conservative. Use information_needed before guessing. Keep response concise."""
 def build_diagnosis_prompt(
     symptoms: str, 
     image_analysis: str = "",
