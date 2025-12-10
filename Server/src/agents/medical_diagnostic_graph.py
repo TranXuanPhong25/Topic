@@ -93,7 +93,7 @@ class MedicalDiagnosticGraph:
         # Document retriever returns to the agent that called it
         workflow.add_conditional_edges(
             "document_retriever",
-            lambda s: s.get("retriever_caller", "supervisor"),
+            lambda s: s.get("retriever_caller") or "supervisor",
             {
                 "supervisor": "supervisor",
                 "diagnosis_engine": "diagnosis_engine",
@@ -105,7 +105,7 @@ class MedicalDiagnosticGraph:
         # Recommender and diagnosis_engine can call document_retriever
         workflow.add_conditional_edges(
             "recommender",
-            lambda s: s.get("next_step", "supervisor"),
+            lambda s: s.get("next_step") or "supervisor",
             {
                 "supervisor": "supervisor",
                 "document_retriever": "document_retriever",
@@ -114,7 +114,7 @@ class MedicalDiagnosticGraph:
         
         workflow.add_conditional_edges(
             "diagnosis_engine",
-            lambda s: s.get("next_step", "diagnosis_critic"),
+            lambda s: s.get("next_step") or "diagnosis_critic",
             {
                 "diagnosis_critic": "diagnosis_critic",
                 "document_retriever": "document_retriever",

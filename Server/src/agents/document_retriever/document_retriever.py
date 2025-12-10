@@ -314,8 +314,14 @@ class DocumentRetrieverNode:
         print("\n📚 === DOCUMENT RETRIEVER AGENT STARTED ===")
         
         # Get caller information
-        caller = state.get("retriever_caller", "supervisor")
+        caller = state.get("retriever_caller") or "supervisor"
         print(f"📞 Called by: {caller}")
+        
+        # Ensure caller is valid for routing
+        if caller not in ["supervisor", "diagnosis_engine", "diagnosis_critic", "recommender"]:
+            print(f"⚠️ Invalid caller '{caller}', defaulting to supervisor")
+            caller = "supervisor"
+            state["retriever_caller"] = caller
         
         # Get goal and context from current plan step
         goal = self._get_current_goal(state)
@@ -336,8 +342,7 @@ class DocumentRetrieverNode:
             # Don't increment current_step when called by another agent
             if caller == "supervisor":
                 state["current_step"] += 1
-            # Clear caller after processing
-            state["retriever_caller"] = None
+            # Clear query after processing
             state["retriever_query"] = None
             return state
         
@@ -349,26 +354,62 @@ class DocumentRetrieverNode:
             # Invoke RAG pipeline
             result = self.pipeline.invoke(query, k=10, rerank_top_k=5)
             
+            # Debug: Log the result structure
+            print(f"🔍 RAG result keys: {list(result.keys()) if isinstance(result, dict) else 'Not a dict'}")
+            
             # Extract documents and format for state
             context_docs = result.get("context_docs", [])
             documents = []
             
+            # Ensure context_docs is not None and is iterable
+            if not context_docs:
+                context_docs = []
+                print("⚠️ No context_docs found in RAG result")
+            else:
+                print(f"📄 Found {len(context_docs)} context documents")
+                if context_docs and len(context_docs) > 0:
+                    first_doc = context_docs[0]
+                    print(f"🔍 First doc type: {type(first_doc)}")
+                    if hasattr(first_doc, '__dict__'):
+                        print(f"🔍 First doc attributes: {list(first_doc.__dict__.keys())}")
+                    elif isinstance(first_doc, dict):
+                        print(f"🔍 First doc keys: {list(first_doc.keys())}")
+            
             for doc in context_docs:
-                metadata = doc.metadata or {}
-                documents.append({
-                    "source": metadata.get("title", "Medical Document"),
-                    "author": metadata.get("author", "Unknown"),
-                    "page": metadata.get("page", "N/A"),
-                    "content": doc.page_content,
-                    "relevance": 0.9  # Reranked docs are high relevance
-                })
+                try:
+                    # Handle both Document objects and dict structures
+                    if hasattr(doc, 'metadata') and hasattr(doc, 'page_content'):
+                        # LangChain Document object
+                        metadata = doc.metadata or {}
+                        content = doc.page_content
+                    elif isinstance(doc, dict):
+                        # Dictionary structure
+                        metadata = doc.get("meta", {})
+                        content = doc.get("text", "")
+                    else:
+                        # Fallback for unknown structure
+                        print(f"⚠️ Unknown document structure: {type(doc)}")
+                        metadata = {}
+                        content = str(doc)
+                    
+                    documents.append({
+                        "source": metadata.get("title", "Medical Document"),
+                        "author": metadata.get("author", "Unknown"),
+                        "page": metadata.get("page", "N/A"),
+                        "content": content,
+                        "relevance": 0.9  # Reranked docs are high relevance
+                    })
+                except Exception as doc_error:
+                    LOGGER.warning(f"Error processing document: {doc_error}")
+                    print(f"⚠️ Error processing document: {doc_error}")
+                    continue
             
             # Get RAG pipeline's answer
             rag_answer = result.get("answer", "")
             english_query = result.get("english_query", "")
             
             print(f"✅ Retrieved {len(documents)} relevant documents")
-            print(f"📝 RAG answer generated ({len(rag_answer)} chars)")
+            print(f"📝 RAG answer generated ({len(str(rag_answer))} chars)")
             
             # Use LLM to synthesize information
             synthesis_result = self._synthesize_with_llm(
@@ -382,21 +423,27 @@ class DocumentRetrieverNode:
             
             # Update state with results
             state["retrieved_documents"] = documents
-            state["rag_answer"] = rag_answer
-            state["rag_english_query"] = english_query
+            state["rag_answer"] = str(rag_answer)
+            state["rag_english_query"] = str(english_query)
             state["document_synthesis"] = synthesis_result
             
             # Only increment current_step if called by supervisor (as part of plan)
             if caller == "supervisor":
                 state["current_step"] += 1
             
-            # Clear caller and query after processing
-            state["retriever_caller"] = None
+            # Clear query after processing, but keep caller for routing
             state["retriever_query"] = None
             
             print(f"📊 Synthesis completed with confidence: {synthesis_result.get('confidence_assessment', {}).get('overall_confidence', 'N/A')}")
             print(f"🔙 Returning to: {caller}")
             print("✅ === DOCUMENT RETRIEVER AGENT COMPLETED ===\n")
+            
+            # Set next step for routing and clear caller after processing
+            state["next_step"] = None  # Will be determined by conditional edge
+            if caller != "supervisor":
+                # For non-supervisor callers, we need to return to them
+                # The conditional edge will handle the routing
+                pass
             
         except ValueError as e:
             print(f"⚠️ No documents found: {e}")
@@ -410,7 +457,6 @@ class DocumentRetrieverNode:
             }
             if caller == "supervisor":
                 state["current_step"] += 1
-            state["retriever_caller"] = None
             state["retriever_query"] = None
             
         except Exception as e:
@@ -421,9 +467,7 @@ class DocumentRetrieverNode:
             state["document_synthesis"] = {}
             if caller == "supervisor":
                 state["current_step"] += 1
-            state["retriever_caller"] = None
             state["retriever_query"] = None
-        
         return state
 
 
