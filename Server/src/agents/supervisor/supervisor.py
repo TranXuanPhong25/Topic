@@ -77,7 +77,7 @@ class SupervisorNode:
             
             # Build messages with chat history for full context
             messages = build_messages_with_history(
-                system_prompt=COMPACT_SUPERVISOR_PROMPT,
+                system_prompt=SUPERVISOR_SYSTEM_PROMPT,
                 current_prompt=supervisor_prompt,
                 chat_history=state.get("chat_history", [])
             )
