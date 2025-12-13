@@ -10,7 +10,6 @@ from enum import Enum
 
 
 class QueryType(Enum):
-    """Types of queries for routing"""
     SEMANTIC = "semantic"      # Complex medical questions, symptom descriptions
     KEYWORD = "keyword"        # Specific term lookups, definitions
     HYBRID = "hybrid"          # Mixed queries requiring both approaches

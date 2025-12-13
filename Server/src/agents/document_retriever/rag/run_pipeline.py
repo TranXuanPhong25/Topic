@@ -1,4 +1,3 @@
-"""Simple CLI runner for the RAG pipeline."""
 
 from __future__ import annotations
 
@@ -21,7 +20,6 @@ def _print_header() -> None:
 
 
 def main() -> None:
-    """Entry point for interactive usage."""
     try:
         pipeline = RAGPipeline.from_existing_index()
     except Exception as exc:

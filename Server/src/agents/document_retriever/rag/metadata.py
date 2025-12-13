@@ -1,4 +1,3 @@
-"""Helpers for inspecting document metadata."""
 
 from __future__ import annotations
 

@@ -1,4 +1,3 @@
-"""Appointment scheduling handler with validation"""
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
 from bson import ObjectId
@@ -84,7 +83,6 @@ class AppointmentHandler:
             return False, "Invalid time format. Please use HH:MM (e.g., 14:00 for 2 PM)"
     
     def validate_provider(self, provider: Optional[str]) -> tuple[bool, str]:
-        """Validate provider name"""
         if provider and provider not in self.providers:
             return False, f"Provider not found. Available: {', '.join(self.providers)}"
         return True, ""
@@ -390,6 +388,6 @@ async def schedule_appointment_function(patient_name: str, date: str, time: str,
     
     if result["success"]:
         apt = result["appointment"]
-        return f"✅ Appointment confirmed!\n\nPatient: {apt['patient_name']}\nDate: {apt['date']}\nTime: {apt['time']}\nProvider: {apt['provider']}\nReason: {apt['reason']}\n\nWe'll send a reminder before your appointment."
+        return f"Appointment confirmed!\n\nPatient: {apt['patient_name']}\nDate: {apt['date']}\nTime: {apt['time']}\nProvider: {apt['provider']}\nReason: {apt['reason']}\n\nWe'll send a reminder before your appointment."
     else:
-        return f"❌ Unable to schedule: {result['error']}\n\nPlease try a different date or time."
+        return f"Unable to schedule: {result['error']}\n\nPlease try a different date or time."

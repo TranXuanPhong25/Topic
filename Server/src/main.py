@@ -1,4 +1,3 @@
-"""FastAPI server for Medical Clinic Chatbot"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -26,7 +25,6 @@ app.add_middleware(
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
-    """Health check endpoint to verify API is running"""
     return HealthResponse(
         status="healthy",
         version="1.0.0",

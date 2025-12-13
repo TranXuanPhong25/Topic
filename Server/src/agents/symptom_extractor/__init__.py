@@ -1,7 +1,3 @@
-"""
-Symptom Extractor Agent
-Extracts and structures symptoms from patient conversations
-"""
 from .config import get_symptom_extractor_model
 from .symptom_extractor import SymptomExtractorNode
 

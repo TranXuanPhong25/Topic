@@ -1,4 +1,3 @@
-"""CLI helper to inspect PDF metadata inside the RAG data directory."""
 
 from __future__ import annotations
 

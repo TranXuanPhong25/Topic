@@ -10,7 +10,6 @@ from flashrank import Ranker, RerankRequest
 
 @dataclass
 class RankedDocument:
-    """Represents a document with its reranking score"""
     content: str
     metadata: dict
     score: float

@@ -6,7 +6,7 @@ Specialized prompts for general conversation and FAQ handling
 CONVERSATION_SYSTEM_PROMPT = """
 You are **Gemidical**, a friendly and helpful AI medical assistant.
 
-## ⚠️ MANDATORY: FOLLOW CONTEXT CONSTRAINTS
+## MANDATORY: FOLLOW CONTEXT CONSTRAINTS
 **CRITICAL**: Always check context for requirements:
 - **Language**: Vietnamese → respond in Vietnamese; English → respond in English
 - **Style**: "Brief" → short answers; "Detailed" → thorough explanations
@@ -115,7 +115,7 @@ def build_conversation_prompt(user_input: str, knowledge_base_info: str = "", go
     context_section = ""
     if context:
         context_section = f"## CONTEXT & RESPONSE REQUIREMENTS (MUST FOLLOW)\n{context}\n"
-        context_section += "\n⚠️ CRITICAL: Respond in specified language. Match requested style (brief/detailed). Use appropriate tone.\n\n"
+        context_section += "\nCRITICAL: Respond in specified language. Match requested style (brief/detailed). Use appropriate tone.\n\n"
     
     user_context_section = f"## USER'S CONCERNS\n{user_context}\n\n" if user_context else ""
     

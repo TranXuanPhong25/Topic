@@ -3,13 +3,6 @@ from typing import Dict, Any, Tuple
 
 
 class ImageAnalyzerNode:
-    """Runs a local lesion classifier (if available) and forwards the prediction
-    to Gemini for interpretation. Falls back to image-based analysis if the
-    classifier is not present or fails.
-    
-    This node also classifies the image type to determine if it's for diagnostic
-    purposes or not (e.g., document, general photo, etc.)
-    """
 
     # Image type constants
     IMAGE_TYPE_MEDICAL = "medical"  # Medical/diagnostic image (skin, wound, body part)
@@ -22,15 +15,6 @@ class ImageAnalyzerNode:
         self.lesion_classifier = lesion_classifier
     
     def _get_current_goal(self, state: "GraphState") -> str:
-        """
-        Extract the goal for the current step from the plan
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Goal string or empty string if not found
-        """
         plan = state.get("plan", [])
         current_step_index = state.get("current_step", 0)
         
@@ -41,20 +25,11 @@ class ImageAnalyzerNode:
         goal = current_plan_step.get("goal", "")
         
         if goal:
-            print(f"🎯 Current Goal: {goal}")
+            print(f"Current Goal: {goal}")
         
         return goal
     
     def _get_current_context(self, state: "GraphState") -> dict:
-        """
-        Extract context and user_context for the current step from the plan
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Dict with 'context' and 'user_context' keys (empty strings if not found)
-        """
         plan = state.get("plan", [])
         current_step_index = state.get("current_step", 0)
         
@@ -66,23 +41,13 @@ class ImageAnalyzerNode:
         user_context = current_plan_step.get("user_context", "")
         
         if context:
-            print(f"📝 Context: {context[:100]}...")
+            print(f"Context: {context[:100]}...")
         if user_context:
-            print(f"👤 User Context: {user_context[:100]}...")
+            print(f"User Context: {user_context[:100]}...")
         
         return {"context": context, "user_context": user_context}
 
     def _classify_image_type(self, image: str, user_input: str = "") -> Tuple[str, bool, str]:
-        """
-        Classify the image to determine its type and whether it's for diagnosis.
-        
-        Args:
-            image: Base64 encoded image
-            user_input: User's text input for context
-            
-        Returns:
-            Tuple of (image_type, is_diagnostic, intent)
-        """
         try:
             classification_result = self.vision_analyzer.classify_image_type(image, user_input)
             
@@ -90,14 +55,14 @@ class ImageAnalyzerNode:
             is_diagnostic = classification_result.get("is_diagnostic", False)
             intent = classification_result.get("intent", "")
             
-            print(f"📷 Image classification: type={image_type}, diagnostic={is_diagnostic}")
+            print(f"Image classification: type={image_type}, diagnostic={is_diagnostic}")
             if intent:
                 print(f"   Intent: {intent}")
             
             return image_type, is_diagnostic, intent
             
         except Exception as e:
-            print(f"⚠️ Image classification failed: {e}, defaulting to medical")
+            print(f"Image classification failed: {e}, defaulting to medical")
             # Default to medical image if classification fails
             return self.IMAGE_TYPE_MEDICAL, True, ""
 

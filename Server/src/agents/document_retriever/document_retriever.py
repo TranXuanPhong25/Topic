@@ -53,23 +53,14 @@ class DocumentRetrieverNode:
         # Initialize RAG pipeline
         try:
             self.pipeline = RAGPipeline.from_existing_index()
-            print("✅ DocumentRetriever: RAG pipeline initialized")
+            print("DocumentRetriever: RAG pipeline initialized")
         except Exception as e:
             LOGGER.error(f"Failed to initialize RAG pipeline: {e}")
             self.pipeline = None
         
-        print("✅ DocumentRetrieverNode initialized as agent")
+        print("DocumentRetrieverNode initialized as agent")
     
     def _get_current_goal(self, state: "GraphState") -> str:
-        """
-        Extract the goal for the current step from the plan
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Goal string or empty string if not found
-        """
         plan = state.get("plan", [])
         current_step_index = state.get("current_step", 0)
         
@@ -80,20 +71,11 @@ class DocumentRetrieverNode:
         goal = current_plan_step.get("goal", "")
         
         if goal:
-            print(f"🎯 Current Goal: {goal}")
+            print(f"Current Goal: {goal}")
         
         return goal
     
     def _get_current_context(self, state: "GraphState") -> dict:
-        """
-        Extract context and user_context for the current step from the plan
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Dict with 'context' and 'user_context' keys (empty strings if not found)
-        """
         plan = state.get("plan", [])
         current_step_index = state.get("current_step", 0)
         
@@ -105,14 +87,13 @@ class DocumentRetrieverNode:
         user_context = current_plan_step.get("user_context", "")
         
         if context:
-            print(f"📝 Context: {context[:100]}...")
+            print(f"Context: {context[:100]}...")
         if user_context:
-            print(f"👤 User Context: {user_context[:100]}...")
+            print(f"User Context: {user_context[:100]}...")
         
         return {"context": context, "user_context": user_context}
     
     def _format_symptoms(self, symptoms: Dict[str, Any]) -> str:
-        """Format symptoms dict to readable string"""
         if not symptoms:
             return ""
         
@@ -130,7 +111,6 @@ class DocumentRetrieverNode:
         return "\n".join(parts)
     
     def _format_diagnosis(self, diagnosis: Dict[str, Any]) -> str:
-        """Format diagnosis dict to readable string"""
         if not diagnosis:
             return ""
         
@@ -148,7 +128,6 @@ class DocumentRetrieverNode:
         return "\n".join(parts)
     
     def _format_retrieved_docs(self, docs: list) -> str:
-        """Format retrieved documents for LLM synthesis"""
         if not docs:
             return ""
         
@@ -286,7 +265,7 @@ class DocumentRetrieverNode:
             # Parse JSON response
             synthesis_result = self._parse_json_response(response_text)
             
-            print(f"✅ LLM synthesis completed")
+            print(f"LLM synthesis completed")
             return synthesis_result
             
         except Exception as e:

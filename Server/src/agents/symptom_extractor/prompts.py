@@ -4,7 +4,7 @@ Symptom Extractor Agent Prompts
 
 SYMPTOM_EXTRACTOR_SYSTEM_PROMPT = """You are a medical symptom extraction specialist. Your role is to analyzing carefully patient conversations and extract structured symptom information.
 
-## ⚠️ CRITICAL: RESPECT ALL CONSTRAINTS IN CONTEXT
+## CRITICAL: RESPECT ALL CONSTRAINTS IN CONTEXT
 Before extracting, check context for constraints:
 - **Language**: If patient uses Vietnamese, maintain language awareness (JSON structure is English but note language context)
 - **Style**: Brief extraction for quick cases, detailed for complex symptoms
@@ -264,7 +264,7 @@ def build_symptom_extraction_prompt(user_input: str, conversation_history: str =
     context_section = ""
     if context:
         context_section = f"\n## CONVERSATION CONTEXT & CONSTRAINTS (MUST FOLLOW):\n{context}\n"
-        context_section += "\n⚠️ CRITICAL: You MUST respect all constraints above (language, style, urgency, tone).\n"
+        context_section += "\nCRITICAL: You MUST respect all constraints above (language, style, urgency, tone).\n"
     
     user_context_section = f"\n## USER'S CONCERNS:\n{user_context}\n" if user_context else ""
     

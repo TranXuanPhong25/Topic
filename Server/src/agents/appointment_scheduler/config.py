@@ -1,6 +1,3 @@
-"""
-Appointment Scheduler Agent Configuration
-"""
 from typing import Optional
 
 from langchain.chat_models import init_chat_model
@@ -12,7 +9,6 @@ import os
 from typing import Any
 
 class AppointmentModelSingleton:
-    """Singleton for Appointment Scheduler's LLM model"""
     _instance: Optional[Any] = None
     
     @classmethod
@@ -20,7 +16,7 @@ class AppointmentModelSingleton:
         if cls._instance is None:
             model = init_chat_model(GEMINI_MODEL_NAME, model_provider="google_genai")
             cls._instance = model
-            print(f"✅ Appointment model initialized: {GEMINI_MODEL_NAME}")
+            print(f"Appointment model initialized: {GEMINI_MODEL_NAME}")
         return cls._instance
     
     @classmethod
@@ -29,5 +25,4 @@ class AppointmentModelSingleton:
 
 
 def get_appointment_model() -> Any:
-    """Get singleton Appointment Scheduler LLM instance"""
     return AppointmentModelSingleton.get_instance()

@@ -68,7 +68,7 @@ async def ma_chat(request: ChatRequest):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"\n❌ Error in multi-agent analysis: {str(e)}")
+        print(f"\nError in multi-agent analysis: {str(e)}")
         import traceback
         traceback.print_exc()
         raise HTTPException(
@@ -79,14 +79,6 @@ async def ma_chat(request: ChatRequest):
 
 @chat_router.post("/ma/chat/image", tags=["Chat"])
 async def ma_chat_with_image(request: ImageChatRequest):
-    """
-    Multi-agent chat with image analysis.
-    
-    Uses the complete multi-agent workflow:
-    Vision Agent → Symptom Matcher → Risk Assessor → Recommender
-    
-    Returns comprehensive medical image analysis.
-    """
     try:
         # Validate image data
         if not request.image:
@@ -102,7 +94,7 @@ async def ma_chat_with_image(request: ImageChatRequest):
                 }
                 for msg in request.chat_history[:-20]
             ]
-            print(f"📝 Image chat history: {len(chat_history)} messages")
+            print(f"Image chat history: {len(chat_history)} messages")
         
         result = await diagnostic_graph.analyze(request.message, request.image, chat_history=chat_history)
         
@@ -115,7 +107,7 @@ async def ma_chat_with_image(request: ImageChatRequest):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"\n❌ Error in multi-agent analysis: {str(e)}")
+        print(f"\nError in multi-agent analysis: {str(e)}")
         import traceback
         traceback.print_exc()
         raise HTTPException(
@@ -126,17 +118,6 @@ async def ma_chat_with_image(request: ImageChatRequest):
 
 @chat_router.post("/ma/chat/stream", tags=["Chat"])
 async def ma_chat_stream(request: ChatRequest):
-    """
-    Streaming multi-agent chat endpoint using Server-Sent Events (SSE).
-    
-    Sends intermediate messages (e.g., "checking availability...") as they happen,
-    then sends the final response.
-    
-    Event types:
-    - intermediate: Partial response while processing (e.g., tool acknowledgment)
-    - final: Complete response
-    - error: Error occurred
-    """
     session_id = request.session_id or str(uuid.uuid4())
     
     async def event_generator():
@@ -180,7 +161,7 @@ async def ma_chat_stream(request: ChatRequest):
             yield f"data: {final_data}\n\n"
             
         except Exception as e:
-            print(f"❌ Stream error: {str(e)}")
+            print(f"Stream error: {str(e)}")
             import traceback
             traceback.print_exc()
             error_data = json.dumps({

@@ -1,4 +1,3 @@
-"""DiagnosisEngine Node: Runs core diagnostic logic with risk assessment."""
 import json
 import re
 import requests

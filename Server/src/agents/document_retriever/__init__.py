@@ -1,4 +1,3 @@
-"""Document Retriever Agent - Retrieve relevant medical documents using RAG pipeline"""
 from .document_retriever import DocumentRetrieverNode, new_document_retriever_node
 from .config import get_document_retriever_model, DocumentRetrieverModelSingleton
 from .prompts import (

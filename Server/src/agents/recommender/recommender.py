@@ -1,4 +1,3 @@
-"""Recommender Node: Synthesizes investigations and retrieved context to generate final recommendations."""
 import json
 from typing import TYPE_CHECKING, Dict
 
@@ -19,15 +18,6 @@ class RecommenderNode:
         self.gemini_model = gemini_model
     
     def _get_current_goal(self, state: "GraphState") -> str:
-        """
-        Extract the goal for the current step from the plan
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Goal string or empty string if not found
-        """
         plan = state.get("plan", [])
         current_step_index = state.get("current_step", 0)
         
@@ -38,20 +28,11 @@ class RecommenderNode:
         goal = current_plan_step.get("goal", "")
         
         if goal:
-            print(f"🎯 Current Goal: {goal}")
+            print(f"Current Goal: {goal}")
         
         return goal
     
     def _get_current_context(self, state: "GraphState") -> Dict[str, str]:
-        """
-        Extract context and user_context for the current step from the plan
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Dict with 'context' and 'user_context' keys (empty strings if not found)
-        """
         plan = state.get("plan", [])
         current_step_index = state.get("current_step", 0)
         
@@ -63,9 +44,9 @@ class RecommenderNode:
         user_context = current_plan_step.get("user_context", "")
         
         if context:
-            print(f"📝 Context: {context[:100]}...")
+            print(f"Context: {context[:100]}...")
         if user_context:
-            print(f"👤 User Context: {user_context[:100]}...")
+            print(f"User Context: {user_context[:100]}...")
         
         return {"context": context, "user_context": user_context}
     
@@ -87,7 +68,7 @@ class RecommenderNode:
                     state, success = request_document_retrieval(state, "recommender", query)
                     if success:
                         state["next_step"] = "document_retriever"
-                        print(f"📚 Recommender: Requesting document retrieval for recommendations")
+                        print(f"Recommender: Requesting document retrieval for recommendations")
                         return state
             
             # Get goal and context from current plan step

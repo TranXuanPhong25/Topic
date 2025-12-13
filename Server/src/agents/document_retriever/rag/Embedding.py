@@ -1,4 +1,3 @@
-"""Embedding helpers for building the RAG vector store."""
 
 from __future__ import annotations
 
@@ -22,7 +21,6 @@ DEFAULT_PINECONE_CLOUD = os.getenv("PINECONE_CLOUD", "aws")
 
 
 def create_embedding_model(model_name: str = DEFAULT_EMBEDDING_MODEL) -> GoogleGenerativeAIEmbeddings:
-    """Instantiate the Google embedding model used across the RAG stack."""
     LOGGER.info("Using embedding model: %s", model_name)
     return GoogleGenerativeAIEmbeddings(model=model_name)
 

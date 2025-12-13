@@ -1,4 +1,3 @@
-"""InvestigationGenerator Node: Generates potential follow-up tests and investigations."""
 import json
 import re
 from typing import TYPE_CHECKING
@@ -33,20 +32,11 @@ class InvestigationGeneratorNode:
         goal = current_plan_step.get("goal", "")
         
         if goal:
-            print(f"🎯 Current Goal: {goal}")
+            print(f"Current Goal: {goal}")
         
         return goal
     
     def _get_current_context(self, state: "GraphState") -> dict:
-        """
-        Extract context and user_context for the current step from the plan
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Dict with 'context' and 'user_context' keys (empty strings if not found)
-        """
         plan = state.get("plan", [])
         current_step_index = state.get("current_step", 0)
         
@@ -58,9 +48,9 @@ class InvestigationGeneratorNode:
         user_context = current_plan_step.get("user_context", "")
         
         if context:
-            print(f"📝 Context: {context[:100]}...")
+            print(f"Context: {context[:100]}...")
         if user_context:
-            print(f"👤 User Context: {user_context[:100]}...")
+            print(f"User Context: {user_context[:100]}...")
         
         return {"context": context, "user_context": user_context}
     

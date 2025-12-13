@@ -1,6 +1,3 @@
-"""
-Image Analyzer Agent Configuration
-"""
 from typing import Optional
 
 from src.agents.image_analyzer.gemini_vision_analyzer import GeminiVisionAnalyzer
@@ -9,13 +6,12 @@ import os
 
 
 class ImageAnalyzerModelSingleton:
-    """Singleton for Image Analyzer's LLM model"""
     _instance: Optional[GeminiVisionAnalyzer] = None
     
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            print("🔬 Initializing Image Analyzer LLM model...")
+            print("Initializing Image Analyzer LLM model...")
             
             model = ChatGoogleGenerativeAI(
                 model=GEMINI_MODEL_NAME,
@@ -33,5 +29,4 @@ class ImageAnalyzerModelSingleton:
 
 
 def get_image_analyzer_model() -> GeminiVisionAnalyzer:
-    """Get singleton Image Analyzer LLM instance"""
     return ImageAnalyzerModelSingleton.get_instance()

@@ -1,4 +1,3 @@
-"""DiagnosisEngine Node: Runs core diagnostic logic with risk assessment."""
 import json
 import re
 import requests
@@ -16,32 +15,11 @@ if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
 
 class DiagnosisEngineNode:
-    """
-    DiagnosisEngine Node: Runs core diagnostic logic with risk assessment.
-    
-    Input: combined_analysis (if image) or symptoms (if symptoms only)
-    Internally calls RiskAssessor to refine diagnosis
-    """
     
     def __init__(self, gemini_model):
-        """
-        Initialize the DiagnosisEngine node.
-        
-        Args:
-            gemini_model: Configured Gemini model for text generation
-        """
         self.gemini_model = gemini_model
     
     def _get_current_goal(self, state: "GraphState") -> str:
-        """
-        Extract the goal for the current step from the plan
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Goal string or empty string if not found
-        """
         plan = state.get("plan", [])
         current_step_index = state.get("current_step", 0)
         
@@ -52,20 +30,11 @@ class DiagnosisEngineNode:
         goal = current_plan_step.get("goal", "")
         
         if goal:
-            print(f"🎯 Current Goal: {goal}")
+            print(f"Current Goal: {goal}")
         
         return goal
     
     def _get_current_context(self, state: "GraphState") -> Dict[str, str]:
-        """
-        Extract context and user_context for the current step from the plan
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Dict with 'context' and 'user_context' keys (empty strings if not found)
-        """
         plan = state.get("plan", [])
         current_step_index = state.get("current_step", 0)
         
@@ -77,23 +46,14 @@ class DiagnosisEngineNode:
         user_context = current_plan_step.get("user_context", "")
         
         if context:
-            print(f"📝 Context: {context[:100]}...")
+            print(f"Context: {context[:100]}...")
         if user_context:
-            print(f"👤 User Context: {user_context[:100]}...")
+            print(f"User Context: {user_context[:100]}...")
         
         return {"context": context, "user_context": user_context}
     
     def __call__(self, state: "GraphState") -> "GraphState":
-        """
-        Execute the diagnosis engine logic.
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Updated graph state with diagnosis and risk assessment
-        """
-        print("🩺 DiagnosisEngine: Running diagnostic analysis...")
+        print("DiagnosisEngine: Running diagnostic analysis...")
         
         # Get input - use combined_analysis if available, otherwise symptoms
         analysis_input = state.get("symptoms", {})
@@ -169,7 +129,7 @@ class DiagnosisEngineNode:
                 state, success = request_document_retrieval(state, "diagnosis_engine", query)
                 if success:
                     state["next_step"] = "document_retriever"
-                    print(f"📚 DiagnosisEngine: Requesting document retrieval for low confidence ({confidence:.2f})")
+                    print(f"DiagnosisEngine: Requesting document retrieval for low confidence ({confidence:.2f})")
                     return state
             
             # Default: proceed to diagnosis_critic
@@ -187,7 +147,7 @@ class DiagnosisEngineNode:
 
                 print(
 
-                    f"💡 DiagnosisEngine: Low confidence ({confidence:.2f}), requesting additional information from user")
+                    f"DiagnosisEngine: Low confidence ({confidence:.2f}), requesting additional information from user")
 
 
 
@@ -226,16 +186,6 @@ class DiagnosisEngineNode:
         return state
     
     def _assess_risk_internal(self, severity: str, diagnosis: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Internal risk assessor (called by DiagnosisEngine).
-        
-        Args:
-            severity: Severity level from diagnosis
-            diagnosis: Full diagnosis dictionary
-            
-        Returns:
-            Risk assessment dictionary
-        """
         risk_mapping = {
             "mild": "LOW",
             "moderate": "MEDIUM",

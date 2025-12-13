@@ -1,7 +1,3 @@
-"""
-Router Agent Configuration
-Handles intent classification and routing decisions
-"""
 from typing import Optional, Any
 from src.configs.agent_config import (
     GOOGLE_API_KEY, 
@@ -11,7 +7,6 @@ from src.configs.agent_config import (
 from .prompts import SUPERVISOR_SYSTEM_PROMPT
 
 class SupervisorModelSingleton:
-    """Singleton for Supervisor agent's LLM model"""
     _instance: Optional[Any] = None
     
     @classmethod
@@ -26,7 +21,7 @@ class SupervisorModelSingleton:
                 top_k=40,
                 max_tokens=5120,
             )
-            print(f"✅ Supervisor model initialized: {GEMINI_MODEL_NAME}")
+            print(f"Supervisor model initialized: {GEMINI_MODEL_NAME}")
         return cls._instance
     
     @classmethod
@@ -35,6 +30,5 @@ class SupervisorModelSingleton:
 
 
 def get_supervisor_model():
-    """Get singleton Supervisor LLM instance"""
     return SupervisorModelSingleton.get_instance()
 
