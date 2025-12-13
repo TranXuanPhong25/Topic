@@ -6,7 +6,7 @@ from langchain_core.tools import tool
 from src.handlers.appointment import AppointmentHandler
 
 
-@tool
+@tool(description="Get current date and time with examples of relative dates like tomorrow, next week, etc.")
 def get_current_datetime() -> str:
     now = datetime.now()
     
@@ -30,7 +30,7 @@ def get_current_datetime() -> str:
     })
 
 
-@tool
+@tool(description="Check if an appointment slot is available for a specific date, time, and optionally a provider. Returns availability status and alternative times if not available.")
 async def check_appointment_availability(date: str, time: str, provider: str | None = None) -> str:
     handler = AppointmentHandler()
 
@@ -74,7 +74,7 @@ async def check_appointment_availability(date: str, time: str, provider: str | N
         })
 
 
-@tool
+@tool(description="Book an appointment for a patient. Requires patient_name, date (YYYY-MM-DD), time (HH:MM), and reason. Optional: phone and provider.")
 async def book_appointment(
         patient_name: str,
         date: str,
@@ -83,20 +83,6 @@ async def book_appointment(
         phone: str | None = None,
         provider: str | None = None
 ) -> str:
-    """
-    Book an appointment for a patient.
-
-    Args:
-        patient_name: Full name of the patient
-        date: Date in YYYY-MM-DD format
-        time: Time in HH:MM format
-        reason: Reason for visit
-        phone: Patient's phone number (optional)
-        provider: Preferred provider name (optional)
-
-    Returns:
-        JSON string with booking confirmation or error details
-    """
     handler = AppointmentHandler()
 
     # Use schedule_appointment method which includes all validation (async)
@@ -132,7 +118,7 @@ async def book_appointment(
         })
 
 
-@tool
+@tool(description="Get a list of available appointment time slots for a specific date. Returns up to 'limit' number of slots.")
 async def get_available_time_slots(date: str, limit: int = 5) -> str:
     handler = AppointmentHandler()
 
