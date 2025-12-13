@@ -88,8 +88,25 @@ class DiagnosisEngineNode:
             response = self.gemini_model.invoke(messages)
             result_text = response.content.strip()
 
-            result_text = re.sub(r'```json\s*|\s*```', '', result_text)
-            diagnosis = json.loads(result_text)
+            # Robust JSON extraction
+            try:
+                # First try to find JSON within markdown code blocks
+                json_match = re.search(r'```json\s*(.*?)\s*```', result_text, re.DOTALL)
+                if json_match:
+                    result_text = json_match.group(1)
+                else:
+                    # If no markdown blocks, try to find the first '{' and last '}'
+                    start_idx = result_text.find('{')
+                    end_idx = result_text.rfind('}')
+                    if start_idx != -1 and end_idx != -1:
+                        result_text = result_text[start_idx:end_idx+1]
+                
+                # Use strict=False to allow control characters like newlines in strings
+                diagnosis = json.loads(result_text, strict=False)
+            except json.JSONDecodeError as e:
+                print(f"JSON Decode Error: {e}")
+                print(f"Raw text: {result_text}")
+                raise e
 
             # Extract risk assessment from diagnosis
             risk_assessment = diagnosis.get("risk_assessment", {})

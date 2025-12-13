@@ -37,7 +37,7 @@ DEFAULT_GENERATION_CONFIG = {
     "temperature": 0.4,  # Balanced creativity and consistency
     "top_p": 0.95,
     "top_k": 40,
-    "max_output_tokens": 2048,
+    "max_output_tokens": 8192,
 }
 
 # Generation config for diagnostic tasks (more precise)
@@ -45,7 +45,7 @@ DIAGNOSTIC_GENERATION_CONFIG = {
     "temperature": 0.3,  # More conservative for medical diagnosis
     "top_p": 0.9,
     "top_k": 40,
-    "max_output_tokens": 2048,
+    "max_output_tokens": 8192,
 }
 
 # Generation config for vision analysis
