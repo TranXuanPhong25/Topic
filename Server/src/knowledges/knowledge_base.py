@@ -4,16 +4,6 @@ from src.configs.config import CLINIC_CONFIG
 
 
 class FAQKnowledgeBase:
-    """
-    Knowledge base for clinic information and frequently asked questions.
-    
-    This class stores and retrieves:
-    - Clinic hours and contact information
-    - Insurance and payment policies
-    - Services offered
-    - Common medical questions
-    - Appointment policies
-    """
     
     def __init__(self):
         """Initialize the knowledge base with clinic FAQs"""
@@ -179,16 +169,7 @@ class FAQKnowledgeBase:
                 self.all_faqs.append(faq)
     
     def search_faqs(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
-        """
-        Search FAQs by keyword matching.
-        
-        Args:
-            query: Search query from user
-            limit: Maximum number of results to return
-            
-        Returns:
-            List of matching FAQ dictionaries with relevance scores
-        """
+
         query_lower = query.lower()
         results = []
         
@@ -223,15 +204,6 @@ class FAQKnowledgeBase:
         return [r["faq"] for r in results[:limit]]
     
     def get_faq_by_category(self, category: str) -> List[Dict[str, str]]:
-        """
-        Get all FAQs in a specific category.
-        
-        Args:
-            category: Category name (e.g., "appointments", "insurance_and_payment")
-            
-        Returns:
-            List of FAQ dictionaries in that category
-        """
         return self.faqs.get(category, [])
     
     def get_all_categories(self) -> List[str]:

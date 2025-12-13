@@ -93,7 +93,6 @@ Trả về JSON array:
 ]
 
 Chỉ trả về JSON:"""
-
             messages = [
                 SystemMessage(content=INVESTIGATION_SYSTEM_PROMPT),
                 HumanMessage(content=investigation_prompt)
@@ -102,10 +101,10 @@ Chỉ trả về JSON:"""
             result_text = response.content.strip()
             result_text = re.sub(r'```json\s*|\s*```', '', result_text)
             investigations = json.loads(result_text)
-            
+            if state["final_response"] is None:
+                state["final_response"] = investigations
             state["investigation_plan"] = investigations
             state["current_step"] += 1
-            print(f"Generated {len(investigations)} investigation items:")
             for test_name in investigations:
                 print(test_name)
         except Exception as e:

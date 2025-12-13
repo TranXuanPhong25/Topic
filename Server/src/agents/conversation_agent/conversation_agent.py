@@ -17,15 +17,6 @@ class ConversationAgentNode:
         self.knowledge_base = knowledge_base
     
     def _get_current_goal(self, state: "GraphState") -> str:
-        """
-        Extract the goal for the current step from the plan
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Goal string or empty string if not found
-        """
         plan = state.get("plan", [])
         current_step_index = state.get("current_step", 0)
         
