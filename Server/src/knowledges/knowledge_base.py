@@ -4,16 +4,6 @@ from src.configs.config import CLINIC_CONFIG
 
 
 class FAQKnowledgeBase:
-    """
-    Knowledge base for clinic information and frequently asked questions.
-    
-    This class stores and retrieves:
-    - Clinic hours and contact information
-    - Insurance and payment policies
-    - Services offered
-    - Common medical questions
-    - Appointment policies
-    """
     
     def __init__(self):
         """Initialize the knowledge base with clinic FAQs"""
@@ -126,49 +116,6 @@ class FAQKnowledgeBase:
                 },
             ],
             
-            "providers": [
-                {
-                    "question": "Who are your providers?",
-                    "answer": f"Our medical team includes: {', '.join(CLINIC_CONFIG['providers'])}. All our providers are board-certified and have years of experience in family medicine.",
-                    "keywords": ["provider", "doctor", "physician", "who", "staff"],
-                },
-                {
-                    "question": "Can I choose my provider?",
-                    "answer": "Absolutely! When scheduling, just let us know which provider you'd like to see. If you're a new patient, we can also help match you with a provider based on your needs.",
-                    "keywords": ["choose", "select", "pick", "prefer", "specific doctor"],
-                },
-                {
-                    "question": "Are your doctors accepting new patients?",
-                    "answer": "Yes! All our providers are currently accepting new patients. We'd love to welcome you to our practice. Would you like to schedule a new patient visit?",
-                    "keywords": ["new patient", "accepting", "taking new"],
-                },
-            ],
-            
-            "emergency": [
-                {
-                    "question": "Is this an emergency?",
-                    "answer": "For life-threatening emergencies (chest pain, difficulty breathing, severe bleeding, etc.), call 911 or go to the nearest emergency room immediately. For urgent but non-emergency care, we offer same-day appointments.",
-                    "keywords": ["emergency", "urgent", "911", "er", "immediate"],
-                },
-                {
-                    "question": "What should I do after hours?",
-                    "answer": "For urgent medical concerns after hours, call our main number (555) 123-4567 - you'll reach our answering service who can connect you with the on-call provider. For emergencies, call 911.",
-                    "keywords": ["after hours", "night", "weekend", "closed", "on-call"],
-                },
-            ],
-            
-            "covid": [
-                {
-                    "question": "Do you test for COVID-19?",
-                    "answer": "Yes, we offer both rapid and PCR COVID-19 testing. Rapid tests give results in 15 minutes, PCR tests in 24-48 hours. Please call ahead to schedule a testing appointment.",
-                    "keywords": ["covid", "coronavirus", "covid-19", "test", "pcr"],
-                },
-                {
-                    "question": "What are your COVID safety measures?",
-                    "answer": "We follow all CDC guidelines: enhanced cleaning, air filtration, hand sanitizer stations, and social distancing in waiting areas. Masks are available if needed.",
-                    "keywords": ["covid", "safety", "mask", "precaution", "protocol"],
-                },
-            ],
         }
         
         # Build a flat list of all FAQs for searching
@@ -179,16 +126,7 @@ class FAQKnowledgeBase:
                 self.all_faqs.append(faq)
     
     def search_faqs(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
-        """
-        Search FAQs by keyword matching.
-        
-        Args:
-            query: Search query from user
-            limit: Maximum number of results to return
-            
-        Returns:
-            List of matching FAQ dictionaries with relevance scores
-        """
+
         query_lower = query.lower()
         results = []
         
@@ -223,15 +161,6 @@ class FAQKnowledgeBase:
         return [r["faq"] for r in results[:limit]]
     
     def get_faq_by_category(self, category: str) -> List[Dict[str, str]]:
-        """
-        Get all FAQs in a specific category.
-        
-        Args:
-            category: Category name (e.g., "appointments", "insurance_and_payment")
-            
-        Returns:
-            List of FAQ dictionaries in that category
-        """
         return self.faqs.get(category, [])
     
     def get_all_categories(self) -> List[str]:
