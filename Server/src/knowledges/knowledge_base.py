@@ -1,4 +1,3 @@
-"""FAQ Knowledge Base for Medical Clinic"""
 from typing import List, Dict, Any, Optional
 from src.configs.config import CLINIC_CONFIG
 
@@ -6,7 +5,6 @@ from src.configs.config import CLINIC_CONFIG
 class FAQKnowledgeBase:
     
     def __init__(self):
-        """Initialize the knowledge base with clinic FAQs"""
         
         # Clinic Information
         self.clinic_info = {
@@ -206,12 +204,10 @@ class FAQKnowledgeBase:
     def get_faq_by_category(self, category: str) -> List[Dict[str, str]]:
         return self.faqs.get(category, [])
     
-    def get_all_categories(self) -> List[str]:
-        """Get list of all FAQ categories."""
+    def get_categories(self) -> List[str]:
         return list(self.faqs.keys())
     
     def get_clinic_info(self) -> Dict[str, Any]:
-        """Get basic clinic information."""
         return self.clinic_info
     
     def answer_question(self, query: str) -> Optional[str]:

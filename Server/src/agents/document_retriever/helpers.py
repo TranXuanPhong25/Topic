@@ -54,7 +54,7 @@ def request_document_retrieval(
     """
     if not can_call_retriever(state, agent_name):
         max_calls = state.get("max_retriever_calls_per_agent", 2)
-        print(f"⚠️ {agent_name} has already called document_retriever {max_calls} times (max)")
+        print(f"{agent_name} has already called document_retriever {max_calls} times (max)")
         return state, False
     
     # Update call count

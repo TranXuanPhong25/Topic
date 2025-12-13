@@ -1,6 +1,3 @@
-"""
-Symptom Extractor Agent Configuration
-"""
 from typing import Optional, Any
 from src.configs.agent_config import (
     GOOGLE_API_KEY, 
@@ -11,13 +8,12 @@ from .prompts import SYMPTOM_EXTRACTOR_SYSTEM_PROMPT
 
 
 class SymptomExtractorModelSingleton:
-    """Singleton for Symptom Extractor's LLM model"""
     _instance: Optional[Any] = None
     
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            print("🩺 Initializing Symptom Extractor LLM model...")
+            print("Initializing Symptom Extractor LLM model...")
             
             cls._instance = ChatGoogleGenerativeAI(
                 model=GEMINI_MODEL_NAME,
@@ -28,7 +24,7 @@ class SymptomExtractorModelSingleton:
                 max_tokens=2048,  # Larger for detailed structured output
                 model_kwargs={"response_mime_type": "application/json"}  # Force JSON output
             )
-            print(f"✅ Symptom Extractor model initialized: {GEMINI_MODEL_NAME}")
+            print(f"Symptom Extractor model initialized: {GEMINI_MODEL_NAME}")
         return cls._instance
     
     @classmethod
@@ -37,5 +33,4 @@ class SymptomExtractorModelSingleton:
 
 
 def get_symptom_extractor_model():
-    """Get singleton Symptom Extractor LLM instance"""
     return SymptomExtractorModelSingleton.get_instance()

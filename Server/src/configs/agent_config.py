@@ -1,7 +1,3 @@
-"""
-Centralized configuration for all AI agents in the medical diagnostic system.
-This module provides shared settings for model names, API keys, and generation parameters.
-"""
 import os
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -132,19 +128,6 @@ RECOMMENDER_CONFIG = {
 # ============================================================================
 
 def get_model_config(agent_type: str) -> dict:
-    """
-    Get configuration for a specific agent type.
-    
-    Args:
-        agent_type: One of 'router', 'conversation', 'diagnosis', 
-                   'vision', 'investigation', 'recommender'
-    
-    Returns:
-        Configuration dictionary with model_name, generation_config, and safety_settings
-    
-    Raises:
-        ValueError: If agent_type is not recognized
-    """
     configs = {
         "router": ROUTER_CONFIG,
         "conversation": CONVERSATION_CONFIG,
@@ -164,15 +147,6 @@ def get_model_config(agent_type: str) -> dict:
 
 
 def get_api_key() -> str:
-    """
-    Get the Google API key.
-    
-    Returns:
-        Google API key string
-    
-    Raises:
-        ValueError: If API key is not set
-    """
     if not GOOGLE_API_KEY:
         raise ValueError(
             "GOOGLE_API_KEY not found. Please set it in your .env file."

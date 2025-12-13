@@ -1,4 +1,3 @@
-"""Appointment Scheduler Agent - Handle appointment booking"""
 from .appointment_scheduler import AppointmentSchedulerNode
 from .config import get_appointment_model
 

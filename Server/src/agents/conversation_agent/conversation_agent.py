@@ -1,4 +1,3 @@
-"""ConversationAgent Node: Handles normal conversations using clinic information and FAQs."""
 from typing import TYPE_CHECKING
 from .prompts import build_conversation_prompt, CONVERSATION_SYSTEM_PROMPT
 from ..utils import build_messages_with_history
@@ -6,11 +5,6 @@ if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
 
 class ConversationAgentNode:
-    """
-    ConversationAgent Node: Handles normal conversations using tools.
-    
-    Tools: CareGuideTool, FAQTool, ClinicInfoTool, PriceTableTool
-    """
     
     def __init__(self, gemini_model, knowledge_base):
         self.gemini_model = gemini_model
@@ -27,20 +21,11 @@ class ConversationAgentNode:
         goal = current_plan_step.get("goal", "")
         
         if goal:
-            print(f"🎯 Current Goal: {goal}")
+            print(f"Current Goal: {goal}")
         
         return goal
     
     def _get_current_context(self, state: "GraphState") -> dict:
-        """
-        Extract context and user_context for the current step from the plan
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Dict with 'context' and 'user_context' keys (empty strings if not found)
-        """
         plan = state.get("plan", [])
         current_step_index = state.get("current_step", 0)
         
@@ -52,14 +37,14 @@ class ConversationAgentNode:
         user_context = current_plan_step.get("user_context", "")
         
         if context:
-            print(f"📝 Context: {context[:100]}...")
+            print(f"Context: {context[:100]}...")
         if user_context:
-            print(f"👤 User Context: {user_context[:100]}...")
+            print(f"User Context: {user_context[:100]}...")
         
         return {"context": context, "user_context": user_context}
     
     def __call__(self, state: "GraphState") -> "GraphState":
-        print("💬 ConversationAgent: Handling conversation...")
+        print("ConversationAgent: Handling conversation...")
         
         user_input = state.get("input", "")
         

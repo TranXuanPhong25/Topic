@@ -1,6 +1,3 @@
-"""
-Investigation Generator Agent Configuration
-"""
 from typing import Optional, Any
 from src.configs.agent_config import (
     GOOGLE_API_KEY, 
@@ -11,13 +8,12 @@ from .prompts import INVESTIGATION_SYSTEM_PROMPT
 
 
 class InvestigationModelSingleton:
-    """Singleton for Investigation Generator's LLM model"""
     _instance: Optional[Any] = None
     
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            print("🔬 Initializing Investigation Generator LLM model...")
+            print("Initializing Investigation Generator LLM model...")
             
             cls._instance = ChatGoogleGenerativeAI(
                 model=GEMINI_MODEL_NAME,
@@ -27,7 +23,7 @@ class InvestigationModelSingleton:
                 top_k=40,
                 max_tokens=1536,
             )
-            print(f"✅ Investigation model initialized: {GEMINI_MODEL_NAME}")
+            print(f"Investigation model initialized: {GEMINI_MODEL_NAME}")
         return cls._instance
     
     @classmethod
@@ -36,5 +32,4 @@ class InvestigationModelSingleton:
 
 
 def get_investigation_model():
-    """Get singleton Investigation Generator LLM instance"""
     return InvestigationModelSingleton.get_instance()

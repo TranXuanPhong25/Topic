@@ -1,7 +1,3 @@
-"""
-Conversation Agent Configuration
-Handles general questions, FAQs, and clinic information
-"""
 from typing import Optional, Any
 from src.configs.agent_config import (
     GOOGLE_API_KEY, 
@@ -12,13 +8,12 @@ from .prompts import CONVERSATION_SYSTEM_PROMPT
 
 
 class ConversationModelSingleton:
-    """Singleton for Conversation agent's LLM model"""
     _instance: Optional[Any] = None
     
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            print("💬 Initializing Conversation LLM model...")
+            print("Initializing Conversation LLM model...")
             
             cls._instance = ChatGoogleGenerativeAI(
                 model=GEMINI_MODEL_NAME,
@@ -29,7 +24,7 @@ class ConversationModelSingleton:
                 max_tokens=1024,
             )
             
-            print(f"✅ Conversation model initialized: {GEMINI_MODEL_NAME}")
+            print(f"Conversation model initialized: {GEMINI_MODEL_NAME}")
         return cls._instance
     
     @classmethod
@@ -38,7 +33,6 @@ class ConversationModelSingleton:
 
 
 def get_conversation_model():
-    """Get singleton Conversation LLM instance"""
     return ConversationModelSingleton.get_instance()
 
 

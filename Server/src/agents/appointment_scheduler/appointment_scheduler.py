@@ -9,11 +9,6 @@ from ..utils.message_builder import build_messages_with_history, extract_text_fr
 from src.configs.agent_config import HumanMessage, AIMessage
 
 class AppointmentSchedulerNode:
-    """
-    React Agent-based Appointment Scheduler.
-    Uses LangGraph's create_react_agent to intelligently handle appointment booking
-    by deciding which tools to use based on user input.
-    """
     
     def __init__(self, model: BaseChatModel):
         # Create React agent with tools
@@ -30,15 +25,6 @@ class AppointmentSchedulerNode:
         )
     
     def _get_current_goal(self, state: "GraphState") -> str:
-        """
-        Extract the goal for the current step from the plan
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Goal string or empty string if not found
-        """
         plan = state.get("plan", [])
         current_step_index = state.get("current_step", 0)
         
@@ -49,20 +35,11 @@ class AppointmentSchedulerNode:
         goal = current_plan_step.get("goal", "")
         
         if goal:
-            print(f"🎯 Current Goal: {goal}")
+            print(f"Current Goal: {goal}")
         
         return goal
     
     def _get_current_context(self, state: "GraphState") -> dict:
-        """
-        Extract context and user_context for the current step from the plan
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Dict with 'context' and 'user_context' keys (empty strings if not found)
-        """
         plan = state.get("plan", [])
         current_step_index = state.get("current_step", 0)
         
@@ -74,9 +51,9 @@ class AppointmentSchedulerNode:
         user_context = current_plan_step.get("user_context", "")
         
         if context:
-            print(f"📝 Context: {context[:100]}...")
+            print(f"Context: {context[:100]}...")
         if user_context:
-            print(f"👤 User Context: {user_context[:100]}...")
+            print(f"User Context: {user_context[:100]}...")
         
         return {"context": context, "user_context": user_context}
 
@@ -97,7 +74,7 @@ class AppointmentSchedulerNode:
             result = await self.agent.ainvoke({"messages": messages})
             agent_messages = result.get("messages", [])
             
-            print(f"📅 AppointmentScheduler: Processing {len(agent_messages)} messages")
+            print(f"AppointmentScheduler: Processing {len(agent_messages)} messages")
             print("=" * 80)
             
             # Trace all messages and collect intermediate messages for streaming
@@ -108,12 +85,12 @@ class AppointmentSchedulerNode:
                 print(f"\n[Message {i+1}/{len(agent_messages)}] Type: {msg_type}")
                 
                 if isinstance(msg, ToolMessage):
-                    print(f"  🔧 Tool: {msg.name}")
-                    print(f"  📤 Output: {msg.content[:200]}..." if len(msg.content) > 200 else f"  📤 Output: {msg.content}")
+                    print(f"  Tool: {msg.name}")
+                    print(f"  Output: {msg.content[:200]}..." if len(msg.content) > 200 else f"  Output: {msg.content}")
                     
                 elif isinstance(msg, LangChainAIMessage):
                     if hasattr(msg, 'tool_calls') and msg.tool_calls:
-                        print(f"  🤖 AI calling tools: {[tc['name'] for tc in msg.tool_calls]}")
+                        print(f"  AI calling tools: {[tc['name'] for tc in msg.tool_calls]}")
                         for tc in msg.tool_calls:
                             print(f"     - {tc['name']}({tc.get('args', {})})")
                     
@@ -128,11 +105,11 @@ class AppointmentSchedulerNode:
                         if hasattr(msg, 'tool_calls') and msg.tool_calls and content_text:
                             # This is an intermediate message - AI is explaining before calling tool
                             intermediate_messages.append(content_text)
-                            print(f"  📨 Added intermediate message for streaming")
+                            print(f"  Added intermediate message for streaming")
                     else:
-                        print(f"  💬 AI Response: {msg}")
+                        print(f"  AI Response: {msg}")
                 else:
-                    print(f"  📝 Content: {str(msg)[:150]}...")
+                    print(f"  Content: {str(msg)[:150]}...")
             
             print("=" * 80)
             
@@ -159,10 +136,10 @@ class AppointmentSchedulerNode:
             
             # If no valid final response found, generate one based on tool output
             if not final_response:
-                print("⚠️  No valid final response found from agent")
+                print("No valid final response found from agent")
                 
                 if last_tool_output:
-                    print(f"  ℹ️  Using last tool output to generate response: {last_tool_output[:100]}...")
+                    print(f"  Using last tool output to generate response: {last_tool_output[:100]}...")
                     # Parse tool output and generate appropriate response
                     try:
                         import json
@@ -173,14 +150,14 @@ class AppointmentSchedulerNode:
                             if tool_result.get("available"):
                                 date = tool_result.get("date", "")
                                 time = tool_result.get("time", "")
-                                final_response = f"✅ Tin tốt! Lịch hẹn vào ngày {date} lúc {time} vẫn còn trống. Để hoàn tất đặt lịch, tôi cần xác nhận thêm: tên đầy đủ của bạn, lý do khám, và số điện thoại liên hệ."
+                                final_response = f"Tin tốt! Lịch hẹn vào ngày {date} lúc {time} vẫn còn trống. Để hoàn tất đặt lịch, tôi cần xác nhận thêm: tên đầy đủ của bạn, lý do khám, và số điện thoại liên hệ."
                             else:
                                 error = tool_result.get("error", "")
                                 alternatives = tool_result.get("alternatives", [])
                                 if alternatives:
-                                    final_response = f"❌ Xin lỗi, {error}. Bạn có thể chọn các khung giờ trống khác: {', '.join(alternatives[:3])}."
+                                    final_response = f"Xin lỗi, {error}. Bạn có thể chọn các khung giờ trống khác: {', '.join(alternatives[:3])}."
                                 else:
-                                    final_response = f"❌ Xin lỗi, {error}. Vui lòng chọn ngày hoặc giờ khác."
+                                    final_response = f"Xin lỗi, {error}. Vui lòng chọn ngày hoặc giờ khác."
                         
                         # Handle book_appointment response
                         elif "success" in tool_result:

@@ -21,7 +21,7 @@ class PatientSimulator:
         
         for step in self.scenario['steps']:
             user_msg = step['user']
-            print(f"\n👤 Patient: {user_msg}")
+            print(f"\nPatient: {user_msg}")
             
             # Send to API
             try:
@@ -40,7 +40,7 @@ class PatientSimulator:
                     bot_msg = data['response']
                     self.session_id = data['session_id']
                     
-                    print(f"🤖 Bot ({latency:.2f}s): {bot_msg}")
+                    print(f"Bot ({latency:.2f}s): {bot_msg}")
                     
                     # Update history (simplified)
                     self.history.append({"role": "user", "parts": [{"text": user_msg}]})
@@ -57,14 +57,14 @@ class PatientSimulator:
                                 missing_keywords.append(kw)
                         
                         if len(missing_keywords) == len(step['expected_keywords']):
-                             print(f"⚠️ Warning: None of the expected keywords found: {step['expected_keywords']}")
+                             print(f"Warning: None of the expected keywords found: {step['expected_keywords']}")
 
                 else:
-                    print(f"❌ Error {response.status_code}: {response.text}")
+                    print(f"Error {response.status_code}: {response.text}")
                     break
                     
             except requests.exceptions.ConnectionError:
-                print("❌ Could not connect to server. Is it running?")
+                print("Could not connect to server. Is it running?")
                 break
             
             # Simulate reading time

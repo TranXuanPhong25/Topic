@@ -1,4 +1,3 @@
-"""Image Analyzer Agent - Medical image analysis"""
 from src.agents.image_analyzer.config import get_image_analyzer_model
 from .image_analyzer import ImageAnalyzerNode
 from .lesion_classifier import get_lesion_classifier

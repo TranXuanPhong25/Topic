@@ -1,11 +1,9 @@
-"""Database models for Medical Clinic Chatbot"""
 from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from . import Base
 
 class Appointment(Base):
-    """Appointment model for storing patient appointments"""
     __tablename__ = "appointments"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -28,7 +26,6 @@ class Appointment(Base):
         return f"<Appointment(id={self.id}, patient={self.patient_name}, date={self.date}, time={self.time})>"
     
     def to_dict(self):
-        """Convert appointment to dictionary"""
         return {
             "id": self.id,
             "patient_name": self.patient_name,

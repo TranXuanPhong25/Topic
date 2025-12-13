@@ -1,4 +1,3 @@
-"""Message builder utilities for constructing chat history and messages."""
 from typing import List, Dict, Any, Optional
 from src.configs.agent_config import BaseMessage, SystemMessage, HumanMessage, AIMessage
 

@@ -1,4 +1,3 @@
-"""Configuration settings for the Medical Clinic Chatbot"""
 import os
 from dotenv import load_dotenv
 

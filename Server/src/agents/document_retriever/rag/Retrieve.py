@@ -1,4 +1,3 @@
-"""Composable RAG pipeline that can be imported as a module."""
 
 from __future__ import annotations
 
@@ -68,7 +67,6 @@ Phân tích và trả lời bằng tiếng Việt (tuân thủ các quy tắc n�
 
 
 def format_context_with_metadata(documents: Sequence[Document]) -> str:
-    """Format retrieved documents so the generator can cite them."""
     formatted = []
     for idx, doc in enumerate(documents, start=1):
         metadata = doc.metadata or {}
@@ -94,8 +92,6 @@ def format_context_with_metadata(documents: Sequence[Document]) -> str:
 
 
 class RAGPipeline:
-    """High-level facade that wires routing, reranking, and response generation."""
-
     def __init__(
         self,
         *,

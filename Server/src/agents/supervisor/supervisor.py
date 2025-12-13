@@ -27,7 +27,6 @@ EMERGENCY_KEYWORDS = {
 }
 
 def _is_emergency_input(text: str) -> bool:
-    """Check if user input contains emergency keywords"""
     if not text:
         return False
     text_lower = text.lower()
