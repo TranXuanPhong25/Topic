@@ -92,7 +92,7 @@ class ConversationAgentNode:
             state["final_response"] = conversation_output
             state["current_step"] +=1
 
-            print(f"Conversation response: {conversation_output[:100]}...")
+            print(f"Conversation response: {conversation_output[:100]}")
             
         except Exception as e:
             print(f"ConversationAgent error: {str(e)}")

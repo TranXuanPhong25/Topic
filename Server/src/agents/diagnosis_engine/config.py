@@ -21,7 +21,7 @@ class DiagnosisModelSingleton:
                 temperature=0.24,  # Conservative for medical diagnosis
                 top_p=0.9,
                 top_k=40,
-                max_tokens=3048,
+                max_tokens=5048,
             )
             print(f"Diagnosis model initialized: {GEMINI_MODEL_NAME}")
         return cls._instance

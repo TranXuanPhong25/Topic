@@ -21,7 +21,7 @@ class SymptomExtractorModelSingleton:
                 temperature=0.2,  # Very conservative for accurate extraction
                 top_p=0.85,
                 top_k=40,
-                max_tokens=2048,  # Larger for detailed structured output
+                max_tokens=5048,  # Larger for detailed structured output
                 model_kwargs={"response_mime_type": "application/json"}  # Force JSON output
             )
             print(f"Symptom Extractor model initialized: {GEMINI_MODEL_NAME}")

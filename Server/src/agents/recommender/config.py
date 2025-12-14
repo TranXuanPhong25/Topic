@@ -21,7 +21,7 @@ class RecommenderModelSingleton:
                 temperature=0.4,  # Balanced for recommendations
                 top_p=0.95,
                 top_k=40,
-                max_tokens=1536,
+                max_tokens=5536,
             )
             print(f"Recommender model initialized: {GEMINI_MODEL_NAME}")
         return cls._instance
