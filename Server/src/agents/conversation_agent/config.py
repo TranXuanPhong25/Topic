@@ -21,7 +21,7 @@ class ConversationModelSingleton:
                 temperature=0.6,  # More natural and friendly
                 top_p=0.95,
                 top_k=40,
-                max_tokens=1024,
+                max_tokens=9024,
             )
             
             print(f"Conversation model initialized: {GEMINI_MODEL_NAME}")

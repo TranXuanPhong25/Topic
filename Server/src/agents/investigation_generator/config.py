@@ -21,7 +21,7 @@ class InvestigationModelSingleton:
                 temperature=0.3,  # Conservative for medical tests
                 top_p=0.9,
                 top_k=40,
-                max_tokens=1536,
+                max_tokens=5536,
             )
             print(f"Investigation model initialized: {GEMINI_MODEL_NAME}")
         return cls._instance

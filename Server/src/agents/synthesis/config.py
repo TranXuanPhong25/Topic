@@ -21,7 +21,7 @@ class SynthesisModelSingleton:
                 temperature=0.3,  # Conservative for medical synthesis
                 top_p=0.9,
                 top_k=40,
-                max_tokens=2048,  # Larger for comprehensive reports
+                max_tokens=5048,  # Larger for comprehensive reports
             )
             print(f"Synthesis model initialized: {GEMINI_MODEL_NAME}")
         return cls._instance
