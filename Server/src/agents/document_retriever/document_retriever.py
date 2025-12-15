@@ -18,7 +18,6 @@ from .config import get_document_retriever_model
 from .prompts import (
     DOCUMENT_RETRIEVER_SYSTEM_PROMPT,
     build_document_retrieval_prompt,
-    SYNTHESIS_PROMPT
 )
 
 if TYPE_CHECKING:
