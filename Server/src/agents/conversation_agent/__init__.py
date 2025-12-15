@@ -1,4 +1,3 @@
-"""Conversation Agent - General conversation and FAQ handling"""
 from src.agents.conversation_agent.config import get_conversation_model
 from .conversation_agent import ConversationAgentNode
 

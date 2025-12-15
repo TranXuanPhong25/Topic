@@ -1,4 +1,3 @@
-"""Database models for Medical Clinic Chatbot"""
 from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -6,7 +5,6 @@ from datetime import datetime
 from . import Base
 
 class Conversation(Base):
-    """Conversation history model for tracking chat sessions"""
     __tablename__ = "conversations"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -23,7 +21,6 @@ class Conversation(Base):
         return f"<Conversation(id={self.id}, session={self.session_id}, role={self.role})>"
     
     def to_dict(self):
-        """Convert conversation to dictionary"""
         return {
             "id": self.id,
             "session_id": self.session_id,

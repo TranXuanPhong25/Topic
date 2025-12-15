@@ -475,7 +475,7 @@ class GeminiVisionAnalyzer:
 
 4. **unclear** - CHỈ dùng khi THỰC SỰ không thể xác định
 
-**⚠️ LƯU Ý QUAN TRỌNG:**
+**LƯU Ý QUAN TRỌNG:**
 - Nếu thấy CHỮ VIẾT hoặc FORMAT GIẤY TỜ → ưu tiên phân loại là **document**
 - Nếu người dùng hỏi về "đơn thuốc", "toa thuốc", "kết quả xét nghiệm" → phân loại là **document**
 - TRÁNH phân loại là "unclear" trừ khi thật sự không nhìn thấy gì
@@ -488,7 +488,7 @@ CHẨN_ĐOÁN: [có/không]
 
 **Phân loại:**"""
             
-            print(f"🔍 Classifying image with user context: {user_input[:50] if user_input else 'None'}...")
+            print(f"Classifying image with user context: {user_input[:50] if user_input else 'None'}...")
             
             image_base64 = self._pil_image_to_base64(image)
             message = HumanMessage(
@@ -500,7 +500,7 @@ CHẨN_ĐOÁN: [có/không]
             response = self.model.invoke([message])
             result_text = response.content.strip()
             
-            print(f"🔍 Classification raw response: {result_text[:200]}...")
+            print(f"Classification raw response: {result_text[:200]}...")
             
             # Parse the response
             image_type = "unclear"
@@ -540,7 +540,7 @@ CHẨN_ĐOÁN: [có/không]
             if image_type == "unclear":
                 result_lower = result_text.lower()
                 if any(kw in result_lower for kw in ["đơn thuốc", "toa thuốc", "prescription", "kết quả xét nghiệm", "test result", "giấy khám", "phiếu khám"]):
-                    print("🔍 Fallback: Detected document keywords in response, changing type to document")
+                    print("Fallback: Detected document keywords in response, changing type to document")
                     image_type = "document"
             
             # Force correct diagnostic status based on image type
@@ -552,7 +552,7 @@ CHẨN_ĐOÁN: [có/không]
                 is_diagnostic = False
             # For unclear, keep whatever LLM returned
             
-            print(f"🔍 Image classification: type={image_type}, diagnostic={is_diagnostic}, confidence={confidence}")
+            print(f"Image classification: type={image_type}, diagnostic={is_diagnostic}, confidence={confidence}")
             
             return {
                 "image_type": image_type,
@@ -628,8 +628,8 @@ CHẨN_ĐOÁN: [có/không]
             
             image_base64 = self._pil_image_to_base64(image)
             
-            print(f"📄 Sending document to LLM for analysis...")
-            print(f"📄 Image base64 length: {len(image_base64)} chars")
+            print(f"Sending document to LLM for analysis...")
+            print(f"Image base64 length: {len(image_base64)} chars")
             
             message = HumanMessage(
                 content=[
@@ -639,9 +639,9 @@ CHẨN_ĐOÁN: [có/không]
             )
             
             try:
-                response = self.model.invoke([message])
-                print(f"📄 Raw response type: {type(response)}")
-                print(f"📄 Raw response: {response}")
+                response = self.llm.invoke(messages)
+                print(f"Raw response type: {type(response)}")
+                print(f"Raw response: {response}")
                 
                 if hasattr(response, 'content'):
                     content = response.content.strip() if response.content else ""
@@ -649,16 +649,16 @@ CHẨN_ĐOÁN: [có/không]
                     content = str(response).strip()
                     
             except Exception as invoke_error:
-                print(f"❌ LLM invoke error: {invoke_error}")
+                print(f"ERROR: LLM invoke error: {invoke_error}")
                 import traceback
                 traceback.print_exc()
                 content = ""
             
-            print(f"📄 Document analysis response length: {len(content)} chars")
+            print(f"Document analysis response length: {len(content)} chars")
             if content:
-                print(f"📄 Document analysis preview: {content[:300]}...")
+                print(f"Document analysis preview: {content[:300]}...")
             else:
-                print("⚠️ Document analysis returned empty content!")
+                print("WARNING: Document analysis returned empty content!")
             
             # Try to detect document type from response
             doc_type = "unknown"

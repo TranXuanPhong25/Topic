@@ -10,7 +10,7 @@ DIAGNOSIS_SYSTEM_PROMPT = """You are **Gemidical**, an expert AI Medical Diagnos
 ## YOUR ROLE
 Analyze patient symptoms and provide preliminary medical diagnosis with differential diagnoses, risk assessment, and clinical reasoning.
 
-## ⚠️ MANDATORY: FOLLOW ALL CONSTRAINTS IN CONTEXT
+## MANDATORY: FOLLOW ALL CONSTRAINTS IN CONTEXT
 **CRITICAL**: When context includes constraints (language, style, urgency, detail level), you MUST follow them:
 - **Language Constraint**: If context says "Language: Vietnamese" → respond ENTIRELY in Vietnamese
 - **Style Constraint**: "Brief" → concise response; "Detailed" → thorough explanation
@@ -20,9 +20,9 @@ Analyze patient symptoms and provide preliminary medical diagnosis with differen
 Failure to follow constraints = poor user experience. Always check context first.
 
 ## IMPORTANT DISCLAIMERS
-⚠️ **This is a preliminary assessment, not a final diagnosis**
-⚠️ **Always recommend professional medical consultation**
-⚠️ **For emergencies, advise immediate medical attention**
+**This is a preliminary assessment, not a final diagnosis**
+**Always recommend professional medical consultation**
+**For emergencies, advise immediate medical attention**
 
 ## DIAGNOSTIC PROCESS
 
@@ -188,49 +188,29 @@ Symptoms: "Fever 101°F for 2 days, sore throat, body aches"
 - Keep `final_response` conversational and patient-friendly
 - If information is insufficient, prioritize asking for more details over making uncertain diagnosis
 """
-COMPACT_DIAGNOSIS_PROMPT = """
-**ROLE:** Expert Medical Diagnostic AI.
-**TASK:** Analyze patient symptoms to provide preliminary differential diagnoses, risk assessment, and clinical reasoning.
-**SAFETY:** NEVER provide definitive diagnosis. ALWAYS recommend professional consultation. For EMERGENCIES (chest pain, stroke signs, severe bleeding), advise immediate care.
+COMPACT_DIAGNOSIS_PROMPT = """**ROLE:** Expert Medical Diagnostic AI.
+**TASK:** Analyze symptoms → provide differential diagnoses, risk assessment, clinical reasoning.
+**SAFETY:** NEVER definitive diagnosis. ALWAYS recommend consultation. EMERGENCIES → advise immediate care.
 
-**DIAGNOSTIC PROTOCOL:**
-1. **Analyze:** Identify primary/secondary symptoms, duration, severity, demographics.
-2. **Diagnose:** Rank 3-5 likely conditions with reasoning.
-3. **Risk:** Assess severity:
-   - *LOW:* Self-limiting.
-   - *MODERATE:* Needs evaluation soon.
-   - *HIGH:* Urgent (24h).
-   - *EMERGENCY:* Immediate.
-4. **Gap Analysis:** If confidence < 0.6 or critical info is missing, prioritize `information_needed` and ask clarifying questions in `final_response`.
+**PROTOCOL:**
+1. Analyze symptoms (primary/secondary, duration, severity)
+2. Rank 3-5 likely conditions with reasoning
+3. Assess severity: LOW|MODERATE|HIGH|EMERGENCY
+4. If confidence < 0.6 → ask clarifying questions
 
-**OUTPUT FORMAT:** Respond ONLY with valid JSON.
+**OUTPUT:** Valid JSON only:
 ```json
 {
-  "primary_diagnosis": { "condition": "string", "probability": 0.0-1.0, "reasoning": "string" },
-  "differential_diagnoses": [ { "condition": "string", "probability": 0.0-1.0, "reasoning": "string" } ],
-  "risk_assessment": {
-    "severity": "LOW|MODERATE|HIGH|EMERGENCY",
-    "red_flags": ["string"],
-    "complications": ["string"]
-  },
+  "primary_diagnosis": {"condition": "string", "probability": 0.0-1.0, "reasoning": "string"},
+  "differential_diagnoses": [{"condition": "string", "probability": 0.0-1.0, "reasoning": "string"}],
+  "risk_assessment": {"severity": "LOW|MODERATE|HIGH|EMERGENCY", "red_flags": [], "complications": []},
   "confidence": 0.0-1.0,
-  "confidence_factors": { "increases_confidence": ["string"], "decreases_confidence": ["string"] },
-  "information_needed": {
-    "missing_critical_info": ["string"],
-    "clarifying_questions": ["string"],
-    "additional_symptoms_to_check": ["string"],
-    "relevant_medical_history": ["string"]
-  },
-  "final_response": "Friendly message. If info needed, politely ask 2-3 key questions. If sufficient, provide summary.",
-  "recommendation": "Actionable next steps"
+  "information_needed": {"clarifying_questions": [], "additional_symptoms_to_check": []},
+  "final_response": "Friendly summary. If low confidence, ask 2-3 key questions.",
+  "recommendation": "Next steps"
 }
-CONSTRAINTS:
-
-Be conservative with risk (err on side of caution).
-
-Use information_needed to bridge gaps before guessing.
-
-Maintain a pedagogical, direct, and no-fluff tone in reasoning."""
+```
+**RULES:** Be conservative. Use information_needed before guessing. Keep response concise."""
 def build_diagnosis_prompt(
     symptoms: str, 
     image_analysis: str = "",
@@ -250,7 +230,7 @@ def build_diagnosis_prompt(
     context_section = ""
     if context:
         context_section = f"\n## CONVERSATION CONTEXT & MANDATORY CONSTRAINTS\n{context}\n"
-        context_section += "\n⚠️ YOU MUST FOLLOW: Language requirement, response style, urgency level, detail level specified above.\n"
+        context_section += "\nYOU MUST FOLLOW: Language requirement, response style, urgency level, detail level specified above.\n"
     
     user_context_section = f"\n## PATIENT'S CONCERNS\n{user_context}\n" if user_context else ""
     print("start revision confirm")
@@ -260,7 +240,7 @@ def build_diagnosis_prompt(
         try:
             revision_data = revision_requirements
             review_data = detailed_review
-            revision_section = "\n## ⚠️ REVISION REQUIRED - PREVIOUS DIAGNOSIS WAS INCOMPLETE\n\n"
+            revision_section = "\n## REVISION REQUIRED - PREVIOUS DIAGNOSIS WAS INCOMPLETE\n\n"
             revision_section += "The previous diagnosis was reviewed and found to need improvements.\n\n"
             
             # Add critical issues
@@ -270,7 +250,7 @@ def build_diagnosis_prompt(
                 high_issues = [r for r in revision_data if r.get("priority") == "HIGH"]
                 medium_issues = [r for r in revision_data if r.get("priority") == "MEDIUM"]
                 if critical_issues:
-                    revision_section += "### 🔴 CRITICAL ISSUES (Must Fix):\n"
+                    revision_section += "### CRITICAL ISSUES (Must Fix):\n"
                     for issue in critical_issues:
                         revision_section += f"- **{issue.get('category', 'general')}**: {issue.get('issue', 'Unknown issue')}\n"
                         if issue.get('suggestion'):
@@ -278,7 +258,7 @@ def build_diagnosis_prompt(
                     revision_section += "\n"
                 
                 if high_issues:
-                    revision_section += "### 🟡 HIGH PRIORITY ISSUES:\n"
+                    revision_section += "### HIGH PRIORITY ISSUES:\n"
                     for issue in high_issues:
                         revision_section += f"- **{issue.get('category', 'general')}**: {issue.get('issue', 'Unknown issue')}\n"
                         if issue.get('suggestion'):
@@ -300,19 +280,19 @@ def build_diagnosis_prompt(
                 if review_data.get("symptom_diagnosis_alignment"):
                     alignment = review_data["symptom_diagnosis_alignment"]
                     if alignment.get("status") == "FAIL":
-                        revision_section += f"- Symptom-Diagnosis Alignment: ❌ {alignment.get('reasoning', 'Issues found')}\n"
+                        revision_section += f"- Symptom-Diagnosis Alignment: [X] {alignment.get('reasoning', 'Issues found')}\n"
                 
                 if review_data.get("differential_quality"):
                     diff_qual = review_data["differential_quality"]
                     if diff_qual.get("status") == "FAIL":
-                        revision_section += f"- Differential Quality: ❌ {diff_qual.get('reasoning', 'Needs improvement')}\n"
+                        revision_section += f"- Differential Quality: [X] {diff_qual.get('reasoning', 'Needs improvement')}\n"
                         if diff_qual.get("notable_omissions"):
                             revision_section += f"  Missing conditions: {', '.join(diff_qual['notable_omissions'])}\n"
                 
                 if review_data.get("severity_assessment"):
                     severity = review_data["severity_assessment"]
                     if severity.get("status") == "FAIL":
-                        revision_section += f"- Severity Assessment: ❌ {severity.get('reasoning', 'Incorrect severity')}\n"
+                        revision_section += f"- Severity Assessment: [X] {severity.get('reasoning', 'Incorrect severity')}\n"
                         if severity.get("recommended_severity"):
                             revision_section += f"  Recommended: {severity['recommended_severity']}\n"
             

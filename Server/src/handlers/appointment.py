@@ -1,18 +1,11 @@
-"""Appointment scheduling handler with validation"""
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
 from bson import ObjectId
-
 from src.database import get_collection
 from src.configs.config import CLINIC_CONFIG
 
 
 class AppointmentHandler:
-    """
-    Handles appointment scheduling with validation.
-    Includes date/time validation, business hours checking, and database persistence.
-    """
-    
     def __init__(self):
         self.clinic_hours_start = "09:00"
         self.clinic_hours_end = "17:00"
@@ -21,15 +14,6 @@ class AppointmentHandler:
         self.collection = get_collection("appointments")
     
     def validate_date(self, date_str: str) -> tuple[bool, str]:
-        """
-        Validate appointment date.
-        
-        Args:
-            date_str: Date in YYYY-MM-DD format
-            
-        Returns:
-            (is_valid, error_message)
-        """
         try:
             # Parse date
             date = datetime.strptime(date_str, "%Y-%m-%d")
@@ -53,15 +37,6 @@ class AppointmentHandler:
             return False, "Invalid date format. Please use YYYY-MM-DD"
     
     def validate_time(self, time_str: str) -> tuple[bool, str]:
-        """
-        Validate appointment time.
-        
-        Args:
-            time_str: Time in HH:MM format (24-hour)
-            
-        Returns:
-            (is_valid, error_message)
-        """
         try:
             # Parse time
             time = datetime.strptime(time_str, "%H:%M").time()
@@ -84,23 +59,11 @@ class AppointmentHandler:
             return False, "Invalid time format. Please use HH:MM (e.g., 14:00 for 2 PM)"
     
     def validate_provider(self, provider: Optional[str]) -> tuple[bool, str]:
-        """Validate provider name"""
         if provider and provider not in self.providers:
             return False, f"Provider not found. Available: {', '.join(self.providers)}"
         return True, ""
     
     async def check_availability(self, date: str, time: str, provider: Optional[str] = None) -> tuple[bool, str]:
-        """
-        Check if appointment slot is available.
-        
-        Args:
-            date: Date in YYYY-MM-DD format
-            time: Time in HH:MM format
-            provider: Optional provider name
-            
-        Returns:
-            (is_available, message)
-        """
         query = {
             "date": date,
             "time": time,
@@ -130,21 +93,6 @@ class AppointmentHandler:
         phone: Optional[str] = None,
         email: Optional[str] = None
     ) -> Dict[str, Any]:
-        """
-        Schedule a new appointment with full validation.
-        
-        Args:
-            patient_name: Patient's full name
-            date: Date in YYYY-MM-DD format
-            time: Time in HH:MM format
-            reason: Reason for visit
-            provider: Optional provider name
-            phone: Optional phone number
-            email: Optional email address
-            
-        Returns:
-            Dictionary with success status, appointment data, or error
-        """
         # Validate date
         valid, error = self.validate_date(date)
         if not valid:
@@ -211,17 +159,6 @@ class AppointmentHandler:
         date: Optional[str] = None,
         status: Optional[str] = None
     ) -> List[Dict[str, Any]]:
-        """
-        Retrieve appointments with optional filters.
-        
-        Args:
-            patient_name: Filter by patient name
-            date: Filter by date (YYYY-MM-DD)
-            status: Filter by status
-            
-        Returns:
-            List of appointment dictionaries
-        """
         query: Dict[str, Any] = {}
         
         if patient_name:
@@ -254,15 +191,6 @@ class AppointmentHandler:
         return appointments
     
     async def cancel_appointment(self, appointment_id: str) -> Dict[str, Any]:
-        """
-        Cancel an appointment.
-        
-        Args:
-            appointment_id: ID of appointment to cancel (MongoDB ObjectId as string)
-            
-        Returns:
-            Success status and message
-        """
         try:
             # Convert string ID to ObjectId
             try:
@@ -293,16 +221,6 @@ class AppointmentHandler:
             return {"success": False, "error": f"Error cancelling appointment: {str(e)}"}
     
     async def get_available_slots(self, date: str, provider: Optional[str] = None) -> List[str]:
-        """
-        Get available appointment slots for a given date.
-        
-        Args:
-            date: Date in YYYY-MM-DD format
-            provider: Optional provider to check availability for
-            
-        Returns:
-            List of available time slots
-        """
         # Generate all possible slots (15-minute intervals)
         start = datetime.strptime(self.clinic_hours_start, "%H:%M")
         end = datetime.strptime(self.clinic_hours_end, "%H:%M")
@@ -336,60 +254,60 @@ class AppointmentHandler:
 appointment_handler = AppointmentHandler()
 
 
-# Function calling schema for Gemini
-SCHEDULE_APPOINTMENT_DECLARATION = {
-    "name": "schedule_appointment",
-    "description": "Schedule a new appointment for a patient. Collects patient information and desired date/time.",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "patient_name": {
-                "type": "string",
-                "description": "Patient's full name"
-            },
-            "date": {
-                "type": "string",
-                "description": "Appointment date in YYYY-MM-DD format"
-            },
-            "time": {
-                "type": "string",
-                "description": "Appointment time in HH:MM format (24-hour, e.g., 14:00 for 2 PM)"
-            },
-            "reason": {
-                "type": "string",
-                "description": "Reason for visit (e.g., checkup, flu symptoms, follow-up)"
-            },
-            "phone": {
-                "type": "string",
-                "description": "Patient's phone number (optional)"
-            },
-            "provider": {
-                "type": "string",
-                "description": f"Preferred provider: {', '.join(CLINIC_CONFIG['providers'])} (optional)"
-            }
-        },
-        "required": ["patient_name", "date", "time", "reason"]
-    }
-}
+# # Function calling schema for Gemini
+# SCHEDULE_APPOINTMENT_DECLARATION = {
+#     "name": "schedule_appointment",
+#     "description": "Schedule a new appointment for a patient. Collects patient information and desired date/time.",
+#     "parameters": {
+#         "type": "object",
+#         "properties": {
+#             "patient_name": {
+#                 "type": "string",
+#                 "description": "Patient's full name"
+#             },
+#             "date": {
+#                 "type": "string",
+#                 "description": "Appointment date in YYYY-MM-DD format"
+#             },
+#             "time": {
+#                 "type": "string",
+#                 "description": "Appointment time in HH:MM format (24-hour, e.g., 14:00 for 2 PM)"
+#             },
+#             "reason": {
+#                 "type": "string",
+#                 "description": "Reason for visit (e.g., checkup, flu symptoms, follow-up)"
+#             },
+#             "phone": {
+#                 "type": "string",
+#                 "description": "Patient's phone number (optional)"
+#             },
+#             "provider": {
+#                 "type": "string",
+#                 "description": f"Preferred provider: {', '.join(CLINIC_CONFIG['providers'])} (optional)"
+#             }
+#         },
+#         "required": ["patient_name", "date", "time", "reason"]
+#     }
+# }
 
 
-async def schedule_appointment_function(patient_name: str, date: str, time: str, reason: str,
-                                  phone: str = "", provider: str = "") -> str:
-    """
-    Function that Gemini can call to schedule appointments.
-    Returns a string response to be shown to the user.
-    """
-    result = await appointment_handler.schedule_appointment(
-        patient_name=patient_name,
-        date=date,
-        time=time,
-        reason=reason,
-        phone=phone,
-        provider=provider
-    )
-    
-    if result["success"]:
-        apt = result["appointment"]
-        return f"✅ Appointment confirmed!\n\nPatient: {apt['patient_name']}\nDate: {apt['date']}\nTime: {apt['time']}\nProvider: {apt['provider']}\nReason: {apt['reason']}\n\nWe'll send a reminder before your appointment."
-    else:
-        return f"❌ Unable to schedule: {result['error']}\n\nPlease try a different date or time."
+# async def schedule_appointment_function(patient_name: str, date: str, time: str, reason: str,
+#                                   phone: str = "", provider: str = "") -> str:
+#     """
+#     Function that Gemini can call to schedule appointments.
+#     Returns a string response to be shown to the user.
+#     """
+#     result = await appointment_handler.schedule_appointment(
+#         patient_name=patient_name,
+#         date=date,
+#         time=time,
+#         reason=reason,
+#         phone=phone,
+#         provider=provider
+#     )
+
+#     if result["success"]:
+#         apt = result["appointment"]
+#         return f"Appointment confirmed!\n\nPatient: {apt['patient_name']}\nDate: {apt['date']}\nTime: {apt['time']}\nProvider: {apt['provider']}\nReason: {apt['reason']}\n\nWe'll send a reminder before your appointment."
+#     else:
+#         return f"Unable to schedule: {result['error']}\n\nPlease try a different date or time."

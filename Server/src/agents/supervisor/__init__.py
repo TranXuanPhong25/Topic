@@ -1,4 +1,3 @@
-"""Supervisor Agent - Coordinate between agents"""
 from src.agents.supervisor.config import get_supervisor_model
 from .supervisor import SupervisorNode
 def new_supervisor_node():

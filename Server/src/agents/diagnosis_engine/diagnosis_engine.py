@@ -1,9 +1,9 @@
-"""DiagnosisEngine Node: Runs core diagnostic logic with risk assessment."""
 import json
 import re
 import requests
 from typing import Dict, Any, TYPE_CHECKING
 from src.configs.agent_config import SystemMessage, HumanMessage
+from src.agents.utils import get_current_context, get_current_goal
 from src.agents.document_retriever.helpers import (
     can_call_retriever,
     request_document_retrieval,
@@ -16,84 +16,12 @@ if TYPE_CHECKING:
     from ..medical_diagnostic_graph import GraphState
 
 class DiagnosisEngineNode:
-    """
-    DiagnosisEngine Node: Runs core diagnostic logic with risk assessment.
-    
-    Input: combined_analysis (if image) or symptoms (if symptoms only)
-    Internally calls RiskAssessor to refine diagnosis
-    """
     
     def __init__(self, gemini_model):
-        """
-        Initialize the DiagnosisEngine node.
-        
-        Args:
-            gemini_model: Configured Gemini model for text generation
-        """
         self.gemini_model = gemini_model
     
-    def _get_current_goal(self, state: "GraphState") -> str:
-        """
-        Extract the goal for the current step from the plan
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Goal string or empty string if not found
-        """
-        plan = state.get("plan", [])
-        current_step_index = state.get("current_step", 0)
-        
-        if not plan or current_step_index >= len(plan):
-            return ""
-        
-        current_plan_step = plan[current_step_index]
-        goal = current_plan_step.get("goal", "")
-        
-        if goal:
-            print(f"🎯 Current Goal: {goal}")
-        
-        return goal
-    
-    def _get_current_context(self, state: "GraphState") -> Dict[str, str]:
-        """
-        Extract context and user_context for the current step from the plan
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Dict with 'context' and 'user_context' keys (empty strings if not found)
-        """
-        plan = state.get("plan", [])
-        current_step_index = state.get("current_step", 0)
-        
-        if not plan or current_step_index >= len(plan):
-            return {"context": "", "user_context": ""}
-        
-        current_plan_step = plan[current_step_index]
-        context = current_plan_step.get("context", "")
-        user_context = current_plan_step.get("user_context", "")
-        
-        if context:
-            print(f"📝 Context: {context[:100]}...")
-        if user_context:
-            print(f"👤 User Context: {user_context[:100]}...")
-        
-        return {"context": context, "user_context": user_context}
-    
     def __call__(self, state: "GraphState") -> "GraphState":
-        """
-        Execute the diagnosis engine logic.
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Updated graph state with diagnosis and risk assessment
-        """
-        print("🩺 DiagnosisEngine: Running diagnostic analysis...")
+        print("DiagnosisEngine: Running diagnostic analysis...")
         
         # Get input - use combined_analysis if available, otherwise symptoms
         analysis_input = state.get("symptoms", {})
@@ -101,8 +29,8 @@ class DiagnosisEngineNode:
             analysis_input = state.get("input", {})
         try:
             # Get goal and context from current plan step
-            goal = self._get_current_goal(state)
-            context_data = self._get_current_context(state)
+            goal = get_current_goal(state)
+            context_data = get_current_context(state)
             
             # Build diagnosis prompt using the system prompt from prompts.py
             image_analysis = json.dumps(state.get("image_analysis_result", ""))
@@ -119,26 +47,34 @@ class DiagnosisEngineNode:
                 context=context_data.get("context", ""),
                 user_context=context_data.get("user_context", "")
             )
+            
+            # Call LLM for diagnosis (single call)
             messages = [
-                SystemMessage(content=DIAGNOSIS_SYSTEM_PROMPT),
+                SystemMessage(content=COMPACT_DIAGNOSIS_PROMPT),
                 HumanMessage(content=diagnosis_context)
             ]
             response = self.gemini_model.invoke(messages)
-            # TODO: None if True else
-            meditron_text = None if True else self._call_meditron(diagnosis_context)
-            if meditron_text:
-                print("Meditron response received.")
-                result_text = meditron_text.strip()
-            else:
-                messages = [
-                    SystemMessage(content=DIAGNOSIS_SYSTEM_PROMPT),
-                    HumanMessage(content=diagnosis_context)
-                ]
-                response = self.gemini_model.invoke(messages)
-                result_text = response.content.strip()
+            result_text = response.content.strip()
 
-            result_text = re.sub(r'```json\s*|\s*```', '', result_text)
-            diagnosis = json.loads(result_text)
+            # Robust JSON extraction
+            try:
+                # First try to find JSON within markdown code blocks
+                json_match = re.search(r'```json\s*(.*?)\s*```', result_text, re.DOTALL)
+                if json_match:
+                    result_text = json_match.group(1)
+                else:
+                    # If no markdown blocks, try to find the first '{' and last '}'
+                    start_idx = result_text.find('{')
+                    end_idx = result_text.rfind('}')
+                    if start_idx != -1 and end_idx != -1:
+                        result_text = result_text[start_idx:end_idx+1]
+                
+                # Use strict=False to allow control characters like newlines in strings
+                diagnosis = json.loads(result_text, strict=False)
+            except json.JSONDecodeError as e:
+                print(f"JSON Decode Error: {e}")
+                print(f"Raw text: {result_text}")
+                raise e
 
             # Extract risk assessment from diagnosis
             risk_assessment = diagnosis.get("risk_assessment", {})
@@ -178,7 +114,7 @@ class DiagnosisEngineNode:
                 state, success = request_document_retrieval(state, "diagnosis_engine", query)
                 if success:
                     state["next_step"] = "document_retriever"
-                    print(f"📚 DiagnosisEngine: Requesting document retrieval for low confidence ({confidence:.2f})")
+                    print(f"DiagnosisEngine: Requesting document retrieval for low confidence ({confidence:.2f})")
                     return state
             
             # Default: proceed to diagnosis_critic
@@ -196,7 +132,7 @@ class DiagnosisEngineNode:
 
                 print(
 
-                    f"💡 DiagnosisEngine: Low confidence ({confidence:.2f}), requesting additional information from user")
+                    f"DiagnosisEngine: Low confidence ({confidence:.2f}), requesting additional information from user")
 
 
 
@@ -235,16 +171,6 @@ class DiagnosisEngineNode:
         return state
     
     def _assess_risk_internal(self, severity: str, diagnosis: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Internal risk assessor (called by DiagnosisEngine).
-        
-        Args:
-            severity: Severity level from diagnosis
-            diagnosis: Full diagnosis dictionary
-            
-        Returns:
-            Risk assessment dictionary
-        """
         risk_mapping = {
             "mild": "LOW",
             "moderate": "MEDIUM",

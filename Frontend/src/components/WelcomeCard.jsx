@@ -59,7 +59,7 @@ const WelcomeCard = ({ setIsOpen }) => {
             <span className="highlight">Medical Assistant</span>
           </h1>
           <p className="hero-text">
-            Experience the future of healthcare with our advanced AI chatbot. 
+            Experience the future of healthcare with our advanced AI chatbot.
             Get instant symptom analysis, schedule appointments, and manage your health journey 24/7.
           </p>
           <div className="cta-group">
@@ -67,20 +67,6 @@ const WelcomeCard = ({ setIsOpen }) => {
               Start Chatting <ArrowRight size={20} />
             </button>
             <button className="secondary-btn">Learn More</button>
-          </div>
-          <div className="trust-indicators">
-            <div className="trust-item">
-              <span className="trust-number">10k+</span>
-              <span className="trust-label">Active Users</span>
-            </div>
-            <div className="trust-item">
-              <span className="trust-number">99%</span>
-              <span className="trust-label">Accuracy Rate</span>
-            </div>
-            <div className="trust-item">
-              <span className="trust-number">24/7</span>
-              <span className="trust-label">Support</span>
-            </div>
           </div>
         </div>
 
@@ -92,7 +78,7 @@ const WelcomeCard = ({ setIsOpen }) => {
                 <BotMessageSquare size={24} color="#1a1a2e" />
               </div>
               <div className="bot-info-preview">
-                <span className="name">Dr. AI Assistant</span>
+                <span className="name">Gemidical</span>
                 <span className="status">● Online Now</span>
               </div>
             </div>
@@ -111,7 +97,7 @@ const WelcomeCard = ({ setIsOpen }) => {
               </div>
             </div>
           </div>
-          
+
           {/* Floating Elements */}
           <div className="floating-card card-1">
             <Calendar size={20} color="#1a1a2e" />
@@ -133,7 +119,7 @@ const WelcomeCard = ({ setIsOpen }) => {
         <div className="features-grid">
           {features.map((feature, index) => (
             <div key={index} className="feature-card">
-              <div 
+              <div
                 className="feature-icon"
                 style={{ backgroundColor: feature.color, color: feature.iconColor, borderColor: feature.iconColor }}
               >
@@ -145,7 +131,7 @@ const WelcomeCard = ({ setIsOpen }) => {
           ))}
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

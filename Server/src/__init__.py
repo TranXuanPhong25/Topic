@@ -1,1 +1,0 @@
-"""Medical Clinic Chatbot - Educational Project"""

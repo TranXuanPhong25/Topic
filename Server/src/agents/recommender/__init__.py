@@ -1,4 +1,3 @@
-"""Recommender Agent - Provide treatment recommendations"""
 from src.agents.recommender.config import get_recommender_model
 from .recommender import RecommenderNode
 

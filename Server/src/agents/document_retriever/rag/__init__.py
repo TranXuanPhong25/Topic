@@ -1,4 +1,3 @@
-"""RAG module exports."""
 
 from .Embedding import (
     DEFAULT_EMBEDDING_MODEL,

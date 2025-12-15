@@ -3,18 +3,18 @@ import { quickMessages, imageActions, symptomTests, appointmentTests, documentRe
 
 // Category labels for image actions
 const imageCategoryLabels = {
-  'medical': '🩺 Medical Images',
-  'document': '📄 Document Images',
+  'medical': 'Medical Images',
+  'document': 'Document Images',
   'general': '🖼️ General Images (Non-medical)'
 };
 
 // Category labels for document retrieval
 const docRetrievalCategoryLabels = {
   'disease-info': '📖 Disease Information',
-  'treatment': '💊 Treatment Queries',
-  'symptom-query': '🔍 Symptom-Based Queries',
+  'treatment': 'Treatment Queries',
+  'symptom-query': 'Symptom-Based Queries',
   'prevention': '🛡️ Preventive Care',
-  'dermatology': '🩺 Dermatology (Skin)'
+  'dermatology': 'Dermatology (Skin)'
 };
 
 const QuickActions = ({ onQuickMessage, setIsOpen }) => {
@@ -80,7 +80,7 @@ const QuickActions = ({ onQuickMessage, setIsOpen }) => {
         ))}
       </div>
       
-      <h3 style={{ marginTop: '20px' }}>📷 Sample Images ({imageActions.length} tests)</h3>
+      <h3 style={{ marginTop: '20px' }}>Sample Images ({imageActions.length} tests)</h3>
       <p style={{ fontSize: '12px', color: '#666', marginBottom: '10px' }}>
         Test image classification: medical, document, or general photos
       </p>
@@ -114,7 +114,7 @@ const QuickActions = ({ onQuickMessage, setIsOpen }) => {
         </div>
       ))}
 
-      <h3 style={{ marginTop: '25px' }}>📚 Document Retrieval Tests ({documentRetrievalTests.length} tests)</h3>
+      <h3 style={{ marginTop: '25px' }}>Document Retrieval Tests ({documentRetrievalTests.length} tests)</h3>
       <p style={{ fontSize: '12px', color: '#666', marginBottom: '10px' }}>
         Test RAG pipeline for medical knowledge retrieval
       </p>

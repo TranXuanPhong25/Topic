@@ -6,14 +6,10 @@ from .prompts import APPOINTMENT_SCHEDULER_SYSTEM_PROMPT
 from .tools import check_appointment_availability, book_appointment, get_available_time_slots, get_current_datetime
 from ..medical_diagnostic_graph import GraphState
 from ..utils.message_builder import build_messages_with_history, extract_text_from_gemini_message, extract_text_from_content
+from ..utils import get_current_context, get_current_goal
 from src.configs.agent_config import HumanMessage, AIMessage
 
 class AppointmentSchedulerNode:
-    """
-    React Agent-based Appointment Scheduler.
-    Uses LangGraph's create_react_agent to intelligently handle appointment booking
-    by deciding which tools to use based on user input.
-    """
     
     def __init__(self, model: BaseChatModel):
         # Create React agent with tools
@@ -29,57 +25,6 @@ class AppointmentSchedulerNode:
             ]
         )
     
-    def _get_current_goal(self, state: "GraphState") -> str:
-        """
-        Extract the goal for the current step from the plan
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Goal string or empty string if not found
-        """
-        plan = state.get("plan", [])
-        current_step_index = state.get("current_step", 0)
-        
-        if not plan or current_step_index >= len(plan):
-            return ""
-        
-        current_plan_step = plan[current_step_index]
-        goal = current_plan_step.get("goal", "")
-        
-        if goal:
-            print(f"🎯 Current Goal: {goal}")
-        
-        return goal
-    
-    def _get_current_context(self, state: "GraphState") -> dict:
-        """
-        Extract context and user_context for the current step from the plan
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Dict with 'context' and 'user_context' keys (empty strings if not found)
-        """
-        plan = state.get("plan", [])
-        current_step_index = state.get("current_step", 0)
-        
-        if not plan or current_step_index >= len(plan):
-            return {"context": "", "user_context": ""}
-        
-        current_plan_step = plan[current_step_index]
-        context = current_plan_step.get("context", "")
-        user_context = current_plan_step.get("user_context", "")
-        
-        if context:
-            print(f"📝 Context: {context[:100]}...")
-        if user_context:
-            print(f"👤 User Context: {user_context[:100]}...")
-        
-        return {"context": context, "user_context": user_context}
-
     async def __call__(self, state: "GraphState") -> "GraphState":
         
         user_input = state.get("input", "")
@@ -97,7 +42,7 @@ class AppointmentSchedulerNode:
             result = await self.agent.ainvoke({"messages": messages})
             agent_messages = result.get("messages", [])
             
-            print(f"📅 AppointmentScheduler: Processing {len(agent_messages)} messages")
+            print(f"AppointmentScheduler: Processing {len(agent_messages)} messages")
             print("=" * 80)
             
             # Trace all messages and collect intermediate messages for streaming
@@ -108,12 +53,12 @@ class AppointmentSchedulerNode:
                 print(f"\n[Message {i+1}/{len(agent_messages)}] Type: {msg_type}")
                 
                 if isinstance(msg, ToolMessage):
-                    print(f"  🔧 Tool: {msg.name}")
-                    print(f"  📤 Output: {msg.content[:200]}..." if len(msg.content) > 200 else f"  📤 Output: {msg.content}")
+                    print(f"  Tool: {msg.name}")
+                    print(f"  Output: {msg.content[:200]}..." if len(msg.content) > 200 else f"  Output: {msg.content}")
                     
                 elif isinstance(msg, LangChainAIMessage):
                     if hasattr(msg, 'tool_calls') and msg.tool_calls:
-                        print(f"  🤖 AI calling tools: {[tc['name'] for tc in msg.tool_calls]}")
+                        print(f"  AI calling tools: {[tc['name'] for tc in msg.tool_calls]}")
                         for tc in msg.tool_calls:
                             print(f"     - {tc['name']}({tc.get('args', {})})")
                     
@@ -121,18 +66,18 @@ class AppointmentSchedulerNode:
                         # Extract text from content (handles both string and list formats)
                         content_text = extract_text_from_content(msg.content)
                         content_preview = content_text[:150] if len(content_text) > 150 else content_text
-                        print(f"  💬 AI Response: {content_preview}...")
+                        print(f"  AI Response: {content_preview}...")
                         
                         # Collect intermediate messages (AI responses before tool calls)
                         # These are messages where AI acknowledges and explains what it's doing
                         if hasattr(msg, 'tool_calls') and msg.tool_calls and content_text:
                             # This is an intermediate message - AI is explaining before calling tool
                             intermediate_messages.append(content_text)
-                            print(f"  📨 Added intermediate message for streaming")
+                            print(f"  Added intermediate message for streaming")
                     else:
-                        print(f"  💬 AI Response: {msg}")
+                        print(f"  AI Response: {msg}")
                 else:
-                    print(f"  📝 Content: {str(msg)[:150]}...")
+                    print(f"  Content: {str(msg)[:150]}...")
             
             print("=" * 80)
             
@@ -159,10 +104,10 @@ class AppointmentSchedulerNode:
             
             # If no valid final response found, generate one based on tool output
             if not final_response:
-                print("⚠️  No valid final response found from agent")
+                print("No valid final response found from agent")
                 
                 if last_tool_output:
-                    print(f"  ℹ️  Using last tool output to generate response: {last_tool_output[:100]}...")
+                    print(f"  Using last tool output to generate response: {last_tool_output[:100]}...")
                     # Parse tool output and generate appropriate response
                     try:
                         import json
@@ -173,23 +118,23 @@ class AppointmentSchedulerNode:
                             if tool_result.get("available"):
                                 date = tool_result.get("date", "")
                                 time = tool_result.get("time", "")
-                                final_response = f"✅ Tin tốt! Lịch hẹn vào ngày {date} lúc {time} vẫn còn trống. Để hoàn tất đặt lịch, tôi cần xác nhận thêm: tên đầy đủ của bạn, lý do khám, và số điện thoại liên hệ."
+                                final_response = f"Tin tốt! Lịch hẹn vào ngày {date} lúc {time} vẫn còn trống. Để hoàn tất đặt lịch, tôi cần xác nhận thêm: tên đầy đủ của bạn, lý do khám, và số điện thoại liên hệ."
                             else:
                                 error = tool_result.get("error", "")
                                 alternatives = tool_result.get("alternatives", [])
                                 if alternatives:
-                                    final_response = f"❌ Xin lỗi, {error}. Bạn có thể chọn các khung giờ trống khác: {', '.join(alternatives[:3])}."
+                                    final_response = f"Xin lỗi, {error}. Bạn có thể chọn các khung giờ trống khác: {', '.join(alternatives[:3])}."
                                 else:
-                                    final_response = f"❌ Xin lỗi, {error}. Vui lòng chọn ngày hoặc giờ khác."
+                                    final_response = f"Xin lỗi, {error}. Vui lòng chọn ngày hoặc giờ khác."
                         
                         # Handle book_appointment response
                         elif "success" in tool_result:
                             if tool_result.get("success"):
                                 confirmation = tool_result.get("confirmation", {})
-                                final_response = f"🎉 Đã đặt lịch thành công!\n\n📋 **Chi tiết cuộc hẹn:**\n- Tên: {confirmation.get('patient_name', 'N/A')}\n- Ngày: {confirmation.get('date', 'N/A')}\n- Giờ: {confirmation.get('time', 'N/A')}\n- Lý do: {confirmation.get('reason', 'N/A')}\n\nChúng tôi sẽ liên hệ nhắc nhở trước ngày khám. Cảm ơn bạn!"
+                                final_response = f"Đã đặt lịch thành công!\n\n**Chi tiết cuộc hẹn:**\n- Tên: {confirmation.get('patient_name', 'N/A')}\n- Ngày: {confirmation.get('date', 'N/A')}\n- Giờ: {confirmation.get('time', 'N/A')}\n- Lý do: {confirmation.get('reason', 'N/A')}\n\nChúng tôi sẽ liên hệ nhắc nhở trước ngày khám. Cảm ơn bạn!"
                             else:
                                 error = tool_result.get("error", "Không thể đặt lịch")
-                                final_response = f"❌ {error}. Vui lòng thử lại hoặc liên hệ phòng khám trực tiếp."
+                                final_response = f"{error}. Vui lòng thử lại hoặc liên hệ phòng khám trực tiếp."
                         
                         # Handle get_available_time_slots response
                         elif "available_slots" in tool_result:
@@ -209,7 +154,7 @@ class AppointmentSchedulerNode:
                     print("  ℹ️  No tool output available")
                     final_response = "Tôi sẵn sàng giúp bạn đặt lịch khám. Vui lòng cho tôi biết: ngày giờ bạn muốn, tên đầy đủ, và lý do khám?"
             else:
-                print(f"✅ Valid final response found: {final_response[:100]}...")
+                print(f"Valid final response found: {final_response[:100]}...")
                 
                 # CRITICAL: Detect hallucination - LLM claims booking success without calling book_appointment
                 booking_claimed = any(phrase in final_response.lower() for phrase in [
@@ -219,21 +164,22 @@ class AppointmentSchedulerNode:
                 ])
                 
                 # Check if book_appointment tool was actually called
-                book_tool_called = any(
-                    isinstance(msg, ToolMessage) and msg.name == "book_appointment"
+                tool_called = any(
+                    isinstance(msg, ToolMessage) and msg.name in ("book_appointment", "check_appointment_availability", "get_available_time_slots")
                     for msg in agent_messages
                 )
                 
-                if booking_claimed and not book_tool_called:
-                    print("⚠️  HALLUCINATION DETECTED: LLM claimed booking success without calling book_appointment!")
+                
+                if booking_claimed and not tool_called:
+                    print("WARNING: HALLUCINATION DETECTED: LLM claimed booking success without calling tool!")
                     # Override the hallucinated response
-                    final_response = "Để hoàn tất đặt lịch, tôi cần thực hiện đặt lịch trong hệ thống. Xin vui lòng xác nhận lại thông tin: tên, ngày giờ, lý do khám và số điện thoại để tôi đặt lịch cho bạn."
+                    final_response = "Tôi gặp vấn đề khi xử lý yêu cầu của bạn. Vui lòng thử lại sau."
             
             state["final_response"] = final_response
             state["intermediate_messages"] = intermediate_messages
             state["current_step"] += 1
         except Exception as e:
-            print(f"❌ AppointmentScheduler error: {str(e)}")
+            print(f"ERROR: AppointmentScheduler error: {str(e)}")
             import traceback
             traceback.print_exc()
             state["final_response"] = "Xin lỗi, tôi gặp sự cố khi xử lý yêu cầu đặt lịch của bạn. Vui lòng cung cấp thông tin: tên, ngày, giờ, và lý do khám."

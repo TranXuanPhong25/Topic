@@ -25,10 +25,7 @@ class AppointmentResponse(BaseModel):
     provider: str
     status: str
 
-# --- HELPER FUNCTIONS ---
-
 def map_appointment(appointment: dict) -> dict:
-    """Chuyển đổi document MongoDB sang dict chuẩn cho API"""
     return {
         "id": appointment.get("id", str(appointment.get("_id", ""))),
         "patient_name": appointment["patient_name"],
@@ -40,51 +37,8 @@ def map_appointment(appointment: dict) -> dict:
         "status": appointment.get("status", "scheduled")
     }
 
-
-# --- AI FUNCTION (Dành riêng cho Bot/Agent) ---
-
-async def book_appointment_internal(patient_name: str, reason: str, date: str, time: str, phone: str, provider: str = None) -> dict:
-    """Internal async function for AI/Agent to book appointments"""
-    try:
-        handler = AppointmentHandler()
-        
-        # Validate inputs
-        if not patient_name or not date or not time:
-            return {"success": False, "message": "Thiếu thông tin bắt buộc (tên, ngày, giờ)."}
-
-        # Use handler's schedule_appointment (async)
-        result = await handler.schedule_appointment(
-            patient_name=patient_name,
-            date=date,
-            time=time,
-            reason=reason,
-            phone=phone,
-            provider=provider
-        )
-
-        if result["success"]:
-            apt = result["appointment"]
-            return {
-                "success": True,
-                "message": f"Đã đặt lịch thành công cho {patient_name} ngày {date} lúc {time}.",
-                "data": {
-                    "id": apt["id"],
-                    "patient_name": patient_name,
-                    "date": date,
-                    "time": time
-                }
-            }
-        else:
-            return {"success": False, "message": result.get("error", "Không thể đặt lịch.")}
-            
-    except Exception as e:
-        print(f"AI Booking Error: {e}")
-        return {"success": False, "message": "Lỗi hệ thống khi lưu lịch."}
-
-
 @router.post("/create", response_model=AppointmentResponse)
 async def create_appointment(request: AppointmentRequest):
-    """Create a new appointment"""
     handler = AppointmentHandler()
     
     result = await handler.schedule_appointment(
@@ -104,7 +58,6 @@ async def create_appointment(request: AppointmentRequest):
 
 @router.get("/list", response_model=List[AppointmentResponse])
 async def list_appointments():
-    """List all appointments"""
     handler = AppointmentHandler()
     appointments = await handler.get_appointments()
     return [map_appointment(apt) for apt in appointments]
@@ -112,7 +65,6 @@ async def list_appointments():
 
 @router.get("/{appointment_id}", response_model=AppointmentResponse)
 async def get_appointment(appointment_id: str):
-    """Get a specific appointment by ID"""
     handler = AppointmentHandler()
     appointments = await handler.get_appointments()
     
@@ -126,7 +78,6 @@ async def get_appointment(appointment_id: str):
 
 @router.put("/{appointment_id}", response_model=AppointmentResponse)
 async def update_appointment(appointment_id: str, request: AppointmentRequest):
-    """Update an existing appointment"""
     handler = AppointmentHandler()
     
     # First cancel the old appointment
@@ -152,7 +103,6 @@ async def update_appointment(appointment_id: str, request: AppointmentRequest):
 
 @router.delete("/{appointment_id}")
 async def delete_appointment(appointment_id: str):
-    """Delete/cancel an appointment"""
     handler = AppointmentHandler()
     
     result = await handler.cancel_appointment(appointment_id)

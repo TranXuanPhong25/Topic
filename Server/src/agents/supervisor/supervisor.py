@@ -11,6 +11,26 @@ from src.agents.utils import build_messages_with_history
 from src.agents.utils.message_builder import extract_text_from_gemini_message
 from jsonschema import validate, ValidationError
 
+# Emergency keywords for fast-path routing (Vietnamese & English)
+EMERGENCY_KEYWORDS = {
+    # Vietnamese
+    "đau ngực", "khó thở", "không thở được", "ngất", "bất tỉnh", "co giật", 
+    "chảy máu nhiều", "đột quỵ", "liệt", "tê nửa người", "sốc phản vệ",
+    "ngộ độc", "tự tử", "muốn chết", "cấp cứu", "khẩn cấp", "nguy hiểm",
+    "đau dữ dội", "không cử động được", "mất ý thức",
+    # English  
+    "chest pain", "can't breathe", "difficulty breathing", "unconscious",
+    "seizure", "stroke", "paralysis", "severe bleeding", "anaphylaxis",
+    "poisoning", "suicide", "want to die", "emergency", "heart attack",
+    "severe pain", "loss of consciousness", "can't move"
+}
+
+def _is_emergency_input(text: str) -> bool:
+    if not text:
+        return False
+    text_lower = text.lower()
+    return any(keyword in text_lower for keyword in EMERGENCY_KEYWORDS)
+
 class SupervisorNode:
     """
     Supervisor Node: Coordinates between different components.
@@ -23,6 +43,24 @@ class SupervisorNode:
     def __call__(self, state: "GraphState") -> "GraphState":
         print("================== SUPERVISOR TURN ======================")
         response_text = ""
+        
+        # FAST PATH: Emergency keyword detection - skip LLM, route directly
+        user_input = state.get("input", "")
+        if _is_emergency_input(user_input) and not state.get("plan"):
+            print("EMERGENCY DETECTED - Fast-path routing to symptom_extractor → diagnosis_engine")
+            state["next_step"] = "symptom_extractor"
+            state["plan"] = [
+                {"step": "symptom_extractor", "description": "Extract emergency symptoms", "status": "not_started", 
+                 "goal": "Extract all symptoms from emergency situation", "context": "EMERGENCY - prioritize severity assessment"},
+                {"step": "diagnosis_engine", "description": "Emergency diagnosis and risk assessment", "status": "not_started",
+                 "goal": "Assess emergency severity and provide immediate guidance", "context": "EMERGENCY case - be conservative, recommend immediate care"},
+                {"step": "synthesis", "description": "Generate emergency response", "status": "not_started",
+                 "goal": "Provide clear emergency instructions", "context": "EMERGENCY - include 115/911 guidance"}
+            ]
+            state["current_step"] = 0
+            print("EMERGENCY plan created - bypassing LLM supervisor")
+            return state
+        
         try:
             # Global loop guard: cap supervisor turns to prevent recursion overflow
             turns = state.get("supervisor_turns", 0)
@@ -38,7 +76,7 @@ class SupervisorNode:
                 if current_step < len(state["plan"]):
                     state["plan"][current_step]["status"] = "completed"
                 else:
-                    print("⚠️  Current step exceeds plan length; cannot mark as completed.")
+                    print("WARNING: Current step exceeds plan length; cannot mark as completed.")
                     return state
                     
             supervisor_prompt = self.build_supervisor_prompt(state)
@@ -71,7 +109,7 @@ class SupervisorNode:
             try:
                 validate(instance=supervisor_decision, schema=SUPERVISOR_RESPONSE_SCHEMA)
             except ValidationError as ve:
-                print(f"⚠️  Validation warning: {ve.message}")
+                print(f"WARNING: Validation warning: {ve.message}")
                 # Continue with best effort
             
             # Extract decisions
@@ -114,7 +152,7 @@ class SupervisorNode:
             # Update symptom_extractor_input if supervisor specified it
             if symptom_extractor_input:
                 state["symptom_extractor_input"] = symptom_extractor_input
-                print(f"📝 Symptom extractor input specified: {symptom_extractor_input[:100]}...")
+                print(f"Symptom extractor input specified: {symptom_extractor_input[:100]}...")
             
             # Add to messages for tracking
    
@@ -125,11 +163,11 @@ class SupervisorNode:
             print("*******************************************************************************************************")
             
         except json.JSONDecodeError as e:
-            print(f"❌ JSON Parse Error: {e}")
+            print(f"ERROR: JSON Parse Error: {e}")
             print(f"Response text: {response_text}")
             
         except Exception as e:
-            print(f"❌ Supervisor Error: {e}")
+            print(f"ERROR: Supervisor Error: {e}")
         return state
     
     def build_supervisor_prompt(self, state: GraphState) -> str:
@@ -187,12 +225,12 @@ class SupervisorNode:
             
             if image_type == "document":
                 context_parts.append(f"**Image Provided**: Yes (type=document, is_diagnostic={is_diagnostic})")
-                context_parts.append(f"**⚠️ IMPORTANT**: This is a DOCUMENT image (prescription/test result), NOT a medical image for diagnosis. Route to synthesis, NOT diagnosis_engine.")
+                context_parts.append(f"**IMPORTANT**: This is a DOCUMENT image (prescription/test result), NOT a medical image for diagnosis. Route to synthesis, NOT diagnosis_engine.")
                 if image_intent:
                     context_parts.append(f"**User intent**: {image_intent}")
             elif image_type == "general":
                 context_parts.append(f"**Image Provided**: Yes (type=general, is_diagnostic=False)")
-                context_parts.append(f"**⚠️ IMPORTANT**: This is a general non-medical image. Image analyzer already handled it. Consider routing to END.")
+                context_parts.append(f"**IMPORTANT**: This is a general non-medical image. Image analyzer already handled it. Consider routing to END.")
             elif image_type == "medical":
                 context_parts.append(f"**Image Provided**: Yes (type=medical, is_diagnostic=True - proceed with diagnosis workflow)")
             else:
@@ -236,7 +274,7 @@ class SupervisorNode:
     6. What is the next logical step in the workflow?
     7. If routing to symptom_extractor: Should I specify custom `symptom_extractor_input` to extract specific parts?
     
-    ## ⚠️ CRITICAL RULE: DO NOT REPLAN IF PLAN IS COMPLETE
+    ## CRITICAL RULE: DO NOT REPLAN IF PLAN IS COMPLETE
     - If current plan exists and ALL steps have status="completed"
     - AND you see "**Original Request** (already processed)" (NOT "Current User Input")
     - Then you MUST set next_step="END" and keep the existing completed plan

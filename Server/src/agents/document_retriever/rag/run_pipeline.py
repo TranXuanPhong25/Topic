@@ -1,4 +1,3 @@
-"""Simple CLI runner for the RAG pipeline."""
 
 from __future__ import annotations
 
@@ -21,7 +20,6 @@ def _print_header() -> None:
 
 
 def main() -> None:
-    """Entry point for interactive usage."""
     try:
         pipeline = RAGPipeline.from_existing_index()
     except Exception as exc:
@@ -32,7 +30,7 @@ def main() -> None:
 
     while True:
         try:
-            question = input("\n💬 Câu hỏi: ").strip()
+            question = input("\nCâu hỏi: ").strip()
         except (EOFError, KeyboardInterrupt):
             print("\nTạm biệt!")
             break
@@ -45,13 +43,13 @@ def main() -> None:
 
         try:
             result = pipeline.invoke(question)
-            print("\n📝 Phản hồi học thuật\n")
+            print("\nPhản hồi học thuật\n")
             print(result["answer"])
         except ValueError as exc:
-            print(f"❌ {exc}")
+            print(f"ERROR: {exc}")
         except Exception as exc:
             LOGGER.exception("Lỗi khi tạo câu trả lời: %s", exc)
-            print("❌ Đã xảy ra lỗi. Vui lòng thử lại.")
+            print("ERROR: Đã xảy ra lỗi. Vui lòng thử lại.")
 
 
 if __name__ == "__main__":

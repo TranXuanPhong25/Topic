@@ -1,22 +1,10 @@
-"""FAQ Knowledge Base for Medical Clinic"""
 from typing import List, Dict, Any, Optional
 from src.configs.config import CLINIC_CONFIG
 
 
 class FAQKnowledgeBase:
-    """
-    Knowledge base for clinic information and frequently asked questions.
-    
-    This class stores and retrieves:
-    - Clinic hours and contact information
-    - Insurance and payment policies
-    - Services offered
-    - Common medical questions
-    - Appointment policies
-    """
     
     def __init__(self):
-        """Initialize the knowledge base with clinic FAQs"""
         
         # Clinic Information
         self.clinic_info = {
@@ -24,7 +12,7 @@ class FAQKnowledgeBase:
             "phone": CLINIC_CONFIG["phone"],
             "address": CLINIC_CONFIG["address"],
             "hours": CLINIC_CONFIG["hours"],
-            "providers": CLINIC_CONFIG["providers"],
+            "doctors": CLINIC_CONFIG["doctors"],
         }
         
         # FAQ Categories
@@ -78,7 +66,7 @@ class FAQKnowledgeBase:
             "insurance_and_payment": [
                 {
                     "question": "Do you accept insurance?",
-                    "answer": "Yes! We accept most major insurance plans including Blue Cross, Aetna, UnitedHealthcare, Cigna, and Medicare. Please call us to verify your specific plan.",
+                    "answer": "Yes! We accept most major insurance . Please call us to verify your specific plan.",
                     "keywords": ["insurance", "accept", "coverage", "plan", "medicare", "medicaid"],
                 },
                 {
@@ -116,7 +104,7 @@ class FAQKnowledgeBase:
                 },
                 {
                     "question": "Do you prescribe medications?",
-                    "answer": "Yes, our providers can prescribe medications when medically necessary. We send prescriptions electronically to your preferred pharmacy. We also offer prescription refills for established patients.",
+                    "answer": "Yes, our doctors can prescribe medications when medically necessary. We send prescriptions electronically to your preferred pharmacy. We also offer prescription refills for established patients.",
                     "keywords": ["medication", "prescription", "medicine", "prescribe", "refill"],
                 },
                 {
@@ -179,16 +167,7 @@ class FAQKnowledgeBase:
                 self.all_faqs.append(faq)
     
     def search_faqs(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
-        """
-        Search FAQs by keyword matching.
-        
-        Args:
-            query: Search query from user
-            limit: Maximum number of results to return
-            
-        Returns:
-            List of matching FAQ dictionaries with relevance scores
-        """
+
         query_lower = query.lower()
         results = []
         
@@ -221,73 +200,14 @@ class FAQKnowledgeBase:
         # Sort by score (highest first) and return top results
         results.sort(key=lambda x: x["score"], reverse=True)
         return [r["faq"] for r in results[:limit]]
+
     
-    def get_faq_by_category(self, category: str) -> List[Dict[str, str]]:
-        """
-        Get all FAQs in a specific category.
-        
-        Args:
-            category: Category name (e.g., "appointments", "insurance_and_payment")
-            
-        Returns:
-            List of FAQ dictionaries in that category
-        """
-        return self.faqs.get(category, [])
-    
-    def get_all_categories(self) -> List[str]:
-        """Get list of all FAQ categories."""
-        return list(self.faqs.keys())
-    
-    def get_clinic_info(self) -> Dict[str, Any]:
-        """Get basic clinic information."""
-        return self.clinic_info
-    
-    def answer_question(self, query: str) -> Optional[str]:
-        """
-        Get a direct answer to a question.
-        Returns the best matching FAQ answer or None if no good match.
-        
-        Args:
-            query: User's question
-            
-        Returns:
-            Answer string or None
-        """
-        results = self.search_faqs(query, limit=1)
-        
-        if results and len(results) > 0:
-            # Return answer if we found a good match
-            return results[0]["answer"]
-        
-        return None
-    
-    def format_search_results(self, results: List[Dict[str, Any]]) -> str:
-        """
-        Format search results into a readable string.
-        
-        Args:
-            results: List of FAQ dictionaries
-            
-        Returns:
-            Formatted string with questions and answers
-        """
-        if not results:
-            return "I couldn't find any information about that. Please call us at (555) 123-4567 for assistance."
-        
-        output = []
-        for i, faq in enumerate(results, 1):
-            output.append(f"{i}. **{faq['question']}**")
-            output.append(f"   {faq['answer']}")
-            output.append("")  # Blank line
-        
-        return "\n".join(output)
 
 
 # Create singleton instance
 knowledge_base = FAQKnowledgeBase()
 
 
-# Function calling wrapper for Gemini
 def search_knowledge_base_function(query: str) -> str:
     """
     Wrapper function for Gemini function calling.
@@ -308,7 +228,7 @@ def search_knowledge_base_function(query: str) -> str:
         
         return response
     else:
-        return f"I don't have specific information about that. You can call us at {CLINIC_CONFIG['phone']} for more details, or I can help you schedule an appointment to discuss this with a provider."
+        return f"I don't have specific information about that. You can call us at {CLINIC_CONFIG['phone']} for more details, or I can help you schedule an appointment to discuss this with a doctor."
 
 
 # Gemini function calling declaration
