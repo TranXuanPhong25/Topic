@@ -37,8 +37,8 @@ QUALITATIVE_CRITERIA = [
 class ComprehensiveEvaluator:
     def __init__(self):
         self.llm = ChatGoogleGenerativeAI(
-            model="gemini-1.5-pro",
-            temperature=0.0,
+            model="gemini-2.5-pro",
+            temperature=0.4,
             google_api_key=GOOGLE_API_KEY
         )
 
