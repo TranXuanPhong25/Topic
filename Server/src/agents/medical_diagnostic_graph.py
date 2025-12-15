@@ -1,6 +1,6 @@
 from langgraph.graph import StateGraph, END
 from typing import Dict, Any, Optional
-
+from typing import List
 from src.agents.diagnosis_critic import new_diagnosis_crictic_node
 from src.models.state import GraphState
 from src.configs.agent_config import (

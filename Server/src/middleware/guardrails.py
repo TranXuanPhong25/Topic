@@ -1,70 +1,29 @@
 from __future__ import annotations
-import re
 from typing import Tuple, Optional, Dict, List
+import json
 
-# Basic keyword sets (could be externalized)
-NON_MEDICAL_KEYWORDS = [
-    # entertainment / unrelated
-    "movie", "game", "football", "soccer", "music", "lyrics", "recipe", "cooking",
-    "stock", "crypto", "bitcoin", "programming", "code", "travel", "vacation"
-]
+# Deprecated regex-based filters kept only for backward compatibility if needed.
+NON_MEDICAL_KEYWORDS: List[str] = []
+PRESCRIPTION_KEYWORDS: List[str] = []
+SELF_HARM_KEYWORDS: List[str] = []
+EMERGENCY_KEYWORDS: List[str] = []
 
-PRESCRIPTION_KEYWORDS = [
-    "prescribe", "thuốc", "dose", "dosage", "mg", "ml", "pill", "tablet", "frequency",
-    "how many times", "bao nhiêu lần", "uống bao nhiêu", "take how", "liều"
-]
-
-SELF_HARM_KEYWORDS = [
-    "suicide", "kill myself", "end my life", "self harm", "hurt myself", "want to die",
-    "tự tử", "tự sát", "tự vẫn", "cắt bản thân", "muốn chết", "tôi muốn chết",
-    "kết liễu", "kết liễu cuộc đời", "kết thúc cuộc đời", "muốn tự tử", "tự hại", "muốn tự hại"
-]
-
-EMERGENCY_KEYWORDS = [
-    "chest pain", "shortness of breath", "difficulty breathing", "severe bleeding",
-    "stroke", "numb face", "cannot breathe", "loss of consciousness", "sudden weakness",
-    "pain in chest", "đau ngực", "khó thở", "chảy máu nhiều"
-]
-
-PII_PATTERNS = {
-    'email': re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"),
-    'phone': re.compile(r"(?:\+?\d{1,3}[\s-]?)?(?:\(\d{2,4}\)|\d{2,4})[\s-]?\d{3,4}[\s-]?\d{3,4}"),
-    'password': re.compile(r"password\s*[:=]\s*\S+", re.IGNORECASE),
-}
-
-def _contains_any(text: str, keywords: List[str]) -> bool:
-    t = text.lower()
-    return any(k in t for k in keywords)
-
-def scrub_pii(text: str) -> Tuple[str, Dict[str, List[str]]]:
-    """Redact PII patterns from text. Returns (scrubbed_text, found_metadata)."""
-    found: Dict[str, List[str]] = {k: [] for k in PII_PATTERNS.keys()}
-    scrubbed = text
-    for name, pattern in PII_PATTERNS.items():
-        matches = pattern.findall(scrubbed)
-        if matches:
-            found[name].extend(matches)
-            # replace each occurrence with placeholder
-            for m in matches:
-                scrubbed = scrubbed.replace(m, f"<{name}_redacted>")
-    return scrubbed, found
 
 def classify_intent(text: str) -> Optional[str]:
-    """Return intent classification tag or None if medical-ish.
-    Tags: 'non_medical' currently only.
-    """
-    if _contains_any(text, NON_MEDICAL_KEYWORDS):
-        return 'non_medical'
+    """Legacy stub kept for compatibility; main classification is now LLM-based."""
     return None
 
+
 def detect_prescription_request(text: str) -> bool:
-    return _contains_any(text, PRESCRIPTION_KEYWORDS)
+    return False
+
 
 def detect_self_harm(text: str) -> bool:
-    return _contains_any(text, SELF_HARM_KEYWORDS)
+    return False
+
 
 def detect_emergency(text: str) -> bool:
-    return _contains_any(text, EMERGENCY_KEYWORDS)
+    return False
 
 
 _VI_CHARS = set("ăâêôơưđáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ")
@@ -76,30 +35,179 @@ def detect_language(text: str) -> str:
         return 'vi'
     return 'en'
 
+
+def build_simple_guardrail_prompt(text: str) -> str:
+    """Simplified, fast prompt for guardrail pre-check before agent processing.
+    
+    Optimized for speed and token efficiency. Returns only JSON boolean.
+    """
+    return (
+        "You are a medical chatbot content filter. Reply ONLY with JSON, no explanation.\n\n"
+        "Check if this message is SAFE for a medical assistant:\n"
+        "- BLOCK if: sports, games, crypto/finance, politics, entertainment, tech/coding, weather, travel, cooking, or any NON-HEALTH topic\n"
+        "- BLOCK if: violence, self-harm, graphic content, hate speech, sexual content\n"
+        "- BLOCK if: requests for drug prescriptions, dosages, supplements, treatment schedules\n\n"
+        "- ALLOW if: symptoms, health concerns, clinic appointments, general medical questions\n\n"
+        "Examples (Vietnamese/English):\n"
+        "✗ BLOCK: 'đá bóng', 'bitcoin', 'chính trị', 'phim', 'python code'\n"
+        "✓ ALLOW: 'đau đầu', 'khó thở', 'đặt lịch khám', 'fever', 'book appointment'\n\n"
+        f"Message: {text}\n\n"
+        "Return JSON: {\"should_block\": true/false}"
+    )
+
+def build_classifier_prompt(text: str) -> str:
+    """Detailed prompt for LLM to classify safety-related aspects of text.
+    
+    Used for comprehensive analysis when simple check needs breakdown.
+
+    The model MUST return ONLY JSON with this schema:
+    {
+      "is_violent_or_sensitive": bool,
+      "is_prescription_or_dosage": bool,
+      "is_supplement": bool,
+      "is_non_medical_topic": bool
+    }
+    """
+    return (
+        "You are a safety classifier for a medical clinic chatbot.\n"
+        "You MUST return ONLY valid JSON, no explanations.\n\n"
+        "Tasks:\n"
+        "1. Detect if the text contains:\n"
+        "   - Violence or graphic/sensitive content (blood, self-harm details, sexual content, hate).\n"
+        "   - Mentions of drugs, medications, dosages, or treatment schedules.\n"
+        "   - Mentions of supplements, vitamins, or functional foods.\n"
+        "   - Topics that are clearly NOT related to health or medicine.\n\n"
+        "2. For NON-MEDICAL topics, consider these categories:\n"
+        "   - Sports (football, soccer, basketball, tennis, swimming, esports, gaming, etc.)\n"
+        "   - Finance/Crypto (bitcoin, stocks, trading, lottery, betting, investments, etc.)\n"
+        "   - Politics (elections, government, political parties, etc.)\n"
+        "   - Entertainment (movies, music, celebrities, showbiz, etc.)\n"
+        "   - Technology/Coding (programming, software bugs, hacking, etc.)\n"
+        "   - General topics (weather, travel, cooking recipes, etc.)\n"
+        "   BE STRICT: If the topic is not clearly about health, symptoms, medical conditions,\n"
+        "   appointments, or clinic services, mark it as non-medical.\n\n"
+        "3. The text may be in English or Vietnamese. Understand both.\n"
+        "   Vietnamese examples:\n"
+        "   - Medical: 'đau đầu', 'khó thở', 'bác sĩ', 'thuốc', 'khám bệnh', 'triệu chứng'\n"
+        "   - Non-medical: 'đá bóng', 'chơi game', 'bitcoin', 'phim ảnh', 'chính trị', 'nấu ăn'\n\n"
+        "Return JSON with this exact schema:\n"
+        "{\n"
+        "  \"is_violent_or_sensitive\": true/false,\n"
+        "  \"is_prescription_or_dosage\": true/false,\n"
+        "  \"is_supplement\": true/false,\n"
+        "  \"is_non_medical_topic\": true/false\n"
+        "}\n\n"
+        f"Text to classify:\n{text}"
+    )
+
+
+def check_guardrail_simple(model, text: str) -> Tuple[bool, Optional[str]]:
+    """Fast guardrail check using simple LLM prompt.
+    
+    Args:
+        model: LangChain ChatGoogleGenerativeAI instance
+        text: User input to check
+    
+    Returns:
+        (should_block: bool, reason: Optional[str])
+        - should_block: True if message should be blocked
+        - reason: Generic reason category if blocked (for refusal message)
+    """
+    try:
+        prompt = build_simple_guardrail_prompt(text)
+        
+        # Use LangChain's invoke() method
+        from langchain_core.messages import HumanMessage
+        resp = model.invoke([HumanMessage(content=prompt)])
+        raw = resp.content if hasattr(resp, 'content') else str(resp)
+        raw = raw.strip()
+        
+        # Handle markdown code blocks
+        if raw.startswith("```json"):
+            raw = raw[7:]
+        if raw.startswith("```"):
+            raw = raw[3:]
+        if raw.endswith("```"):
+            raw = raw[:-3]
+        raw = raw.strip()
+        
+        data = json.loads(raw)
+        should_block = bool(data.get("should_block", False))
+        
+        # If blocked, use detailed classifier to get specific reason
+        if should_block:
+            cls = classify_content_llm(model, text)
+            if cls.get("is_violent_or_sensitive"):
+                return True, "self_harm"
+            elif cls.get("is_prescription_or_dosage") or cls.get("is_supplement"):
+                return True, "prescription"
+            elif cls.get("is_non_medical_topic"):
+                return True, "non_medical"
+            else:
+                return True, "non_medical"  # default fallback
+        
+        return False, None
+        
+    except Exception as e:
+        # On error, allow message through (fail open for availability)
+        print(f"⚠️ Guardrail check error: {e}")
+        import traceback
+        traceback.print_exc()
+        return False, None
+
+
+def classify_content_llm(model, text: str) -> Dict[str, bool]:
+    """Use an LLM to classify text for safety guardrails with detailed breakdown.
+    
+    Args:
+        model: LangChain ChatGoogleGenerativeAI instance
+        text: Content to classify
+
+    Returns dict with keys used by higher-level guardrail logic.
+    On error, returns all False (treat as safe, caller can decide fallback).
+    """
+    try:
+        prompt = build_classifier_prompt(text)
+        
+        # Use LangChain's invoke() method
+        from langchain_core.messages import HumanMessage
+        resp = model.invoke([HumanMessage(content=prompt)])
+        raw = resp.content if hasattr(resp, 'content') else str(resp)
+        raw = raw.strip()
+        
+        # Try to extract JSON directly
+        # Handle potential markdown code blocks if the model outputs them
+        if raw.startswith("```json"):
+            raw = raw[7:]
+        if raw.endswith("```"):
+            raw = raw[:-3]
+        raw = raw.strip()
+        
+        data = json.loads(raw)
+        return {
+            "is_violent_or_sensitive": bool(data.get("is_violent_or_sensitive", False)),
+            "is_prescription_or_dosage": bool(data.get("is_prescription_or_dosage", False)),
+            "is_supplement": bool(data.get("is_supplement", False)),
+            "is_non_medical_topic": bool(data.get("is_non_medical_topic", False)),
+        }
+    except Exception as e:
+        print(f"⚠️ Classification error: {e}")
+        return {
+            "is_violent_or_sensitive": False,
+            "is_prescription_or_dosage": False,
+            "is_supplement": False,
+            "is_non_medical_topic": False,
+        }
+
+
 def apply_guardrails(text: str) -> Tuple[bool, Optional[str], str, Dict[str, any]]:
-    """Apply guardrail checks to input text.
-    Returns: (is_safe, action_tag, sanitized_text, metadata)
+    """Legacy input guardrail: now only returns original text without changes.
+
+    New code should prefer `classify_content_llm` + action mapping.
     """
     meta: Dict[str, any] = {}
     action: Optional[str] = None
-
-    # Emergency & self-harm take precedence
-    if detect_self_harm(text):
-        action = 'self_harm'
-    elif detect_emergency(text):
-        action = 'emergency'
-    elif detect_prescription_request(text):
-        action = 'prescription'
-    else:
-        intent = classify_intent(text)
-        if intent == 'non_medical':
-            action = 'non_medical'
-
-    sanitized, pii_found = scrub_pii(text)
-    meta['pii_redacted'] = {k: v for k, v in pii_found.items() if v}
-
-    is_safe = action is None
-    return is_safe, action, sanitized, meta
+    return True, action, text, meta
 
 
 def build_refusal_prompt(action: str, text: Optional[str] = None, lang: Optional[str] = None) -> str:
@@ -175,19 +283,90 @@ def refusal_message_llm(model, action: str, text: Optional[str] = None, lang: Op
     """
     Generate a refusal/assistive message via an LLM using the built prompt.
     Falls back to static localized message if generation fails.
+    
+    Args:
+        model: LangChain ChatGoogleGenerativeAI instance
+        action: Type of refusal (self_harm, prescription, non_medical, etc.)
+        text: Original user message
+        lang: Language code (vi/en)
     """
     try:
         prompt = build_refusal_prompt(action, text=text, lang=lang)
-        resp = model.generate_content(prompt)
-        msg = getattr(resp, 'text', '') or ''
+        
+        # Use LangChain's invoke() method
+        from langchain_core.messages import HumanMessage
+        resp = model.invoke([HumanMessage(content=prompt)])
+        msg = resp.content if hasattr(resp, 'content') else str(resp)
         # Basic sanitation: trim and fallback if empty
         msg = msg.strip()
         if msg:
             return msg
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ Refusal generation error: {e}")
+    
+    # Fallback if LLM fails
+    return refusal_message(action, text, lang)
+
+
+def refusal_message(action: str, text: Optional[str] = None, lang: Optional[str] = None) -> str:
+    """Simple, static fallback refusal message.
+
+    Kept for backwards compatibility with existing code that imports
+    `refusal_message`. For richer, localized responses, prefer
+    `refusal_message_llm` which uses the LLM and `build_refusal_prompt`.
+    """
+    chosen_lang = lang or (detect_language(text or "") if text is not None else 'en')
+
+    if action == 'self_harm':
+        if chosen_lang == 'vi':
+            return (
+                "Nếu bạn đang nghĩ đến việc tự hại hoặc tự tử, hãy tìm sự giúp đỡ ngay lập tức. "
+                "Hãy liên hệ dịch vụ khẩn cấp hoặc một chuyên gia đáng tin cậy. Bạn rất quan trọng."
+            )
+        return (
+            "If you're thinking about self-harm or suicide, please seek immediate help. "
+            "Contact local emergency services or a trusted professional right now. You matter."
+        )
+
+    if action == 'emergency':
+        if chosen_lang == 'vi':
+            return (
+                "Mô tả của bạn có thể cho thấy tình huống khẩn cấp. "
+                "Hãy tìm trợ giúp y tế ngay hoặc gọi dịch vụ khẩn cấp."
+            )
+        return (
+            "Your description may indicate a medical emergency. "
+            "Please seek immediate medical attention or call emergency services."
+        )
+
+    if action == 'prescription':
+        if chosen_lang == 'vi':
+            return (
+                "Mình không thể kê đơn hoặc đưa ra liều lượng thuốc cụ thể. "
+                "Vui lòng trao đổi với bác sĩ hoặc nhân viên y tế được cấp phép để được hướng dẫn về thuốc."
+            )
+        return (
+            "I can't provide prescriptions, specific medication dosages, or treatment schedules. "
+            "Please consult a licensed healthcare professional for medication guidance."
+        )
+
+    if action == 'non_medical':
+        if chosen_lang == 'vi':
+            return (
+                "Mình chỉ hỗ trợ các câu hỏi liên quan đến y tế và sức khỏe. "
+                "Bạn có thể hỏi về triệu chứng, hướng dẫn chăm sóc sức khỏe, hoặc dịch vụ của phòng khám."
+            )
+        return (
+            "I can only help with medical or health-related questions. "
+            "Please ask about symptoms, general health guidance, or clinic services."
+        )
+
+    # Default generic fallback
+    return "I'm unable to process this request."
+
 
 __all__ = [
     'apply_guardrails', 'refusal_message', 'build_refusal_prompt', 'refusal_message_llm',
-    'scrub_pii', 'detect_emergency', 'detect_self_harm', 'detect_prescription_request', 'classify_intent', 'detect_language'
+    'build_classifier_prompt', 'classify_content_llm', 'check_guardrail_simple',
+    'detect_emergency', 'detect_self_harm', 'detect_prescription_request', 'classify_intent', 'detect_language'
 ]

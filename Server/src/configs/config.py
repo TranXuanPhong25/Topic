@@ -13,3 +13,9 @@ CLINIC_CONFIG = {
     "appointment_duration": 30,  # minutes
     "providers": ["Dr. Phong", "Dr. Đông", "Dr. Mạnh", "Dr. Phước", "Dr. Quang"],
 }
+
+
+# Guardrail configuration flags
+GUARDRAILS_ENABLED: bool = os.getenv("GUARDRAILS_ENABLED", "true").lower() in {"1", "true", "yes", "on"}
+GUARDRAILS_CHECK_OUTPUT: bool = os.getenv("GUARDRAILS_CHECK_OUTPUT", "true").lower() in {"1", "true", "yes", "on"}
+
