@@ -6,6 +6,7 @@ from .prompts import APPOINTMENT_SCHEDULER_SYSTEM_PROMPT
 from .tools import check_appointment_availability, book_appointment, get_available_time_slots, get_current_datetime
 from ..medical_diagnostic_graph import GraphState
 from ..utils.message_builder import build_messages_with_history, extract_text_from_gemini_message, extract_text_from_content
+from ..utils import get_current_context, get_current_goal
 from src.configs.agent_config import HumanMessage, AIMessage
 
 class AppointmentSchedulerNode:
@@ -24,39 +25,6 @@ class AppointmentSchedulerNode:
             ]
         )
     
-    def _get_current_goal(self, state: "GraphState") -> str:
-        plan = state.get("plan", [])
-        current_step_index = state.get("current_step", 0)
-        
-        if not plan or current_step_index >= len(plan):
-            return ""
-        
-        current_plan_step = plan[current_step_index]
-        goal = current_plan_step.get("goal", "")
-        
-        if goal:
-            print(f"Current Goal: {goal}")
-        
-        return goal
-    
-    def _get_current_context(self, state: "GraphState") -> dict:
-        plan = state.get("plan", [])
-        current_step_index = state.get("current_step", 0)
-        
-        if not plan or current_step_index >= len(plan):
-            return {"context": "", "user_context": ""}
-        
-        current_plan_step = plan[current_step_index]
-        context = current_plan_step.get("context", "")
-        user_context = current_plan_step.get("user_context", "")
-        
-        if context:
-            print(f"Context: {context[:100]}...")
-        if user_context:
-            print(f"User Context: {user_context[:100]}...")
-        
-        return {"context": context, "user_context": user_context}
-
     async def __call__(self, state: "GraphState") -> "GraphState":
         
         user_input = state.get("input", "")
@@ -98,7 +66,7 @@ class AppointmentSchedulerNode:
                         # Extract text from content (handles both string and list formats)
                         content_text = extract_text_from_content(msg.content)
                         content_preview = content_text[:150] if len(content_text) > 150 else content_text
-                        print(f"  💬 AI Response: {content_preview}...")
+                        print(f"  AI Response: {content_preview}...")
                         
                         # Collect intermediate messages (AI responses before tool calls)
                         # These are messages where AI acknowledges and explains what it's doing
@@ -163,10 +131,10 @@ class AppointmentSchedulerNode:
                         elif "success" in tool_result:
                             if tool_result.get("success"):
                                 confirmation = tool_result.get("confirmation", {})
-                                final_response = f"🎉 Đã đặt lịch thành công!\n\n📋 **Chi tiết cuộc hẹn:**\n- Tên: {confirmation.get('patient_name', 'N/A')}\n- Ngày: {confirmation.get('date', 'N/A')}\n- Giờ: {confirmation.get('time', 'N/A')}\n- Lý do: {confirmation.get('reason', 'N/A')}\n\nChúng tôi sẽ liên hệ nhắc nhở trước ngày khám. Cảm ơn bạn!"
+                                final_response = f"Đã đặt lịch thành công!\n\n**Chi tiết cuộc hẹn:**\n- Tên: {confirmation.get('patient_name', 'N/A')}\n- Ngày: {confirmation.get('date', 'N/A')}\n- Giờ: {confirmation.get('time', 'N/A')}\n- Lý do: {confirmation.get('reason', 'N/A')}\n\nChúng tôi sẽ liên hệ nhắc nhở trước ngày khám. Cảm ơn bạn!"
                             else:
                                 error = tool_result.get("error", "Không thể đặt lịch")
-                                final_response = f"❌ {error}. Vui lòng thử lại hoặc liên hệ phòng khám trực tiếp."
+                                final_response = f"{error}. Vui lòng thử lại hoặc liên hệ phòng khám trực tiếp."
                         
                         # Handle get_available_time_slots response
                         elif "available_slots" in tool_result:
@@ -186,7 +154,7 @@ class AppointmentSchedulerNode:
                     print("  ℹ️  No tool output available")
                     final_response = "Tôi sẵn sàng giúp bạn đặt lịch khám. Vui lòng cho tôi biết: ngày giờ bạn muốn, tên đầy đủ, và lý do khám?"
             else:
-                print(f"✅ Valid final response found: {final_response[:100]}...")
+                print(f"Valid final response found: {final_response[:100]}...")
                 
                 # CRITICAL: Detect hallucination - LLM claims booking success without calling book_appointment
                 booking_claimed = any(phrase in final_response.lower() for phrase in [
@@ -203,7 +171,7 @@ class AppointmentSchedulerNode:
                 
                 
                 if booking_claimed and not tool_called:
-                    print("⚠️  HALLUCINATION DETECTED: LLM claimed booking success without calling tool!")
+                    print("WARNING: HALLUCINATION DETECTED: LLM claimed booking success without calling tool!")
                     # Override the hallucinated response
                     final_response = "Tôi gặp vấn đề khi xử lý yêu cầu của bạn. Vui lòng thử lại sau."
             
@@ -211,7 +179,7 @@ class AppointmentSchedulerNode:
             state["intermediate_messages"] = intermediate_messages
             state["current_step"] += 1
         except Exception as e:
-            print(f"❌ AppointmentScheduler error: {str(e)}")
+            print(f"ERROR: AppointmentScheduler error: {str(e)}")
             import traceback
             traceback.print_exc()
             state["final_response"] = "Xin lỗi, tôi gặp sự cố khi xử lý yêu cầu đặt lịch của bạn. Vui lòng cung cấp thông tin: tên, ngày, giờ, và lý do khám."

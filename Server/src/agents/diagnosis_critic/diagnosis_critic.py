@@ -6,6 +6,7 @@ from collections import Counter
 
 from src.models.state import GraphState
 from src.configs.agent_config import SystemMessage, HumanMessage
+from src.agents.utils import get_current_context, get_current_goal
 from src.agents.document_retriever.helpers import (
     can_call_retriever,
     request_document_retrieval,
@@ -21,60 +22,9 @@ class DiagnosisCriticNode:
 
         self.model = model
     
-    def _get_current_goal(self, state: "GraphState") -> str:
-        """
-        Extract the goal for the current step from the plan
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Goal string or empty string if not found
-        """
-        plan = state.get("plan", [])
-        current_step_index = state.get("current_step", 0)
-        
-        if not plan or current_step_index >= len(plan):
-            return ""
-        
-        current_plan_step = plan[current_step_index]
-        goal = current_plan_step.get("goal", "")
-        
-        if goal:
-            print(f"🎯 Current Goal: {goal}")
-        
-        return goal
-    
-    def _get_current_context(self, state: "GraphState") -> Dict[str, str]:
-        """
-        Extract context and user_context for the current step from the plan
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Dict with 'context' and 'user_context' keys (empty strings if not found)
-        """
-        plan = state.get("plan", [])
-        current_step_index = state.get("current_step", 0)
-        
-        if not plan or current_step_index >= len(plan):
-            return {"context": "", "user_context": ""}
-        
-        current_plan_step = plan[current_step_index]
-        context = current_plan_step.get("context", "")
-        user_context = current_plan_step.get("user_context", "")
-        
-        if context:
-            print(f"📝 Context: {context[:100]}...")
-        if user_context:
-            print(f"👤 User Context: {user_context[:100]}...")
-        
-        return {"context": context, "user_context": user_context}
-    
     def __call__(self, state: "GraphState") -> "GraphState":
 
-        print("🩺 DiagnosisCritic: Running diagnostic Critic...")        
+        print("DiagnosisCritic: Running diagnostic Critic...")        
         # Get input - use combined_analysis if available, otherwise symptoms
         symptoms = state.get("symptoms", {})
         diagnosis = state.get("diagnosis", {})
@@ -85,7 +35,7 @@ class DiagnosisCriticNode:
 
             # Fast path for low-risk, high-confidence cases
             if severity == "LOW" and confidence >= 0.7:
-                print("⚡ DiagnosisCritic: Using fast path review (low severity, high confidence)")
+                print("DiagnosisCritic: Using fast path review (low severity, high confidence)")
                 fast_review_result = self._fast_review(state, diagnosis)
                 # Update state fields individually
                 for key, value in fast_review_result.items():
@@ -93,7 +43,7 @@ class DiagnosisCriticNode:
                 return state
 
             # Full comprehensive review for other cases
-            print("🔍 DiagnosisCritic: Using comprehensive review")
+            print("DiagnosisCritic: Using comprehensive review")
             # Generate diagnosis using Gemini
 
             combined_symptoms = json.dumps(symptoms.get("extracted_symptoms",state.get("input",""))) + json.dumps(state.get("image_analysis_result",""))
@@ -137,32 +87,32 @@ class DiagnosisCriticNode:
                 state, success = request_document_retrieval(state, "diagnosis_critic", query)
                 if success:
                     state["next_step"] = "document_retriever"
-                    print(f"📚 DiagnosisCritic: Requesting document retrieval for evidence")
+                    print(f"DiagnosisCritic: Requesting document retrieval for evidence")
                     return state
             
             if requires_revision:
                 if revision_count >= max_revisions:
                     # Force accept after max attempts to prevent infinite loop
                     state["current_step"] +=1
-                    print(f"⚠️ DiagnosisCritic: Max revisions ({max_revisions}) reached. Proceeding despite issues.")
+                    print(f"WARNING DiagnosisCritic: Max revisions ({max_revisions}) reached. Proceeding despite issues.")
                     state["next_step"] = "supervisor"
 
                 else:
                     # Request revision
                     state["revision_count"] = revision_count + 1
                     state["next_step"] = "diagnosis_engine"
-                    print(f"🔄 DiagnosisCritic: Requesting revision (attempt {revision_count + 1}/{max_revisions})")
+                    print(f"DiagnosisCritic: Requesting revision (attempt {revision_count + 1}/{max_revisions})")
 
             else:
                 # Diagnosis is acceptable
                 state["current_step"] +=1
                 state["next_step"] = routing_decision["next_step"]
-                print(f"✅ DiagnosisCritic: Diagnosis quality: {critic_result.get('review_summary', {}).get('overall_quality', 'N/A')}")
+                print(f"DiagnosisCritic: Diagnosis quality: {critic_result.get('review_summary', {}).get('overall_quality', 'N/A')}")
 
-            print(f"✅ DiagnosisCritic")   
+            print(f"DiagnosisCritic")   
          
         except Exception as e:
-            print(f"❌ DiagnosisCritic Error: {str(e)}")
+            print(f"ERROR DiagnosisCritic Error: {str(e)}")
             # On error, proceed to supervisor to avoid blocking
             state["next_step"] = "supervisor"
         return state
@@ -276,7 +226,7 @@ class DiagnosisCriticNode:
                         context += f"- {symptom}\n"
             red_flags_in_symptoms = symptoms_data.get("red_flags", [])
             if red_flags_in_symptoms:
-                context += f"\n⚠️ **Red Flags Detected by Symptom Extractor**: {len(red_flags_in_symptoms)}\n"
+                context += f"\n**Red Flags Detected by Symptom Extractor**: {len(red_flags_in_symptoms)}\n"
                 for flag in red_flags_in_symptoms:
                     if isinstance(flag, dict):
                         context += f"- {flag.get('symptom', 'Unknown')} [{flag.get('urgency_level', 'unknown')}]\n"

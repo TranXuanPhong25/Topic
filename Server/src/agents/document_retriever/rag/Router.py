@@ -75,11 +75,11 @@ Loại tìm kiếm (chỉ trả lời một từ):"""
                 return QueryType.HYBRID
             else:
                 # Default to semantic if unclear
-                print(f"⚠️ Router output unclear: '{result}', defaulting to semantic")
+                print(f"WARNING: Router output unclear: '{result}', defaulting to semantic")
                 return QueryType.SEMANTIC
                 
         except Exception as e:
-            print(f"⚠️ Router error: {e}, defaulting to semantic")
+            print(f"WARNING: Router error: {e}, defaulting to semantic")
             return QueryType.SEMANTIC
     
     def route_with_explanation(self, question: str) -> tuple[QueryType, str]:

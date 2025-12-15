@@ -4,7 +4,6 @@ from src.configs.agent_config import (
     GEMINI_MODEL_NAME,
     ChatGoogleGenerativeAI
 )
-from .prompts import SUPERVISOR_SYSTEM_PROMPT
 
 class SupervisorModelSingleton:
     _instance: Optional[Any] = None

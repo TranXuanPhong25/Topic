@@ -1,4 +1,5 @@
 from src.models.state import GraphState
+from src.agents.utils import get_current_context, get_current_goal
 from typing import Dict, Any, Tuple
 
 
@@ -14,39 +15,6 @@ class ImageAnalyzerNode:
         self.vision_analyzer = vision_analyzer
         self.lesion_classifier = lesion_classifier
     
-    def _get_current_goal(self, state: "GraphState") -> str:
-        plan = state.get("plan", [])
-        current_step_index = state.get("current_step", 0)
-        
-        if not plan or current_step_index >= len(plan):
-            return ""
-        
-        current_plan_step = plan[current_step_index]
-        goal = current_plan_step.get("goal", "")
-        
-        if goal:
-            print(f"Current Goal: {goal}")
-        
-        return goal
-    
-    def _get_current_context(self, state: "GraphState") -> dict:
-        plan = state.get("plan", [])
-        current_step_index = state.get("current_step", 0)
-        
-        if not plan or current_step_index >= len(plan):
-            return {"context": "", "user_context": ""}
-        
-        current_plan_step = plan[current_step_index]
-        context = current_plan_step.get("context", "")
-        user_context = current_plan_step.get("user_context", "")
-        
-        if context:
-            print(f"Context: {context[:100]}...")
-        if user_context:
-            print(f"User Context: {user_context[:100]}...")
-        
-        return {"context": context, "user_context": user_context}
-
     def _classify_image_type(self, image: str, user_input: str = "") -> Tuple[str, bool, str]:
         try:
             classification_result = self.vision_analyzer.classify_image_type(image, user_input)
@@ -90,16 +58,16 @@ class ImageAnalyzerNode:
             # Handle based on image type
             if not is_diagnostic:
                 # Image is not for diagnosis - provide appropriate response
-                print(f"📷 Non-diagnostic image detected: {image_type}")
+                print(f"Non-diagnostic image detected: {image_type}")
                 
                 if image_type == self.IMAGE_TYPE_DOCUMENT:
                     # Document/prescription - extract text info
                     analysis_result = self._analyze_document_image(image, user_input)
                     # Debug: print document content
                     doc_content = analysis_result.get("document_content", "")
-                    print(f"📄 Document content extracted: {len(doc_content)} chars")
+                    print(f"Document content extracted: {len(doc_content)} chars")
                     if doc_content:
-                        print(f"📄 Preview: {doc_content[:200]}...")
+                        print(f"Preview: {doc_content[:200]}...")
                     # Set final_response for document
                     if "message" in analysis_result:
                         state["final_response"] = analysis_result["message"]
@@ -190,7 +158,7 @@ class ImageAnalyzerNode:
             Analysis result dict
         """
         try:
-            print(f"📄 Analyzing document image with user input: {user_input[:100] if user_input else 'None'}...")
+            print(f"Analyzing document image with user input: {user_input[:100] if user_input else 'None'}...")
             
             # Use vision analyzer to extract document information
             doc_result = self.vision_analyzer.analyze_document(image, user_input)
@@ -198,12 +166,12 @@ class ImageAnalyzerNode:
             document_content = doc_result.get("content", "")
             document_type = doc_result.get("type", "unknown")
             
-            print(f"📄 Document type detected: {document_type}")
-            print(f"📄 Document content length: {len(document_content)} chars")
+            print(f"Document type detected: {document_type}")
+            print(f"Document content length: {len(document_content)} chars")
             if document_content:
-                print(f"📄 Content preview: {document_content[:200]}...")
+                print(f"Content preview: {document_content[:200]}...")
             else:
-                print("⚠️ No document content extracted!")
+                print("WARNING: No document content extracted!")
             
             return {
                 "visual_description": doc_result.get("description", "Phân tích tài liệu y tế"),
@@ -214,7 +182,7 @@ class ImageAnalyzerNode:
                 "confidence": doc_result.get("confidence", 0.5)
             }
         except Exception as e:
-            print(f"❌ Document analysis error: {str(e)}")
+            print(f"ERROR: Document analysis error: {str(e)}")
             return {
                 "visual_description": "Đây là hình ảnh tài liệu/đơn thuốc.",
                 "image_type": self.IMAGE_TYPE_DOCUMENT,

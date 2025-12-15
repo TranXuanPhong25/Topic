@@ -24,7 +24,7 @@ Your role is to synthesize diagnostic information into a **clear, conversational
 
 ---
 
-## ⚠️ CRITICAL: RESPECT ALL CONSTRAINTS IN CONTEXT
+## CRITICAL: RESPECT ALL CONSTRAINTS IN CONTEXT
 **MANDATORY**: Always check context for constraints and follow them:
 - **Language**: "Vietnamese" → entire response in Vietnamese; "English" → entire response in English
 - **Style**: "Brief" → concise answer (2-4 paragraphs); "Detailed" → thorough explanation (still conversational)
@@ -139,7 +139,7 @@ Think of it like answering: "So what's wrong with me and what should I do?"
 - **Bold** for actions or warnings: "**See a doctor today**"
 - **Bullet points** ONLY for lists (medications, tests, symptoms)
 - **No headers** unless response is long (>300 words)
-- **Emoji sparingly**: 🚨 for true emergencies only
+- **Emoji sparingly**: Only for true emergencies
 
 ### Tone:
 - **Friendly but professional**: Like a doctor you trust
@@ -153,7 +153,7 @@ Think of it like answering: "So what's wrong with me and what should I do?"
 ## ADAPT TO SEVERITY
 
 ### EMERGENCY:
-- Lead with action: "🚨 **Go to ER immediately** or call emergency services."
+- Lead with action: "**Go to ER immediately** or call emergency services."
 - Brief why (1-2 sentences)
 - What not to do
 - Total: 2-3 short paragraphs
@@ -211,26 +211,6 @@ Have a helpful medical conversation - concise, clear, actionable.
 
 
 def build_synthesis_prompt(state_data: dict, goal: str = "", context: str = "", user_context: str = "") -> str:
-    """
-    Build synthesis prompt with ONLY available state data.
-    Dynamically includes sections based on what information exists.
-    
-    Args:
-        state_data: Dictionary containing all relevant state information
-            - symptoms: Extracted symptoms (JSON string or dict)
-            - image_analysis_result: Image analysis if available
-            - diagnosis: Diagnostic results
-            - risk_assessment: Risk assessment
-            - investigation_plan: Recommended tests
-            - recommendation: Treatment recommendations
-            - intent: Original user intent
-        goal: Purpose of synthesis step from plan
-        context: Relevant conversation history from plan
-        user_context: User's specific concerns from plan
-    
-    Returns:
-        Complete prompt for synthesis with only relevant sections
-    """
     # Extract available data
     diagnosis = state_data.get("diagnosis", {})
     risk_assessment = state_data.get("risk_assessment", {})
@@ -246,7 +226,7 @@ def build_synthesis_prompt(state_data: dict, goal: str = "", context: str = "", 
     context_section = ""
     if context:
         context_section = f"## CONTEXT & SYNTHESIS REQUIREMENTS (MUST FOLLOW)\n{context}\n"
-        context_section += "\n⚠️ MANDATORY: Use specified language throughout report. Match style and detail level. Reflect urgency in tone.\n\n"
+        context_section += "\nMANDATORY: Use specified language throughout report. Match style and detail level. Reflect urgency in tone.\n\n"
     
     user_context_section = f"## PATIENT'S SPECIFIC CONCERNS\n{user_context}\n\n" if user_context else ""
     
@@ -266,7 +246,7 @@ def build_synthesis_prompt(state_data: dict, goal: str = "", context: str = "", 
         if image_type == "document":
             # Document image - prescription, test result, etc.
             prompt += "## DOCUMENT INFORMATION (from image)\n"
-            prompt += "⚠️ **NOTE**: This is a document image (prescription/test result), NOT a medical diagnosis image.\n"
+            prompt += "**NOTE**: This is a document image (prescription/test result), NOT a medical diagnosis image.\n"
             prompt += "Your task is to EXPLAIN the document content clearly to the patient.\n\n"
             
             document_content = image_analysis.get("document_content", "")

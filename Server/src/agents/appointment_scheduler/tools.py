@@ -4,6 +4,7 @@ from datetime import datetime
 from langchain_core.tools import tool
 
 from src.handlers.appointment import AppointmentHandler
+from datetime import timedelta
 
 
 @tool(description="Get current date and time with examples of relative dates like tomorrow, next week, etc.")
@@ -11,7 +12,6 @@ def get_current_datetime() -> str:
     now = datetime.now()
     
     # Calculate common relative dates
-    from datetime import timedelta
     tomorrow = now + timedelta(days=1)
     next_week = now + timedelta(days=7)
     in_3_days = now + timedelta(days=3)

@@ -3,6 +3,7 @@ import re
 import requests
 from typing import Dict, Any, TYPE_CHECKING
 from src.configs.agent_config import SystemMessage, HumanMessage
+from src.agents.utils import get_current_context, get_current_goal
 from src.agents.document_retriever.helpers import (
     can_call_retriever,
     request_document_retrieval,
@@ -19,39 +20,6 @@ class DiagnosisEngineNode:
     def __init__(self, gemini_model):
         self.gemini_model = gemini_model
     
-    def _get_current_goal(self, state: "GraphState") -> str:
-        plan = state.get("plan", [])
-        current_step_index = state.get("current_step", 0)
-        
-        if not plan or current_step_index >= len(plan):
-            return ""
-        
-        current_plan_step = plan[current_step_index]
-        goal = current_plan_step.get("goal", "")
-        
-        if goal:
-            print(f"Current Goal: {goal}")
-        
-        return goal
-    
-    def _get_current_context(self, state: "GraphState") -> Dict[str, str]:
-        plan = state.get("plan", [])
-        current_step_index = state.get("current_step", 0)
-        
-        if not plan or current_step_index >= len(plan):
-            return {"context": "", "user_context": ""}
-        
-        current_plan_step = plan[current_step_index]
-        context = current_plan_step.get("context", "")
-        user_context = current_plan_step.get("user_context", "")
-        
-        if context:
-            print(f"Context: {context[:100]}...")
-        if user_context:
-            print(f"User Context: {user_context[:100]}...")
-        
-        return {"context": context, "user_context": user_context}
-    
     def __call__(self, state: "GraphState") -> "GraphState":
         print("DiagnosisEngine: Running diagnostic analysis...")
         
@@ -61,8 +29,8 @@ class DiagnosisEngineNode:
             analysis_input = state.get("input", {})
         try:
             # Get goal and context from current plan step
-            goal = self._get_current_goal(state)
-            context_data = self._get_current_context(state)
+            goal = get_current_goal(state)
+            context_data = get_current_context(state)
             
             # Build diagnosis prompt using the system prompt from prompts.py
             image_analysis = json.dumps(state.get("image_analysis_result", ""))

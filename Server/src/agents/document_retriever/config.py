@@ -12,7 +12,6 @@ class DocumentRetrieverModelSingleton:
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            print("Initializing Document Retriever LLM model...")
             
             cls._instance = ChatGoogleGenerativeAI(
                 model=GEMINI_MODEL_NAME,
@@ -21,9 +20,8 @@ class DocumentRetrieverModelSingleton:
                 top_p=0.9,
                 top_k=40,
                 max_tokens=8096,  # Larger for detailed document synthesis
-                model_kwargs={"response_mime_type": "application/json"}  # Force JSON output
+                # model_kwargs={"response_mime_type": "application/json"}  # Force JSON output
             )
-            print(f"Document Retriever model initialized: {GEMINI_MODEL_NAME}")
         return cls._instance
     
     @classmethod
