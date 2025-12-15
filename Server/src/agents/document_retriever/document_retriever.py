@@ -18,7 +18,6 @@ from .config import get_document_retriever_model
 from .prompts import (
     DOCUMENT_RETRIEVER_SYSTEM_PROMPT,
     build_document_retrieval_prompt,
-    QUERY_REFINEMENT_PROMPT,
     SYNTHESIS_PROMPT
 )
 
@@ -29,24 +28,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class DocumentRetrieverNode:
-    """
-    DocumentRetriever Agent: Intelligent document retrieval and synthesis.
-    
-    This agent:
-    - Analyzes input queries in medical context
-    - Refines queries for optimal retrieval
-    - Uses RAG pipeline (Pinecone + Reranking) for document retrieval
-    - Synthesizes information with LLM
-    - Returns structured results with citations
-    """
-    
     def __init__(self, llm_model=None):
-        """
-        Initialize the DocumentRetriever agent.
-        
-        Args:
-            llm_model: Optional pre-initialized LLM model (for testing)
-        """
         # Initialize LLM for query analysis and synthesis
         self.llm = llm_model or get_document_retriever_model()
         
@@ -149,15 +131,6 @@ class DocumentRetrieverNode:
         return "\n\n---\n\n".join(formatted)
 
     def _build_query(self, state: "GraphState") -> str:
-        """
-        Build search query from state information.
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Search query string
-        """
         parts = []
         
         # Add user input
@@ -190,15 +163,6 @@ class DocumentRetrieverNode:
         return ". ".join(parts) if parts else "medical information"
     
     def _parse_json_response(self, response_text: str) -> Dict[str, Any]:
-        """
-        Parse JSON response from LLM, handling potential formatting issues.
-        
-        Args:
-            response_text: Raw response text from LLM
-            
-        Returns:
-            Parsed JSON dict or empty dict if parsing fails
-        """
         try:
             # Try direct JSON parsing
             return json.loads(response_text)
@@ -225,20 +189,7 @@ class DocumentRetrieverNode:
         symptoms_str: str,
         diagnosis_str: str
     ) -> Dict[str, Any]:
-        """
-        Use LLM to synthesize information from retrieved documents.
-        
-        Args:
-            query: Original query
-            documents: Retrieved documents
-            goal: Current goal from plan
-            context: Additional context
-            symptoms_str: Formatted symptoms string
-            diagnosis_str: Formatted diagnosis string
-            
-        Returns:
-            Synthesized result dict
-        """
+
         try:
             # Format documents for LLM
             docs_formatted = self._format_retrieved_docs(documents)
@@ -273,36 +224,16 @@ class DocumentRetrieverNode:
             return {}
 
     def __call__(self, state: "GraphState") -> "GraphState":
-        """
-        Execute the document retriever agent logic.
-        
-        Flow:
-        1. Check who called this agent (retriever_caller)
-        2. Extract goal and context from current plan step
-        3. Build optimized query from state information (or use retriever_query if provided)
-        4. Invoke RAG pipeline for document retrieval
-        5. Use LLM to synthesize and analyze retrieved information
-        6. Return to the caller agent (or supervisor if called directly)
-        
-        Args:
-            state: Current graph state
-            
-        Returns:
-            Updated graph state with retrieved documents and synthesis
-        """
         print("\n📚 === DOCUMENT RETRIEVER AGENT STARTED ===")
         
         # Get caller information
         caller = state.get("retriever_caller") or "supervisor"
-        print(f"📞 Called by: {caller}")
         
-        # Ensure caller is valid for routing
         if caller not in ["supervisor", "diagnosis_engine", "diagnosis_critic", "recommender"]:
             print(f"⚠️ Invalid caller '{caller}', defaulting to supervisor")
             caller = "supervisor"
             state["retriever_caller"] = caller
         
-        # Get goal and context from current plan step
         goal = self._get_current_goal(state)
         context_data = self._get_current_context(state)
         context = context_data.get("context", "")
@@ -313,28 +244,17 @@ class DocumentRetrieverNode:
         symptoms_str = self._format_symptoms(symptoms)
         diagnosis_str = self._format_diagnosis(diagnosis)
         
-        if not self.pipeline:
-            print("❌ RAG pipeline not available, using LLM only mode")
-            state["retrieved_documents"] = []
-            state["rag_answer"] = ""
-            state["document_synthesis"] = {}
-            # Don't increment current_step when called by another agent
-            if caller == "supervisor":
-                state["current_step"] += 1
-            # Clear query after processing
-            state["retriever_query"] = None
-            return state
         
         try:
             # Use retriever_query if provided, otherwise build from state
             query = state.get("retriever_query") or self._build_query(state)
-            print(f"🔍 Search query: {query[:100]}...")
+            print(f"Search query: {query[:100]}...")
             
             # Invoke RAG pipeline
             result = self.pipeline.invoke(query, k=10, rerank_top_k=5)
             
             # Debug: Log the result structure
-            print(f"🔍 RAG result keys: {list(result.keys()) if isinstance(result, dict) else 'Not a dict'}")
+            print(f"RAG result keys: {list(result.keys()) if isinstance(result, dict) else 'Not a dict'}")
             
             # Extract documents and format for state
             context_docs = result.get("context_docs", [])
@@ -439,7 +359,6 @@ class DocumentRetrieverNode:
             state["retriever_query"] = None
             
         except Exception as e:
-            LOGGER.exception(f"DocumentRetriever error: {e}")
             print(f"❌ DocumentRetriever error: {str(e)}")
             state["retrieved_documents"] = []
             state["rag_answer"] = ""
@@ -451,13 +370,4 @@ class DocumentRetrieverNode:
 
 
 def new_document_retriever_node(llm_model=None) -> DocumentRetrieverNode:
-    """
-    Factory function to create DocumentRetrieverNode.
-    
-    Args:
-        llm_model: Optional pre-initialized LLM model (for testing)
-        
-    Returns:
-        Initialized DocumentRetrieverNode instance
-    """
     return DocumentRetrieverNode(llm_model=llm_model)

@@ -3,8 +3,6 @@ from .config import get_document_retriever_model, DocumentRetrieverModelSingleto
 from .prompts import (
     DOCUMENT_RETRIEVER_SYSTEM_PROMPT,
     build_document_retrieval_prompt,
-    QUERY_REFINEMENT_PROMPT,
-    SYNTHESIS_PROMPT
 )
 from .helpers import (
     can_call_retriever,
@@ -21,8 +19,6 @@ __all__ = [
     "DocumentRetrieverModelSingleton",
     "DOCUMENT_RETRIEVER_SYSTEM_PROMPT",
     "build_document_retrieval_prompt",
-    "QUERY_REFINEMENT_PROMPT",
-    "SYNTHESIS_PROMPT",
     # Helper functions
     "can_call_retriever",
     "request_document_retrieval",

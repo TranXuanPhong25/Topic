@@ -10,18 +10,6 @@ if TYPE_CHECKING:
 
 
 def can_call_retriever(state: "GraphState", agent_name: str) -> bool:
-    """
-    Check if an agent can call the document retriever.
-    
-    Each agent is limited to max_retriever_calls_per_agent calls (default: 2).
-    
-    Args:
-        state: Current graph state
-        agent_name: Name of the agent wanting to call retriever
-        
-    Returns:
-        True if agent can call retriever, False otherwise
-    """
     max_calls = state.get("max_retriever_calls_per_agent", 2)
     call_counts = state.get("retriever_call_counts", {})
     current_count = call_counts.get(agent_name, 0)
@@ -34,24 +22,7 @@ def request_document_retrieval(
     agent_name: str,
     query: Optional[str] = None
 ) -> Tuple["GraphState", bool]:
-    """
-    Request document retrieval from an agent.
-    
-    This function:
-    1. Checks if the agent can still call the retriever
-    2. Updates the call count
-    3. Sets up the state for document retriever to process
-    
-    Args:
-        state: Current graph state
-        agent_name: Name of the calling agent
-        query: Optional specific query (if None, retriever will build from state)
-        
-    Returns:
-        Tuple of (updated_state, success)
-        - success is True if retrieval request was accepted
-        - success is False if agent has exceeded max calls
-    """
+
     if not can_call_retriever(state, agent_name):
         max_calls = state.get("max_retriever_calls_per_agent", 2)
         print(f"{agent_name} has already called document_retriever {max_calls} times (max)")
@@ -67,7 +38,7 @@ def request_document_retrieval(
     if query:
         state["retriever_query"] = query
     
-    print(f"📤 {agent_name} requesting document retrieval (call {call_counts[agent_name]}/{state.get('max_retriever_calls_per_agent', 2)})")
+    print(f"{agent_name} requesting document retrieval (call {call_counts[agent_name]}/{state.get('max_retriever_calls_per_agent', 2)})")
     
     return state, True
 
@@ -102,13 +73,4 @@ def has_retrieved_documents(state: "GraphState") -> bool:
 
 
 def get_document_synthesis(state: "GraphState") -> dict:
-    """
-    Get the document synthesis from the state.
-    
-    Args:
-        state: Current graph state
-        
-    Returns:
-        Document synthesis dict or empty dict
-    """
     return state.get("document_synthesis", {})

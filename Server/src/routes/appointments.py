@@ -25,8 +25,6 @@ class AppointmentResponse(BaseModel):
     provider: str
     status: str
 
-# --- HELPER FUNCTIONS ---
-
 def map_appointment(appointment: dict) -> dict:
     return {
         "id": appointment.get("id", str(appointment.get("_id", ""))),
@@ -38,47 +36,6 @@ def map_appointment(appointment: dict) -> dict:
         "provider": appointment.get("provider", ""),
         "status": appointment.get("status", "scheduled")
     }
-
-
-# --- AI FUNCTION (Dành riêng cho Bot/Agent) ---
-
-async def book_appointment_internal(patient_name: str, reason: str, date: str, time: str, phone: str, provider: str = None) -> dict:
-    try:
-        handler = AppointmentHandler()
-        
-        # Validate inputs
-        if not patient_name or not date or not time:
-            return {"success": False, "message": "Thiếu thông tin bắt buộc (tên, ngày, giờ)."}
-
-        # Use handler's schedule_appointment (async)
-        result = await handler.schedule_appointment(
-            patient_name=patient_name,
-            date=date,
-            time=time,
-            reason=reason,
-            phone=phone,
-            provider=provider
-        )
-
-        if result["success"]:
-            apt = result["appointment"]
-            return {
-                "success": True,
-                "message": f"Đã đặt lịch thành công cho {patient_name} ngày {date} lúc {time}.",
-                "data": {
-                    "id": apt["id"],
-                    "patient_name": patient_name,
-                    "date": date,
-                    "time": time
-                }
-            }
-        else:
-            return {"success": False, "message": result.get("error", "Không thể đặt lịch.")}
-            
-    except Exception as e:
-        print(f"AI Booking Error: {e}")
-        return {"success": False, "message": "Lỗi hệ thống khi lưu lịch."}
-
 
 @router.post("/create", response_model=AppointmentResponse)
 async def create_appointment(request: AppointmentRequest):

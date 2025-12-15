@@ -9,27 +9,6 @@ def build_messages_with_history(
 ) -> List[BaseMessage]:
     """
     Build a list of messages including system prompt, chat history, and current prompt.
-    
-    Args:
-        system_prompt: System instruction message
-        current_prompt: Current user prompt to add
-        chat_history: Optional list of chat history in Gemini format
-                     Each message should have:
-                     - role: "user" or "model"
-                     - parts: list of dicts with "text" key
-                     
-    Returns:
-        List of BaseMessage objects (SystemMessage, HumanMessage, AIMessage)
-        
-    Example:
-        >>> messages = build_messages_with_history(
-        ...     system_prompt="You are a helpful assistant",
-        ...     current_prompt="What is the weather?",
-        ...     chat_history=[
-        ...         {"role": "user", "parts": [{"text": "Hello"}]},
-        ...         {"role": "model", "parts": [{"text": "Hi there!"}]}
-        ...     ]
-        ... )
     """
     messages: List[BaseMessage] = [SystemMessage(content=system_prompt)] if system_prompt else []
     
@@ -57,17 +36,6 @@ def build_messages_with_history(
 def extract_text_from_gemini_message(msg: Dict[str, Any]) -> str:
     """
     Extract text content from a Gemini-format message.
-    
-    Args:
-        msg: Message dict with "parts" key containing list of text parts
-        
-    Returns:
-        Concatenated text from all parts
-        
-    Example:
-        >>> msg = {"role": "user", "parts": [{"text": "Hello"}, {"text": " world"}]}
-        >>> extract_text_from_gemini_message(msg)
-        'Hello world'
     """
     text_parts = [part.get("text", "") for part in msg.get("parts", [])]
     return " ".join(text_parts).strip()
@@ -76,24 +44,6 @@ def extract_text_from_gemini_message(msg: Dict[str, Any]) -> str:
 def extract_text_from_content(content: Any) -> str:
     """
     Extract text from various content formats (Gemini 2.5 style).
-    
-    Handles:
-    - Plain string: "Hello world"
-    - List of content blocks: [{'type': 'text', 'text': '...', 'extras': {...}}]
-    - Dict with 'text' key: {'type': 'text', 'text': '...'}
-    - None or empty
-    
-    Args:
-        content: Content in various formats
-        
-    Returns:
-        Extracted text string
-        
-    Example:
-        >>> extract_text_from_content([{'type': 'text', 'text': 'Hello', 'extras': {'signature': '...'}}])
-        'Hello'
-        >>> extract_text_from_content("Hello world")
-        'Hello world'
     """
     if content is None:
         return ""

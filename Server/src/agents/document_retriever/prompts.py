@@ -45,20 +45,6 @@ def build_document_retrieval_prompt(
     diagnosis: str = "",
     retrieved_docs: str = ""
 ) -> str:
-    """
-    Build the prompt for document retrieval analysis.
-    
-    Args:
-        query: User's original query
-        context: Additional context from the plan
-        goal: Current goal from supervisor
-        symptoms: Extracted symptoms if available
-        diagnosis: Current diagnosis if available
-        retrieved_docs: Documents retrieved from RAG pipeline
-        
-    Returns:
-        Formatted prompt string
-    """
     prompt_parts = [
         "## THÔNG TIN TRUY VẤN",
         f"**Truy vấn gốc:** {query}",
@@ -90,62 +76,3 @@ Dựa trên thông tin trên, hãy:
 Trả về JSON output:""")
     
     return "\n".join(prompt_parts)
-
-
-QUERY_REFINEMENT_PROMPT = """Bạn là một chuyên gia thuật ngữ y khoa. Nhiệm vụ của bạn là tối ưu hóa truy vấn tìm kiếm.
-
-## TRUY VẤN GỐC:
-{query}
-
-## NGỮ CẢNH:
-- Triệu chứng: {symptoms}
-- Chẩn đoán hiện tại: {diagnosis}
-- Mục tiêu: {goal}
-
-## YÊU CẦU:
-1. Chuyển đổi truy vấn sang thuật ngữ y khoa chuẩn
-2. Thêm các từ khóa liên quan để mở rộng tìm kiếm
-3. Đề xuất các chẩn đoán phân biệt có thể
-
-## OUTPUT FORMAT (JSON):
-{
-  "refined_query_vietnamese": "Truy vấn đã tối ưu bằng tiếng Việt",
-  "refined_query_english": "Optimized query in English medical terminology",
-  "search_keywords": ["keyword1", "keyword2"],
-  "differential_diagnoses": ["diagnosis1", "diagnosis2"],
-  "search_strategy": "Giải thích chiến lược tìm kiếm"
-}
-"""
-
-
-SYNTHESIS_PROMPT = """Bạn là một trợ lý nghiên cứu y khoa. Hãy tổng hợp thông tin từ các tài liệu sau để trả lời truy vấn.
-
-## TRUY VẤN:
-{query}
-
-## TÀI LIỆU:
-{documents}
-
-## YÊU CẦU:
-1. Tổng hợp thông tin một cách có cấu trúc
-2. Trích dẫn nguồn cho mỗi thông tin
-3. Đánh giá mức độ tin cậy
-4. Xác định các khoảng trống thông tin
-
-## OUTPUT FORMAT (JSON):
-{
-  "synthesis": {
-    "main_answer": "Câu trả lời chính",
-    "supporting_evidence": [
-      {
-        "point": "Điểm thông tin",
-        "source": "Nguồn trích dẫn",
-        "confidence": "high/medium/low"
-      }
-    ],
-    "clinical_implications": "Ý nghĩa lâm sàng"
-  },
-  "information_gaps": ["Thông tin còn thiếu"],
-  "recommendations": ["Đề xuất tìm kiếm thêm"]
-}
-"""

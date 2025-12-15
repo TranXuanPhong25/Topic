@@ -4,7 +4,6 @@ from src.configs.agent_config import (
     GEMINI_MODEL_NAME,
     ChatGoogleGenerativeAI
 )
-from .prompts import DOCUMENT_RETRIEVER_SYSTEM_PROMPT
 
 
 class DocumentRetrieverModelSingleton:
@@ -21,7 +20,7 @@ class DocumentRetrieverModelSingleton:
                 temperature=0.3,  # Balanced for information synthesis
                 top_p=0.9,
                 top_k=40,
-                max_tokens=4096,  # Larger for detailed document synthesis
+                max_tokens=8096,  # Larger for detailed document synthesis
                 model_kwargs={"response_mime_type": "application/json"}  # Force JSON output
             )
             print(f"Document Retriever model initialized: {GEMINI_MODEL_NAME}")
