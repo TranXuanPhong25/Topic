@@ -69,7 +69,6 @@ class ConversationAgentNode:
             goal = self._get_current_goal(state)
             context_data = self._get_current_context(state)
             
-            # Build prompt using optimized template
             conversation_prompt = build_conversation_prompt(
                 user_input=user_input,
                 knowledge_base_info=knowledge_base_info,
@@ -78,14 +77,12 @@ class ConversationAgentNode:
                 user_context=context_data.get("user_context", "")
             )
             
-            # Build messages with chat history for full context
             messages = build_messages_with_history(
                 system_prompt=CONVERSATION_SYSTEM_PROMPT,
                 current_prompt=conversation_prompt,
                 chat_history=state.get("chat_history", [])
             )
             
-            # Use Gemini to generate response
             response = self.gemini_model.invoke(messages)
             conversation_output = response.content.strip()
             

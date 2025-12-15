@@ -404,7 +404,7 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
 
                 {/* Appointment Tests */}
                 <div className="sidebar-section">
-                  <div className="sidebar-section-title" style={{ color: '#0066cc' }}>📅 Appointment Tests ({appointmentTests.length})</div>
+                  <div className="sidebar-section-title" style={{ color: '#0066cc' }}> Appointment Tests ({appointmentTests.length})</div>
 
                   {/* Group by category */}
                   {Object.entries(
@@ -417,7 +417,7 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
                   ).map(([category, items]) => (
                     <div key={`appt-${category}`} className="symptom-category">
                       <div className="category-label" style={{ color: '#0066cc' }}>
-                        📅 {category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' ')} ({items.length})
+                         {category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' ')} ({items.length})
                       </div>
                       <ul className="sidebar-list">
                         {items.map((item, index) => (

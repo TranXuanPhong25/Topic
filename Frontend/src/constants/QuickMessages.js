@@ -1,28 +1,28 @@
 const quickMessages = [
-    { text: '🕐 Hours', message: 'What are your hours?' },
-    { text: '📍 Location', message: 'Where are you located?' },
-    { text: '💳 Insurance', message: 'Do you accept insurance?' },
-    { text: '📅 Book Appointment', message: 'I need to schedule an appointment' },
-    { text: '🏥 Services', message: 'What services do you offer?' },
-    { text: '💰 Pricing', message: 'How much does a visit cost?' },
-    { text: '👨‍⚕️ Doctors', message: 'What doctors are available?' },
-    { text: '📞 Contact', message: 'How can I contact you?' },
-    { text: '🚗 Parking', message: 'Is parking available?' },
-    { text: '♿ Accessibility', message: 'Is the clinic wheelchair accessible?' },
-    { text: '🌐 Languages', message: 'What languages do you speak?' },
-    { text: '📋 New Patient', message: 'I am a new patient. What do I need to bring?' },
-    { text: '💉 Vaccinations', message: 'Do you provide vaccinations?' },
-    { text: '🧪 Lab Tests', message: 'Can I get lab tests done at your clinic?' },
-    { text: '🩺 Telemedicine', message: 'Do you offer online consultations?' },
-    { text: '⏰ Emergency', message: 'Do you handle emergencies?' },
-    { text: '👶 Pediatrics', message: 'Do you see children?' },
-    { text: '🤰 Pregnancy', message: 'Do you offer prenatal care?' },
-    { text: '🔄 Reschedule', message: 'I need to reschedule my appointment' },
-    { text: '❌ Cancel', message: 'I need to cancel my appointment' },
-    { text: '📄 Medical Records', message: 'How do I get my medical records?' },
-    { text: '💊 Prescriptions', message: 'Can I get a prescription refill?' },
-    { text: '🏃 Sports Physical', message: 'Do you do sports physicals?' },
-    { text: '✈️ Travel Medicine', message: 'Do you offer travel consultations?' }
+    { text: 'Hours', message: 'What are your hours?' },
+    { text: 'Location', message: 'Where are you located?' },
+    { text: 'Insurance', message: 'Do you accept insurance?' },
+    { text: 'Book Appointment', message: 'I need to schedule an appointment' },
+    { text: 'Services', message: 'What services do you offer?' },
+    { text: 'Pricing', message: 'How much does a visit cost?' },
+    { text: 'Doctors', message: 'What doctors are available?' },
+    { text: 'Contact', message: 'How can I contact you?' },
+    { text: 'Parking', message: 'Is parking available?' },
+    { text: 'Accessibility', message: 'Is the clinic wheelchair accessible?' },
+    { text: 'Languages', message: 'What languages do you speak?' },
+    { text: 'New Patient', message: 'I am a new patient. What do I need to bring?' },
+    { text: 'Vaccinations', message: 'Do you provide vaccinations?' },
+    { text: 'Lab Tests', message: 'Can I get lab tests done at your clinic?' },
+    { text: 'Telemedicine', message: 'Do you offer online consultations?' },
+    { text: 'Emergency', message: 'Do you handle emergencies?' },
+    { text: 'Pediatrics', message: 'Do you see children?' },
+    { text: 'Pregnancy', message: 'Do you offer prenatal care?' },
+    { text: 'Reschedule', message: 'I need to reschedule my appointment' },
+    { text: 'Cancel', message: 'I need to cancel my appointment' },
+    { text: 'Medical Records', message: 'How do I get my medical records?' },
+    { text: 'Prescriptions', message: 'Can I get a prescription refill?' },
+    { text: 'Sports Physical', message: 'Do you do sports physicals?' },
+    { text: 'Travel Medicine', message: 'Do you offer travel consultations?' }
   ];
 
 export { quickMessages };
@@ -30,37 +30,37 @@ export { quickMessages };
 export const imageActions = [
   // Medical/Diagnostic images
   { 
-    text: '📸 Vitiligo Sample', 
+    text: 'Vitiligo Sample', 
     imagePath: '/src/public/12419-vitiligo.jpg',
     message: 'Please analyze this vitiligo (bạch biến) image and provide diagnosis',
     category: 'medical'
   },
   { 
-    text: '📸 Jaundice Sample', 
+    text: 'Jaundice Sample', 
     imagePath: '/src/public/350--trieu-chung-vang-da-la-dau-hieu-cua-nhung-benh-gi1_41181.jpg',
     message: 'My hand looks like this. What could be the issue?',
     category: 'medical'
   },
   { 
-    text: '📸 Skin Rash', 
+    text: 'Skin Rash', 
     imagePath: '/src/public/rash-sample.jpg',
     message: 'I have this rash on my arm for 3 days. What could it be?',
     category: 'medical'
   },
   { 
-    text: '📸 Mole Check', 
+    text: 'Mole Check', 
     imagePath: '/src/public/mole-sample.jpg',
     message: 'This mole has been changing color and size. Should I be concerned?',
     category: 'medical'
   },
   { 
-    text: '📸 Acne Problem', 
+    text: 'Acne Problem', 
     imagePath: '/src/public/acne-sample.jpg',
     message: 'I have severe acne. What treatment do you recommend?',
     category: 'medical'
   },
   { 
-    text: '📸 Eczema', 
+    text: 'Eczema', 
     imagePath: '/src/public/eczema-sample.jpg',
     message: 'My skin is very dry, itchy and red. Is this eczema?',
     category: 'medical'
@@ -68,19 +68,19 @@ export const imageActions = [
   
   // Document images (prescriptions, test results)
   { 
-    text: '📄 Prescription', 
+    text: 'Prescription', 
     imagePath: '/src/public/prescription-sample.jpg',
     message: 'Can you help me understand this prescription?',
     category: 'document'
   },
   { 
-    text: '📄 Test Result', 
+    text: 'Test Result', 
     imagePath: '/src/public/test-result-sample.jpg',
     message: 'What do these test results mean?',
     category: 'document'
   },
   { 
-    text: '📄 Blood Test', 
+    text: 'Blood Test', 
     imagePath: '/src/public/blood-test-sample.jpg',
     message: 'Can you explain my blood test results?',
     category: 'document'
@@ -88,13 +88,13 @@ export const imageActions = [
   
   // Non-medical images (to test classification)
   { 
-    text: '🖼️ General Photo', 
+    text: 'General Photo', 
     imagePath: '/src/public/general-photo-sample.jpg',
     message: 'What do you see in this image?',
     category: 'general'
   },
   { 
-    text: '🖼️ Food Photo', 
+    text: 'Food Photo', 
     imagePath: '/src/public/food-sample.jpg',
     message: 'Is this food healthy?',
     category: 'general'
@@ -104,266 +104,266 @@ export const imageActions = [
 export const symptomTests = [
   // Common symptoms
   { 
-    text: '🤒 Fever & Headache', 
+    text: 'Fever & Headache', 
     message: 'I have a high fever (39°C), severe headache, and body aches for 3 days. What could this be?',
     category: 'common'
   },
   { 
-    text: '🤧 Cold Symptoms', 
+    text: 'Cold Symptoms', 
     message: 'I have runny nose, sore throat, sneezing, and mild cough for 2 days. What should I do?',
     category: 'common'
   },
   { 
-    text: '😷 COVID-19 Symptoms', 
+    text: 'COVID-19 Symptoms', 
     message: 'I have fever, dry cough, loss of taste and smell, and fatigue. Could this be COVID-19?',
     category: 'common'
   },
   { 
-    text: '🤢 Nausea & Vomiting', 
+    text: 'Nausea & Vomiting', 
     message: 'I have been experiencing nausea, vomiting, and diarrhea since last night. What might be the cause?',
     category: 'common'
   },
   { 
-    text: '💔 Chest Pain', 
+    text: 'Chest Pain', 
     message: 'I feel chest pain and shortness of breath when exercising. Should I be concerned?',
     category: 'common'
   },
   { 
-    text: '🩸 Diabetes Symptoms', 
+    text: 'Diabetes Symptoms', 
     message: 'I have excessive thirst, frequent urination, and unexplained weight loss. Could this be diabetes?',
     category: 'common'
   },
   { 
-    text: '🚨 Severe Chest Pain', 
+    text: 'Severe Chest Pain', 
     message: 'Sudden severe chest pain radiating to left arm, sweating, difficulty breathing. Male 55 years old.',
     category: 'emergency'
   },
   {
-    text: '🆘 Tôi bị đau ngực dữ dội và khó thở',
+    text: 'Tôi bị đau ngực dữ dội và khó thở',
     message: 'Tôi bị đau ngực dữ dội và khó thở',
     category: 'emergency'
   },
   { 
-    text: '🧠 Stroke Symptoms', 
+    text: 'Stroke Symptoms', 
     message: 'Sudden weakness on right side, slurred speech, facial drooping. Started 30 minutes ago.',
     category: 'emergency'
   },
   { 
-    text: '🤕 Severe Allergic Reaction', 
+    text: 'Severe Allergic Reaction', 
     message: 'Throat swelling, difficulty breathing, hives after eating peanuts 10 minutes ago.',
     category: 'emergency'
   },
   
   // Chronic conditions
   { 
-    text: '💊 High Blood Pressure', 
+    text: 'High Blood Pressure', 
     message: 'Blood pressure consistently 150/95, headaches, dizziness. Family history of heart disease.',
     category: 'chronic'
   },
   { 
-    text: '🫁 Asthma Attack', 
+    text: 'Asthma Attack', 
     message: 'Wheezing, chest tightness, shortness of breath. Inhaler not helping much.',
     category: 'chronic'
   },
   { 
-    text: '🦴 Joint Pain', 
+    text: 'Joint Pain', 
     message: 'Pain and stiffness in knees and hands, worse in morning. Getting worse over months.',
     category: 'chronic'
   },
   
   // Digestive issues
   { 
-    text: '🤢 Food Poisoning', 
+    text: 'Food Poisoning', 
     message: 'Severe stomach cramps, vomiting, diarrhea after eating seafood last night.',
     category: 'digestive'
   },
   { 
-    text: '🔥 Heartburn', 
+    text: 'Heartburn', 
     message: 'Burning sensation in chest, especially after meals and at night. Happens frequently.',
     category: 'digestive'
   },
   { 
-    text: '💩 Constipation', 
+    text: 'Constipation', 
     message: 'Haven\'t had bowel movement for 5 days, abdominal pain, bloating.',
     category: 'digestive'
   },
   
   // Women's health
   { 
-    text: '👩 Irregular Periods', 
+    text: 'Irregular Periods', 
     message: 'Very irregular periods, heavy bleeding, severe cramps. Age 28.',
     category: 'womens-health'
   },
   { 
-    text: '🤰 Pregnancy Symptoms', 
+    text: 'Pregnancy Symptoms', 
     message: 'Missed period, morning sickness, fatigue. Positive home pregnancy test.',
     category: 'womens-health'
   },
   { 
-    text: '🌡️ Menopause Symptoms', 
+    text: 'Menopause Symptoms', 
     message: 'Hot flashes, night sweats, mood swings, irregular periods. Age 48.',
     category: 'womens-health'
   },
   
   // Mental health
   { 
-    text: '😰 Anxiety', 
+    text: 'Anxiety', 
     message: 'Constant worry, racing heart, trouble sleeping, panic attacks. Affecting daily life.',
     category: 'mental-health'
   },
   { 
-    text: '😔 Depression', 
+    text: 'Depression', 
     message: 'Feeling sad for weeks, no energy, lost interest in everything, trouble concentrating.',
     category: 'mental-health'
   },
   { 
-    text: '😴 Insomnia', 
+    text: 'Insomnia', 
     message: 'Can\'t fall asleep, lying awake for hours. Exhausted during day. Ongoing for months.',
     category: 'mental-health'
   },
   
   // Pediatric
   { 
-    text: '👶 Baby Fever', 
+    text: 'Baby Fever', 
     message: 'My 8-month-old has fever 38.8°C, fussy, not eating well, pulling at ear.',
     category: 'pediatric'
   },
   { 
-    text: '🤧 Child Cough', 
+    text: 'Child Cough', 
     message: 'My 5-year-old has persistent cough for 2 weeks, worse at night. No fever.',
     category: 'pediatric'
   },
   { 
-    text: '🤮 Child Vomiting', 
+    text: 'Child Vomiting', 
     message: 'My child vomited 4 times today, diarrhea, looks pale and tired. Age 6.',
     category: 'pediatric'
   },
   { 
-    text: '🦠 Hand Foot Mouth', 
+    text: 'Hand Foot Mouth', 
     message: 'Child has fever, sores in mouth, rash on hands and feet. Daycare outbreak. Age 3.',
     category: 'pediatric'
   },
   
   // Respiratory
   { 
-    text: '🫁 Shortness of Breath', 
+    text: 'Shortness of Breath', 
     message: 'Difficulty breathing even at rest, chest tightness, wheezing. Getting worse.',
     category: 'respiratory'
   },
   { 
-    text: '😷 Persistent Cough', 
+    text: 'Persistent Cough', 
     message: 'Dry cough for 4 weeks, worse at night, sometimes coughing up phlegm.',
     category: 'respiratory'
   },
   { 
-    text: '🤧 Sinus Infection', 
+    text: 'Sinus Infection', 
     message: 'Facial pain, thick yellow/green nasal discharge, headache, fever for 10 days.',
     category: 'respiratory'
   },
   
   // Skin conditions
   { 
-    text: '🔴 Severe Acne', 
+    text: 'Severe Acne', 
     message: 'Painful acne on face, back and chest. Tried OTC products, not working. Scarring.',
     category: 'dermatology'
   },
   { 
-    text: '🦠 Fungal Rash', 
+    text: 'Fungal Rash', 
     message: 'Itchy, red, circular rash spreading on leg. Looks like ringworm.',
     category: 'dermatology'
   },
   { 
-    text: '🌞 Suspicious Mole', 
+    text: 'Suspicious Mole', 
     message: 'Mole changing shape and color, irregular borders, bigger than 6mm. Should I worry?',
     category: 'dermatology'
   },
   
   // Injuries
   { 
-    text: '🏀 Ankle Sprain', 
+    text: 'Ankle Sprain', 
     message: 'Twisted ankle playing sports. Very swollen, can\'t walk on it, bruising.',
     category: 'injury'
   },
   { 
-    text: '🔪 Deep Cut', 
+    text: 'Deep Cut', 
     message: 'Cut hand with knife, deep cut, bleeding controlled. Happened 3 hours ago. Need stitches?',
     category: 'injury'
   },
   { 
-    text: '🔥 Burn Injury', 
+    text: 'Burn Injury', 
     message: 'Burned hand on hot pan. Red, blistering, very painful. What should I do?',
     category: 'injury'
   },
   
   // Vietnamese language
   { 
-    text: '🇻🇳 Sốt Cao', 
+    text: 'Sốt Cao', 
     message: 'Con tôi bị sốt 39 độ, ho nhiều, khó thở. Bé 4 tuổi, sốt được 3 ngày rồi.',
     category: 'vietnamese'
   },
   { 
-    text: '🇻🇳 Đau Bụng', 
+    text: 'Đau Bụng', 
     message: 'Đau bụng quặn thắt, tiêu chảy, buồn nôn từ tối qua. Ăn hải sản hôm qua.',
     category: 'vietnamese'
   },
   { 
-    text: '🇻🇳 Đau Ngực', 
+    text: 'Đau Ngực', 
     message: 'Đau ngực dữ dội lan ra cánh tay, ra mồ hôi lạnh, khó thở. Nam 55 tuổi.',
     category: 'vietnamese'
   },
   { 
-    text: '🇻🇳 Dị Ứng', 
+    text: 'Dị Ứng', 
     message: 'Nổi mẩn đỏ khắp người, ngứa nhiều, sưng môi sau khi ăn tôm.',
     category: 'vietnamese'
   },
   { 
-    text: '🇻🇳 Đau Lưng', 
+    text: 'Đau Lưng', 
     message: 'Đau lưng dưới lan xuống chân, tê bì, khó cử động. Đau 2 tuần rồi.',
     category: 'vietnamese'
   },
   
   // Complex multi-symptom
   { 
-    text: '🤒 Flu-like Illness', 
+    text: 'Flu-like Illness', 
     message: 'Fever, chills, body aches, headache, sore throat, exhaustion for 4 days. Can\'t get out of bed.',
     category: 'complex'
   },
   { 
-    text: '🦠 UTI Symptoms', 
+    text: 'UTI Symptoms', 
     message: 'Painful urination, frequent urge to pee, lower abdominal pain, cloudy urine. Female 32.',
     category: 'complex'
   },
   { 
-    text: '🤕 Migraine', 
+    text: 'Migraine', 
     message: 'Severe one-sided headache, nausea, sensitivity to light and sound. Lasting 2 days.',
     category: 'complex'
   },
   
   // Senior health
   { 
-    text: '👴 Memory Loss', 
+    text: 'Memory Loss', 
     message: 'My father (75) is forgetting things frequently, confused, personality changes over months.',
     category: 'senior'
   },
   { 
-    text: '💊 Multiple Medications', 
+    text: 'Multiple Medications', 
     message: 'Taking 8 medications daily, experiencing dizziness, confusion, falls. Age 80.',
     category: 'senior'
   },
   
   // Preventive & wellness
   { 
-    text: '💪 Annual Checkup', 
+    text: 'Annual Checkup', 
     message: 'I\'m 40 years old. What health screenings should I get for my age?',
     category: 'prevention'
   },
   { 
-    text: '💉 Vaccination', 
+    text: 'Vaccination', 
     message: 'Need to update my vaccinations. What vaccines do adults need?',
     category: 'prevention'
   },
   { 
-    text: '🏃 Weight Management', 
+    text: 'Weight Management', 
     message: 'Need help losing weight. BMI 32, pre-diabetes, high cholesterol. Age 45.',
     category: 'wellness'
   }
@@ -372,195 +372,195 @@ export const symptomTests = [
 export const appointmentTests = [
   // Standard appointment requests
   { 
-    text: '📅 General Checkup', 
+    text: 'General Checkup', 
     message: 'I need to schedule a general checkup appointment for next Monday at 9 AM. My name is John Smith, phone: 0123456789.',
     category: 'standard'
   },
   { 
-    text: '🦷 Dental Checkup', 
+    text: 'Dental Checkup', 
     message: 'Can I book a dental checkup? I\'m available Tuesday afternoon, around 2 PM. Name: Sarah Johnson, phone: 0987654321.',
     category: 'standard'
   },
   { 
-    text: '💉 Vaccination', 
+    text: 'Vaccination', 
     message: 'I want to get my flu vaccine. Can we schedule for December 15th at 10:30 AM? My name is Michael Lee, phone: 0912345678.',
     category: 'standard'
   },
   { 
-    text: '🩺 Follow-up Visit', 
+    text: 'Follow-up Visit', 
     message: 'Need to schedule a follow-up appointment for my blood test results. Next Friday morning would be great. Name: Emily Davis, phone: 0945678901.',
     category: 'standard'
   },
   
   // Urgent appointments
   { 
-    text: '🚨 Urgent - Fever', 
+    text: 'Urgent - Fever', 
     message: 'My child has high fever (39°C) for 2 days. Can we get an appointment today? ASAP please. Name: Linda Brown, phone: 0923456789.',
     category: 'urgent'
   },
   { 
-    text: '⚠️ Urgent - Injury', 
+    text: 'Urgent - Injury', 
     message: 'I hurt my ankle badly, it\'s very swollen. Need to see a doctor soon. Can you fit me in today? Name: David Wilson, phone: 0934567890.',
     category: 'urgent'
   },
   { 
-    text: '🤒 Same Day - Sick', 
+    text: 'Same Day - Sick', 
     message: 'I feel very sick with flu symptoms. Is there any available slot today or tomorrow? Name: Rachel Martinez, phone: 0956789012.',
     category: 'urgent'
   },
   
   // Incomplete information (testing chatbot's ability to ask follow-up questions)
   { 
-    text: '📅 Missing Time', 
+    text: 'Missing Time', 
     message: 'I need an appointment next week for a checkup. My name is Tom Anderson, phone: 0967890123.',
     category: 'incomplete'
   },
   { 
-    text: '📅 Missing Name', 
+    text: 'Missing Name', 
     message: 'Can I book an appointment for December 10th at 2 PM for a general checkup?',
     category: 'incomplete'
   },
   { 
-    text: '📅 Missing Phone', 
+    text: 'Missing Phone', 
     message: 'I\'d like to schedule a visit on Monday at 11 AM for my annual physical. Name is Jessica Taylor.',
     category: 'incomplete'
   },
   { 
-    text: '📅 Missing Reason', 
+    text: 'Missing Reason', 
     message: 'Hi, I want to make an appointment for next Wednesday at 3 PM. I\'m Chris Roberts, phone: 0978901234.',
     category: 'incomplete'
   },
   { 
-    text: '📅 Vague Request', 
+    text: 'Vague Request', 
     message: 'I need to see a doctor sometime next week.',
     category: 'incomplete'
   },
   
   // Specific time requests
   { 
-    text: '🕐 Morning Slot', 
+    text: 'Morning Slot', 
     message: 'I need an early morning appointment, preferably 8 AM on Thursday. Routine checkup. Name: Kevin Zhang, phone: 0989012345.',
     category: 'time-specific'
   },
   { 
-    text: '🕒 Lunch Time', 
+    text: 'Lunch Time', 
     message: 'Can I get an appointment during lunch break, around 12-1 PM tomorrow? Name: Amy White, phone: 0990123456.',
     category: 'time-specific'
   },
   { 
-    text: '🕔 After Work', 
+    text: 'After Work', 
     message: 'Do you have evening slots after 5 PM? I work during the day. Need checkup. Name: Brian Thompson, phone: 0901234567.',
     category: 'time-specific'
   },
   { 
-    text: '🗓️ Weekend', 
+    text: 'Weekend', 
     message: 'I can only come on weekends. Is Saturday morning available? General consultation. Name: Nancy Green, phone: 0912345670.',
     category: 'time-specific'
   },
   
   // Multiple people
   { 
-    text: '👨‍👩‍👧 Family Appointment', 
+    text: 'Family Appointment', 
     message: 'Can we book appointments for the whole family? 3 people - me, my wife, and daughter. December 20th around 10 AM. Name: Paul Harris, phone: 0923456701.',
     category: 'multiple'
   },
   { 
-    text: '👶 Mother & Baby', 
+    text: 'Mother & Baby', 
     message: 'I need appointments for both me and my baby for checkup. Can we do back-to-back? Next Tuesday 9 AM. Name: Maria Garcia, phone: 0934567012.',
     category: 'multiple'
   },
   
   // Rescheduling
   { 
-    text: '🔄 Reschedule', 
+    text: 'Reschedule', 
     message: 'I have an appointment on Monday but need to change it to Wednesday same time. Name: Robert Kim, phone: 0945678123.',
     category: 'reschedule'
   },
   { 
-    text: '❌ Cancel & Rebook', 
+    text: 'Cancel & Rebook', 
     message: 'Need to cancel my Friday appointment and book for next week instead. Name: Jennifer Lopez, phone: 0956789234.',
     category: 'reschedule'
   },
   
   // Special requirements
   { 
-    text: '👨‍⚕️ Specific Doctor', 
-    message: 'I want to see Dr. Smith if possible. Next Thursday afternoon. General checkup. Name: Mark Taylor, phone: 0967890345.',
+    text: 'Specific Doctor', 
+    message: 'I want to see Dr. Phong if possible. Next Thursday afternoon. General checkup. Name: Mark Taylor, phone: 0967890345.',
     category: 'special'
   },
   { 
-    text: '🌐 Language Request', 
+    text: 'Language Request', 
     message: 'I need an appointment with a Vietnamese-speaking doctor. Next week any day. Name: Nguyen Van A, phone: 0978901456.',
     category: 'special'
   },
   { 
-    text: '♿ Accessibility', 
+    text: 'Accessibility', 
     message: 'I use a wheelchair. Do I need to mention this when booking? Want appointment Dec 12 at 10 AM. Name: Susan Clark, phone: 0989012567.',
     category: 'special'
   },
   
   // Vietnamese language
   { 
-    text: '🇻🇳 Đặt Lịch Khám', 
+    text: 'Đặt Lịch Khám', 
     message: 'Tôi muốn đặt lịch khám tổng quát vào thứ 2 tuần sau lúc 9 giờ sáng. Tên: Trần Văn B, SĐT: 0990123678.',
     category: 'vietnamese'
   },
   { 
-    text: '🇻🇳 Khám Cho Con', 
+    text: 'Khám Cho Con', 
     message: 'Con tôi cần khám bệnh gấp, con bị sốt. Có thể đặt lịch hôm nay không? Tên: Lê Thị C, SĐT: 0901234789.',
     category: 'vietnamese'
   },
   { 
-    text: '🇻🇳 Tái Khám', 
+    text: 'Tái Khám', 
     message: 'Đặt lịch tái khám kết quả xét nghiệm. Thứ 6 này 2 giờ chiều được không? Tên: Phạm Văn D, SĐT: 0912345890.',
     category: 'vietnamese'
   },
   { 
-    text: '🇻🇳 Hỏi Giờ Trống', 
+    text: 'Hỏi Giờ Trống', 
     message: 'Thứ 4 tuần sau buổi sáng có giờ nào trống không ạ? Khám nội khoa. Tên: Hoàng Thị E, SĐT: 0923456901.',
     category: 'vietnamese'
   },
   
   // Edge cases
   { 
-    text: '⏰ Very Early', 
+    text: 'Very Early', 
     message: 'Can I get the first appointment of the day? Like 7 AM? Checkup. Name: William Brown, phone: 0934567012.',
     category: 'edge-case'
   },
   { 
-    text: '🌙 Late Evening', 
+    text: 'Late Evening', 
     message: 'Do you have any slots after 7 PM? I work late. Name: Olivia Martinez, phone: 0945678123.',
     category: 'edge-case'
   },
   { 
-    text: '📅 Far Future', 
+    text: 'Far Future', 
     message: 'I want to book an appointment for March 2026. Annual physical. Name: Ethan Anderson, phone: 0956789234.',
     category: 'edge-case'
   },
   { 
-    text: '🔜 Tomorrow', 
+    text: 'Tomorrow', 
     message: 'Can I get in tomorrow? Any time works. Just need a quick consultation. Name: Sophia White, phone: 0967890345.',
     category: 'edge-case'
   },
   { 
-    text: '📞 No Name Given', 
+    text: 'No Name Given', 
     message: 'Book me for Thursday 3 PM, general checkup, phone: 0978901456.',
     category: 'edge-case'
   },
   
   // Natural conversation style
   { 
-    text: '💬 Casual Style', 
+    text: 'Casual Style', 
     message: 'Hey, can you squeeze me in sometime next week? Need to get my knee checked. Name\'s Alex Johnson, call me at 0989012567.',
     category: 'natural'
   },
   { 
-    text: '💬 Polite Formal', 
+    text: 'Polite Formal', 
     message: 'Good morning. I would like to request an appointment for a health screening. Would December 18th at 10:00 AM be available? My name is Dr. Richard Lee, contact: 0990123678.',
     category: 'natural'
   },
   { 
-    text: '💬 Brief', 
+    text: 'Brief', 
     message: 'Appointment Dec 15, 2pm, checkup. John Doe, 0901234789.',
     category: 'natural'
   }
@@ -570,105 +570,105 @@ export const appointmentTests = [
 export const documentRetrievalTests = [
   // Disease information queries
   { 
-    text: '📚 Tiểu đường', 
+    text: 'Tiểu đường', 
     message: 'Bệnh tiểu đường type 2 có những triệu chứng gì và cách điều trị như thế nào?',
     category: 'disease-info'
   },
   { 
-    text: '📚 Cao huyết áp', 
+    text: 'Cao huyết áp', 
     message: 'Nguyên nhân và biến chứng của bệnh cao huyết áp là gì?',
     category: 'disease-info'
   },
   { 
-    text: '📚 Viêm gan B', 
+    text: 'Viêm gan B', 
     message: 'Viêm gan B lây qua đường nào và có vaccine phòng ngừa không?',
     category: 'disease-info'
   },
   { 
-    text: '📚 Hen suyễn', 
+    text: 'Hen suyễn', 
     message: 'Cách phòng ngừa và kiểm soát cơn hen suyễn như thế nào?',
     category: 'disease-info'
   },
   
   // Treatment queries
   { 
-    text: '💊 Điều trị eczema', 
+    text: 'Điều trị eczema', 
     message: 'Các phương pháp điều trị bệnh chàm (eczema) hiện nay là gì?',
     category: 'treatment'
   },
   { 
-    text: '💊 Thuốc hạ sốt', 
+    text: 'Thuốc hạ sốt', 
     message: 'Khi nào nên dùng paracetamol và khi nào dùng ibuprofen để hạ sốt?',
     category: 'treatment'
   },
   { 
-    text: '💊 Kháng sinh', 
+    text: 'Kháng sinh', 
     message: 'Tại sao không nên tự ý dùng kháng sinh và các tác dụng phụ của việc lạm dụng kháng sinh?',
     category: 'treatment'
   },
   { 
-    text: '💊 Điều trị mụn', 
+    text: 'Điều trị mụn', 
     message: 'Các loại thuốc và phương pháp điều trị mụn trứng cá hiệu quả?',
     category: 'treatment'
   },
   
   // Symptom-based queries
   { 
-    text: '🔍 Đau đầu kéo dài', 
+    text: 'Đau đầu kéo dài', 
     message: 'Đau đầu kéo dài nhiều ngày có thể là dấu hiệu của bệnh gì?',
     category: 'symptom-query'
   },
   { 
-    text: '🔍 Mệt mỏi kinh niên', 
+    text: 'Mệt mỏi kinh niên', 
     message: 'Mệt mỏi kéo dài dù ngủ đủ giấc có thể do nguyên nhân gì?',
     category: 'symptom-query'
   },
   { 
-    text: '🔍 Đau bụng dưới', 
+    text: 'Đau bụng dưới', 
     message: 'Đau bụng dưới bên phải có thể là triệu chứng của những bệnh gì?',
     category: 'symptom-query'
   },
   { 
-    text: '🔍 Khó thở', 
+    text: 'Khó thở', 
     message: 'Khó thở khi nằm xuống là dấu hiệu của vấn đề gì về sức khỏe?',
     category: 'symptom-query'
   },
   
   // Preventive care queries
   { 
-    text: '🛡️ Vaccine COVID', 
+    text: 'Vaccine COVID', 
     message: 'Các loại vaccine COVID-19 hiện có và hiệu quả của từng loại?',
     category: 'prevention'
   },
   { 
-    text: '🛡️ Tầm soát ung thư', 
+    text: 'Tầm soát ung thư', 
     message: 'Nên tầm soát ung thư từ độ tuổi nào và những loại nào cần kiểm tra?',
     category: 'prevention'
   },
   { 
-    text: '🛡️ Dinh dưỡng', 
+    text: 'Dinh dưỡng', 
     message: 'Chế độ ăn uống phòng ngừa bệnh tim mạch như thế nào?',
     category: 'prevention'
   },
   
   // Dermatology specific (for skin image diagnosis support)
   { 
-    text: '🩺 Bạch biến', 
+    text: 'Bạch biến', 
     message: 'Bệnh bạch biến (vitiligo) có chữa được không và phương pháp điều trị hiện tại?',
     category: 'dermatology'
   },
   { 
-    text: '🩺 Vảy nến', 
+    text: 'Vảy nến', 
     message: 'Bệnh vảy nến có lây không và cách kiểm soát triệu chứng?',
     category: 'dermatology'
   },
   { 
-    text: '🩺 Nấm da', 
+    text: 'Nấm da', 
     message: 'Cách phân biệt các loại nấm da và phương pháp điều trị cho từng loại?',
     category: 'dermatology'
   },
   { 
-    text: '🩺 Ung thư da', 
+    text: 'Ung thư da', 
     message: 'Dấu hiệu nhận biết nốt ruồi có khả năng là ung thư da (melanoma)?',
     category: 'dermatology'
   }
