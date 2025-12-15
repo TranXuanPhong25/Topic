@@ -196,15 +196,16 @@ class AppointmentSchedulerNode:
                 ])
                 
                 # Check if book_appointment tool was actually called
-                book_tool_called = any(
-                    isinstance(msg, ToolMessage) and msg.name == "book_appointment"
+                tool_called = any(
+                    isinstance(msg, ToolMessage) and msg.name in ("book_appointment", "check_appointment_availability", "get_available_time_slots")
                     for msg in agent_messages
                 )
                 
-                if booking_claimed and not book_tool_called:
-                    print("⚠️  HALLUCINATION DETECTED: LLM claimed booking success without calling book_appointment!")
+                
+                if booking_claimed and not tool_called:
+                    print("⚠️  HALLUCINATION DETECTED: LLM claimed booking success without calling tool!")
                     # Override the hallucinated response
-                    final_response = "Để hoàn tất đặt lịch, tôi cần thực hiện đặt lịch trong hệ thống. Xin vui lòng xác nhận lại thông tin: tên, ngày giờ, lý do khám và số điện thoại để tôi đặt lịch cho bạn."
+                    final_response = "Tôi gặp vấn đề khi xử lý yêu cầu của bạn. Vui lòng thử lại sau."
             
             state["final_response"] = final_response
             state["intermediate_messages"] = intermediate_messages
