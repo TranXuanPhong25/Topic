@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Tuple, Optional, Dict, List
 import json
+import base64
 
 # Deprecated regex-based filters kept only for backward compatibility if needed.
 NON_MEDICAL_KEYWORDS: List[str] = []
@@ -36,21 +37,34 @@ def detect_language(text: str) -> str:
     return 'en'
 
 
-def build_simple_guardrail_prompt(text: str) -> str:
+def build_simple_guardrail_prompt(text: str, has_image: bool = False) -> str:
     """Simplified, fast prompt for guardrail pre-check before agent processing.
     
     Optimized for speed and token efficiency. Returns only JSON boolean.
+    
+    Args:
+        text: User message to check
+        has_image: Whether request includes a medical image (X-ray, skin photo, etc.)
     """
+    image_context = ""
+    if has_image:
+        image_context = (
+            "\n**IMPORTANT CONTEXT**: This message is accompanied by a MEDICAL IMAGE (X-ray, photo of symptoms, medical document, etc.).\n"
+            "- ALWAYS ALLOW messages about medical images, symptoms shown in images, or asking for image analysis\n"
+            "- Examples: 'đây là ảnh bệnh của tôi', 'check this rash', 'X-ray results', 'skin condition photo'\n\n"
+        )
+    
     return (
         "You are a medical chatbot content filter. Reply ONLY with JSON, no explanation.\n\n"
+        f"{image_context}"
         "Check if this message is SAFE for a medical assistant:\n"
         "- BLOCK if: sports, games, crypto/finance, politics, entertainment, tech/coding, weather, travel, cooking, or any NON-HEALTH topic\n"
         "- BLOCK if: violence, self-harm, graphic content, hate speech, sexual content\n"
         "- BLOCK if: requests for drug prescriptions, dosages, supplements, treatment schedules\n\n"
-        "- ALLOW if: symptoms, health concerns, clinic appointments, general medical questions\n\n"
+        "- ALLOW if: symptoms, health concerns, clinic appointments, general medical questions, medical images\n\n"
         "Examples (Vietnamese/English):\n"
         "✗ BLOCK: 'đá bóng', 'bitcoin', 'chính trị', 'phim', 'python code'\n"
-        "✓ ALLOW: 'đau đầu', 'khó thở', 'đặt lịch khám', 'fever', 'book appointment'\n\n"
+        "✓ ALLOW: 'đau đầu', 'khó thở', 'đặt lịch khám', 'fever', 'book appointment', 'ảnh bệnh', 'X-ray'\n\n"
         f"Message: {text}\n\n"
         "Return JSON: {\"should_block\": true/false}"
     )
@@ -101,12 +115,91 @@ def build_classifier_prompt(text: str) -> str:
     )
 
 
-def check_guardrail_simple(model, text: str) -> Tuple[bool, Optional[str]]:
+def check_image_medical_relevance(vision_model, image_base64: str) -> Tuple[bool, Optional[str]]:
+    """Check if image is medically relevant using vision model.
+    
+    Args:
+        vision_model: Vision-capable model (Gemini with image support)
+        image_base64: Base64 encoded image data
+    
+    Returns:
+        (is_medical: bool, reason: Optional[str])
+        - is_medical: True if image is medically relevant
+        - reason: Explanation if not medical
+    """
+    try:
+        import google.generativeai as genai
+        from PIL import Image
+        import io
+        
+        # Decode base64 image
+        if ',' in image_base64:
+            image_base64 = image_base64.split(',', 1)[1]
+        
+        image_bytes = base64.b64decode(image_base64)
+        image = Image.open(io.BytesIO(image_bytes))
+        
+        prompt = (
+            "You are a medical image classifier. Analyze this image and determine if it's medically relevant.\n\n"
+            "MEDICAL images include:\n"
+            "- Medical scans (X-ray, CT, MRI, ultrasound)\n"
+            "- Skin conditions, rashes, wounds, injuries\n"
+            "- Body parts showing symptoms (swelling, discoloration, abnormalities)\n"
+            "- Medical documents (prescriptions, lab results, medical reports)\n"
+            "- Medical equipment or procedures\n\n"
+            "NON-MEDICAL images include:\n"
+            "- Landscapes, buildings, scenery\n"
+            "- Food, recipes, cooking\n"
+            "- Sports, games, entertainment\n"
+            "- Animals, pets (unless showing medical issue)\n"
+            "- Screenshots of non-medical content\n"
+            "- General photos unrelated to health\n\n"
+            "Reply ONLY with JSON: {\"is_medical\": true/false, \"reason\": \"brief explanation\"}"
+        )
+        
+        # Use Gemini vision API directly
+        from src.configs.agent_config import GOOGLE_API_KEY
+        genai.configure(api_key=GOOGLE_API_KEY)
+        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        
+        response = model.generate_content([prompt, image])
+        raw = response.text.strip()
+        
+        # Parse JSON
+        if raw.startswith("```json"):
+            raw = raw[7:]
+        if raw.startswith("```"):
+            raw = raw[3:]
+        if raw.endswith("```"):
+            raw = raw[:-3]
+        raw = raw.strip()
+        
+        data = json.loads(raw)
+        is_medical = bool(data.get("is_medical", True))  # Default to True (fail open)
+        reason = data.get("reason", "")
+        
+        if not is_medical:
+            print(f"🛡 Image rejected as non-medical: {reason}")
+            return False, reason
+        
+        return True, None
+        
+    except Exception as e:
+        print(f"⚠️ Image classification error: {e} - Allowing through (fail open)")
+        import traceback
+        traceback.print_exc()
+        # Fail open - if we can't classify, allow the image
+        return True, None
+
+
+def check_guardrail_simple(model, text: str, has_image: bool = False, image_data: Optional[str] = None) -> Tuple[bool, Optional[str]]:
     """Fast guardrail check using simple LLM prompt.
     
     Args:
         model: LangChain ChatGoogleGenerativeAI instance
         text: User input to check
+        has_image: Whether the request includes an image
+        image_data: Base64 image data for content validation
     
     Returns:
         (should_block: bool, reason: Optional[str])
@@ -114,7 +207,15 @@ def check_guardrail_simple(model, text: str) -> Tuple[bool, Optional[str]]:
         - reason: Generic reason category if blocked (for refusal message)
     """
     try:
-        prompt = build_simple_guardrail_prompt(text)
+        # If image provided, validate it's medically relevant
+        if has_image and image_data:
+            is_medical, img_reason = check_image_medical_relevance(model, image_data)
+            if not is_medical:
+                print(f"🛡 Guardrail blocked non-medical image: {img_reason}")
+                return True, "non_medical"
+        
+        # Check text content
+        prompt = build_simple_guardrail_prompt(text, has_image)
         
         # Use LangChain's invoke() method
         from langchain_core.messages import HumanMessage
