@@ -62,14 +62,6 @@ class SupervisorNode:
             return state
         
         try:
-            # Global loop guard: cap supervisor turns to prevent recursion overflow
-            turns = state.get("supervisor_turns", 0)
-            if turns >= 18:
-                state["next_step"] = "END"
-                state["messages"] = state.get("messages", [])
-                state["messages"].append("⚠️ Supervisor: Max turns reached, terminating to avoid recursion.")
-                return state
-            state["supervisor_turns"] = turns + 1
             # Build optimized prompt with full context
             if len(state.get("plan", [])) != 0:
                 current_step = state.get("current_step", 1) - 1
@@ -114,33 +106,16 @@ class SupervisorNode:
             
             # Extract decisions
             next_step = supervisor_decision.get("next_step", "END")
-            # Hard guard: if we already have extracted symptoms, advance to diagnosis_engine
-            try:
+            # Simple guard: Prevent redundant symptom extraction if symptoms already exist
+            # Note: LangGraph's recursion_limit=25 handles infinite loops at graph level
+            if next_step == "symptom_extractor":
                 extracted_symptoms = (state.get("symptoms", {}) or {}).get("extracted_symptoms", [])
-                if next_step == "symptom_extractor" and extracted_symptoms:
+                if extracted_symptoms:
+                    # Symptoms already extracted - advance to diagnosis
                     next_step = "diagnosis_engine"
                     supervisor_decision["reasoning"] = (
-                        "Symptoms already extracted; proceeding to diagnosis_engine to avoid redundant extraction."
+                        "Symptoms already extracted; proceeding to diagnosis_engine."
                     )
-            except Exception:
-                pass
-            # Loop guard: prevent infinite re-entry into symptom_extractor
-            if next_step == "symptom_extractor":
-                attempts = state.get("symptom_extractor_attempts", 0)
-                # If we've already run symptom extraction once, route forward instead of looping
-                if attempts >= 1:
-                    symptoms_data = state.get("symptoms", {}) or {}
-                    extracted = symptoms_data.get("extracted_symptoms", [])
-                    # Prefer diagnosis if we have any structured symptoms
-                    if extracted:
-                        next_step = "diagnosis_engine"
-                        reasoning_override = "Symptom extraction already performed; advancing to diagnosis_engine to avoid loop."
-                    else:
-                        next_step = "conversation_agent"
-                        reasoning_override = "Repeated symptom_extractor without progress; switching to conversation_agent for clarification."
-                    supervisor_decision["reasoning"] = reasoning_override
-                # Increment attempt counter when we decide to run symptom_extractor again (first time)
-                state["symptom_extractor_attempts"] = attempts + 1 if attempts < 1 else attempts
             reasoning = supervisor_decision.get("reasoning", "No reasoning provided")
             updated_plan = supervisor_decision.get("plan", state.get("plan", []))
             symptom_extractor_input = supervisor_decision.get("symptom_extractor_input")

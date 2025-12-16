@@ -56,9 +56,9 @@ async def ma_chat(request: ChatRequest):
         
         # Fast guardrail pre-check BEFORE entering agent graph (saves resources)
         if GUARDRAILS_ENABLED:
-            # Use lightweight model for fast guardrail checking
-            from src.agents.conversation_agent.config import get_conversation_model
-            model = get_conversation_model()
+            # Use lightweight dedicated model for fast guardrail checking
+            from src.middleware.guardrail_config import get_guardrail_model
+            model = get_guardrail_model()
             should_block, action = check_guardrail_simple(model, request.message)
             
             if should_block and action is not None:
@@ -134,8 +134,8 @@ async def ma_chat_with_image(request: ImageChatRequest):
 
         # Fast guardrail pre-check for image chat
         if GUARDRAILS_ENABLED:
-            from src.agents.conversation_agent.config import get_conversation_model
-            model = get_conversation_model()
+            from src.middleware.guardrail_config import get_guardrail_model
+            model = get_guardrail_model()
             should_block, action = check_guardrail_simple(model, request.message or "")
             
             if should_block and action is not None:
@@ -203,8 +203,8 @@ async def ma_chat_stream(request: ChatRequest):
         try:
             # Fast guardrail pre-check before starting streaming analysis
             if GUARDRAILS_ENABLED:
-                from src.agents.conversation_agent.config import get_conversation_model
-                model = get_conversation_model()
+                from src.middleware.guardrail_config import get_guardrail_model
+                model = get_guardrail_model()
                 should_block, action = check_guardrail_simple(model, request.message)
                 
                 if should_block and action is not None:

@@ -17,7 +17,6 @@ from src.agents.investigation_generator import InvestigationGeneratorNode, new_i
 from src.agents.document_retriever import DocumentRetrieverNode, new_document_retriever_node
 from src.agents.recommender import RecommenderNode, new_recommender_node
 from src.agents.synthesis import SynthesisNode, new_synthesis_node
-from src.middleware.guardrails import detect_language
 from src.agents.conversation_agent import new_conversation_agent_node
 from src.agents.appointment_scheduler import  new_appointment_scheduler_node
 from src.agents.image_analyzer import new_image_analyzer_node
@@ -131,31 +130,6 @@ class MedicalDiagnosticGraph:
         )
         
         return workflow.compile()
-
-    def _translate_text(self, text: str, target_lang: str) -> str:
-        if not text or target_lang == 'en':
-            return text
-        try:
-            if target_lang == 'vi':
-                prompt = (
-                    "Dịch sang tiếng Việt một cách tự nhiên, ngắn gọn, giữ nguyên ý và cảnh báo an toàn nếu có.\n"
-                    "Không thêm thông tin mới. Văn bản:\n\n" + text
-                )
-            else:
-                prompt = f"Translate to {target_lang} naturally, preserving meaning without adding content.\n\n" + text
-            resp = self.gemini_model.generate_content(prompt)
-            return getattr(resp, 'text', None) or text
-        except Exception:
-            return text
-
-    def _translate_list(self, items: List[Any], target_lang: str) -> List[Any]:
-        out: List[Any] = []
-        for it in items or []:
-            if isinstance(it, str):
-                out.append(self._translate_text(it, target_lang))
-            else:
-                out.append(it)
-        return out
 
     # ========================================================================
     # PUBLIC API

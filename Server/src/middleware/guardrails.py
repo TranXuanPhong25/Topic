@@ -134,17 +134,10 @@ def check_guardrail_simple(model, text: str) -> Tuple[bool, Optional[str]]:
         data = json.loads(raw)
         should_block = bool(data.get("should_block", False))
         
-        # If blocked, use detailed classifier to get specific reason
+        # If blocked, return generic non_medical reason (avoid extra API call)
+        # This saves 1 API call per blocked request
         if should_block:
-            cls = classify_content_llm(model, text)
-            if cls.get("is_violent_or_sensitive"):
-                return True, "self_harm"
-            elif cls.get("is_prescription_or_dosage") or cls.get("is_supplement"):
-                return True, "prescription"
-            elif cls.get("is_non_medical_topic"):
-                return True, "non_medical"
-            else:
-                return True, "non_medical"  # default fallback
+            return True, "non_medical"
         
         return False, None
         

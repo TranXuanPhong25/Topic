@@ -114,24 +114,6 @@ class FAQKnowledgeBase:
                 },
             ],
             
-            "providers": [
-                {
-                    "question": "Who are your providers?",
-                    "answer": f"Our medical team includes: {', '.join(CLINIC_CONFIG['providers'])}. All our providers are board-certified and have years of experience in family medicine.",
-                    "keywords": ["provider", "doctor", "physician", "who", "staff"],
-                },
-                {
-                    "question": "Can I choose my provider?",
-                    "answer": "Absolutely! When scheduling, just let us know which provider you'd like to see. If you're a new patient, we can also help match you with a provider based on your needs.",
-                    "keywords": ["choose", "select", "pick", "prefer", "specific doctor"],
-                },
-                {
-                    "question": "Are your doctors accepting new patients?",
-                    "answer": "Yes! All our providers are currently accepting new patients. We'd love to welcome you to our practice. Would you like to schedule a new patient visit?",
-                    "keywords": ["new patient", "accepting", "taking new"],
-                },
-            ],
-            
             "emergency": [
                 {
                     "question": "Is this an emergency?",
