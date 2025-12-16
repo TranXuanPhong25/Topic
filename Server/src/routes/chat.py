@@ -1,10 +1,6 @@
 from . import chat_router
 from src.agents.medical_diagnostic_graph import MedicalDiagnosticGraph
 from src.middleware.guardrails import (
-    apply_guardrails,
-    refusal_message,
-    refusal_message_llm,
-    classify_content_llm,
     check_guardrail_simple,
 )
 from src.configs.config import GUARDRAILS_ENABLED, GUARDRAILS_CHECK_OUTPUT
@@ -16,11 +12,8 @@ from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from src.models.chat import ChatRequest, ImageChatRequest, ChatResponse
 
-# Reuse a single graph instance to avoid re-initializing models every request
-# (Frequent reinitialization causes multiple concurrent Gemini calls and rate limits)
 diagnostic_graph = MedicalDiagnosticGraph()
 
-# Optional: draw once at startup (comment out if noisy in logs)
 try:
     print(diagnostic_graph.graph.get_graph().draw_ascii())
 except Exception:
@@ -46,7 +39,6 @@ async def ma_chat(request: ChatRequest):
 
         session_id = request.session_id or str(uuid.uuid4())
 
-        # Fast path: simple greeting -> lightweight response, avoid full graph
         if _is_simple_greeting(request.message):
             return {
                 "session_id": session_id,
@@ -54,20 +46,15 @@ async def ma_chat(request: ChatRequest):
                 "timestamp": datetime.now().isoformat()
             }
         
-        # Fast guardrail pre-check BEFORE entering agent graph (saves resources)
         if GUARDRAILS_ENABLED:
             # Use lightweight dedicated model for fast guardrail checking
-            from src.middleware.guardrail_config import get_guardrail_model
-            model = get_guardrail_model()
-            should_block, action = check_guardrail_simple(model, request.message)
+            should_block, action = check_guardrail_simple(request.message)
             
             if should_block and action is not None:
                 # Log guardrail decision for debugging/monitoring
-                print(f"🛡 Guardrail blocked input. Action={action}, text={request.message!r}")
-                msg = refusal_message_llm(model, action, text=request.message)
                 return {
                     "session_id": session_id,
-                    "response": msg,
+                    "response": "Your message was refused due to security policies.",
                     "timestamp": datetime.now().isoformat()
                 }
          # Convert chat_history to dict format if provided
@@ -87,24 +74,6 @@ async def ma_chat(request: ChatRequest):
         final_response = result['final_response']
 
         # Optional output guardrails: rewrite unsafe responses
-        if GUARDRAILS_ENABLED and GUARDRAILS_CHECK_OUTPUT and diagnostic_graph.gemini_model is not None:
-            cls_out = classify_content_llm(diagnostic_graph.gemini_model, final_response)
-            if any(cls_out.values()):
-                # If output unsafe, ask LLM to rewrite a safe version using refusal_message_llm-style prompt
-                # Reuse prescription / non_medical for mapping, and treat violent/sensitive as self_harm-style crisis guard.
-                if cls_out.get("is_violent_or_sensitive"):
-                    action_out = "self_harm"
-                elif cls_out.get("is_prescription_or_dosage") or cls_out.get("is_supplement"):
-                    action_out = "prescription"
-                elif cls_out.get("is_non_medical_topic"):
-                    action_out = "non_medical"
-                else:
-                    action_out = None
-
-                if action_out is not None:
-                    safe_msg = refusal_message_llm(diagnostic_graph.gemini_model, action_out, text=final_response)
-                    final_response = safe_msg
-    
         return {
             "session_id": session_id,
             "response": final_response,
@@ -133,22 +102,14 @@ async def ma_chat_with_image(request: ImageChatRequest):
         session_id = request.session_id or str(uuid.uuid4())
 
         if GUARDRAILS_ENABLED:
-            from src.middleware.guardrail_config import get_guardrail_model
-            model = get_guardrail_model()
-            # Pass image data for content validation
             should_block, action = check_guardrail_simple(
-                model, 
-                request.message or "", 
-                has_image=True,
-                image_data=request.image
+                request.message or ""
             )
             
             if should_block and action is not None:
-                print(f"🛡 Guardrail blocked image-chat input. Action={action}, text={request.message!r}")
-                msg = refusal_message_llm(model, action, text=request.message or "ảnh không liên quan đến y tế")
                 return {
                     "session_id": session_id,
-                    "response": msg,
+                    "response": "Your message was refused due to security policies.",
                     "timestamp": datetime.now().isoformat()
                 }
         chat_history = None
@@ -166,22 +127,6 @@ async def ma_chat_with_image(request: ImageChatRequest):
 
         final_response = result['final_response']
 
-        if GUARDRAILS_ENABLED and GUARDRAILS_CHECK_OUTPUT and diagnostic_graph.gemini_model is not None:
-            cls_out = classify_content_llm(diagnostic_graph.gemini_model, final_response)
-            if any(cls_out.values()):
-                if cls_out.get("is_violent_or_sensitive"):
-                    action_out = "self_harm"
-                elif cls_out.get("is_prescription_or_dosage") or cls_out.get("is_supplement"):
-                    action_out = "prescription"
-                elif cls_out.get("is_non_medical_topic"):
-                    action_out = "non_medical"
-                else:
-                    action_out = None
-
-                if action_out is not None:
-                    safe_msg = refusal_message_llm(diagnostic_graph.gemini_model, action_out, text=final_response)
-                    final_response = safe_msg
-        
         return {
             "session_id": session_id,
             "response": final_response,
@@ -208,17 +153,13 @@ async def ma_chat_stream(request: ChatRequest):
         try:
             # Fast guardrail pre-check before starting streaming analysis
             if GUARDRAILS_ENABLED:
-                from src.middleware.guardrail_config import get_guardrail_model
-                model = get_guardrail_model()
-                should_block, action = check_guardrail_simple(model, request.message)
+                should_block, action = check_guardrail_simple( request.message)
                 
                 if should_block and action is not None:
-                    print(f"🛡 Guardrail blocked streaming input. Action={action}, text={request.message!r}")
-                    msg = refusal_message_llm(model, action, text=request.message)
                     event_data = json.dumps({
                         "type": "final",
                         "session_id": session_id,
-                        "content": msg,
+                        "content": "Your message was refused due to security policies.",
                         "timestamp": datetime.now().isoformat(),
                     })
                     yield f"data: {event_data}\n\n"
