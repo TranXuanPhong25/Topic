@@ -9,7 +9,7 @@ CLINIC_CONFIG = {
     "phone": "19001836",
     "address": "120 Yen Lang, Kien An, Hai Hau",
     "appointment_duration": 30,
-    "doctors": [
+    "providers": [
         {
             "id": "doctor_001",
             "name": "Dr. Tran Xuan Phong",

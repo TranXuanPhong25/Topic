@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Booking.css';
+import Dialog from './Dialog';
+import SuccessDialog from './SuccessDialog';
 
 const API_BASE_URL = 'http://localhost:8000/appointments';
 
@@ -13,49 +15,76 @@ const Booking = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  // Track if data was loaded from API to prevent localStorage overwrite on F5
-  const isInitialLoad = useRef(true);
+  const [showAll, setShowAll] = useState(false); // Track if showing all appointments from API
 
-  // Load bookings from API on component mount
+  // Dialog states
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [newAppointmentId, setNewAppointmentId] = useState('');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteBookingId, setDeleteBookingId] = useState('');
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [savedBookingsLoaded, setSavedBookingsLoaded] = useState(false);
+  // Load bookings from localStorage on mount
   useEffect(() => {
-    fetchBookings();
+    const savedBookings = localStorage.getItem('appointments');
+    if (savedBookings) {
+      try {
+        setBookings(JSON.parse(savedBookings));
+      } catch (err) {
+        console.error('Error parsing saved appointments:', err);
+        setBookings([]);
+      }
+    }
+    setSavedBookingsLoaded(true);
   }, []);
 
-  // Only save to localStorage after user actions, not initial load
+  // Save bookings to localStorage whenever they change
   useEffect(() => {
-    if (!isInitialLoad.current && bookings.length >= 0) {
+    if (!savedBookingsLoaded || showAll) return;
+    if (bookings.length >= 0) {
       localStorage.setItem('appointments', JSON.stringify(bookings));
     }
-  }, [bookings]);
+  }, [bookings, savedBookingsLoaded, showAll]);
 
   const fetchBookings = async () => {
     try {
       setLoading(true);
+      setError('');
       const response = await fetch(`${API_BASE_URL}/list`);
-      
+      await new Promise(resolve => setTimeout(resolve, 400)); // Allow loading state to render
+
       if (response.ok) {
         const data = await response.json();
         setBookings(data);
-        isInitialLoad.current = false; // Mark initial load as complete
+        setShowAll(true); // Mark as showing all appointments
+        setShowHistory(true); // Auto-show history when loading all
       } else {
-        // Fallback to localStorage if API fails
-        const savedBookings = localStorage.getItem('appointments');
-        if (savedBookings) {
-          setBookings(JSON.parse(savedBookings));
-        }
-        isInitialLoad.current = false;
+        const errorData = await response.json();
+        setError(errorData.detail || 'Failed to fetch appointments');
       }
     } catch (err) {
       console.error('Failed to fetch bookings:', err);
-      // Fallback to localStorage
-      const savedBookings = localStorage.getItem('appointments');
-      if (savedBookings) {
-        setBookings(JSON.parse(savedBookings));
-      }
-      isInitialLoad.current = false;
+      setError('Network error. Please check if the server is running.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleShowLocalOnly = () => {
+    // Reload from localStorage
+    const savedBookings = localStorage.getItem('appointments');
+    if (savedBookings) {
+      try {
+        setBookings(JSON.parse(savedBookings));
+        console.log(savedBookings)
+        setShowAll(false);
+      } catch (err) {
+        console.error('Error parsing saved appointments:', err);
+        setBookings([]);
+      }
+    } else {
+      setBookings([]);
+      setShowAll(false);
     }
   };
 
@@ -71,7 +100,7 @@ const Booking = () => {
 
     try {
       setLoading(true);
-      
+
       const response = await fetch(`${API_BASE_URL}/create`, {
         method: 'POST',
         headers: {
@@ -88,16 +117,20 @@ const Booking = () => {
 
       if (response.ok) {
         const newBooking = await response.json();
+
+        // Add to localStorage (not from API)
         setBookings(prevBookings => [...prevBookings, newBooking]);
-        
+
         // Reset form
         setPatientName('');
         setReason('');
         setDate('');
         setTime('');
         setPhone('');
-        
-        alert('Booking created successfully!');
+
+        // Show success dialog with appointment ID
+        setNewAppointmentId(newBooking.id);
+        setShowSuccessDialog(true);
       } else {
         const errorData = await response.json();
         setError(errorData.detail || 'Failed to create booking');
@@ -111,49 +144,41 @@ const Booking = () => {
   };
 
   const handleDeleteBooking = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this booking?')) {
-      return;
-    }
+    setDeleteBookingId(id);
+    setShowDeleteDialog(true);
+  };
 
+  const confirmDeleteBooking = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/${deleteBookingId}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
-        setBookings(prevBookings => prevBookings.filter(booking => booking.id !== id));
+        // Remove from localStorage
+        setBookings(prevBookings => prevBookings.filter(booking => booking.id !== deleteBookingId));
       } else {
         const errorData = await response.json();
-        setError(errorData.detail || 'Failed to delete booking');
+        setError(errorData.detail || 'Failed to cancel booking');
       }
     } catch (err) {
-      console.error('Failed to delete booking:', err);
+      console.error('Failed to cancel booking:', err);
       setError('Network error. Please try again.');
     } finally {
       setLoading(false);
+      setDeleteBookingId('');
     }
   };
 
-  const handleClearAllBookings = async () => {
-    if (!window.confirm('Are you sure you want to clear all bookings?')) {
-      return;
-    }
+  const handleClearAllBookings = () => {
+    setShowClearDialog(true);
+  };
 
-    try {
-      setLoading(true);
-      // Delete all bookings one by one
-      for (const booking of bookings) {
-        await fetch(`${API_BASE_URL}/${booking.id}`, { method: 'DELETE' });
-      }
-      setBookings([]);
-      localStorage.removeItem('appointments');
-    } catch (err) {
-      console.error('Failed to clear bookings:', err);
-      setError('Failed to clear some bookings. Please refresh.');
-    } finally {
-      setLoading(false);
-    }
+  const confirmClearAllBookings = () => {
+    // Just clear localStorage (not API)
+    setBookings([]);
+    localStorage.removeItem('appointments');
   };
 
   // Generate time slots (9:00 - 17:00, 15-minute intervals)
@@ -171,7 +196,7 @@ const Booking = () => {
   return (
     <div className="booking-container">
       {error && <div className="error-message">{error}</div>}
-      
+
       <form className="booking-form" onSubmit={handleCreateBooking}>
         <div className="form-group">
           <label htmlFor="patientName">Patient Name *</label>
@@ -257,21 +282,30 @@ const Booking = () => {
           {showHistory ? 'Hide' : 'Show'} Booking History ({bookings.length})
         </button>
 
-        {bookings.length > 0 && (
-          <button
-            className="clear-btn"
-            onClick={handleClearAllBookings}
-            disabled={loading}
-          >
-            Clear All Bookings
-          </button>
-        )}
+        <button
+          className={`show-all-btn ${showAll ? 'active' : ''}`}
+          onClick={showAll ? handleShowLocalOnly : fetchBookings}
+          disabled={loading}
+        >
+          {showAll ? 'Show Local Only' : 'Show All Appointments'}
+        </button>
+
       </div>
 
       {showHistory && (
         <div className="booking-history">
-          <h3>Appointment History</h3>
-
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3>Appointment History {showAll && <span className="source-badge">Database</span>}{!showAll && <span className="source-badge">Local</span>}</h3>
+            {bookings.length > 0 && (
+              <button
+                className="clear-btn"
+                onClick={handleClearAllBookings}
+                disabled={loading}
+              >
+                Clear All
+              </button>
+            )}
+          </div>
           {loading ? (
             <p className="loading">Loading...</p>
           ) : bookings.length === 0 ? (
@@ -281,6 +315,9 @@ const Booking = () => {
               {bookings.map((booking) => (
                 <div key={booking.id} className="booking-item">
                   <div className="booking-details">
+                    <div className="booking-info">
+                      <strong>ID:</strong> <code>{booking.id}</code>
+                    </div>
                     <div className="booking-info">
                       <strong>Patient:</strong> {booking.patient_name}
                     </div>
@@ -302,7 +339,7 @@ const Booking = () => {
                       </div>
                     )}
                     <div className="booking-info">
-                      <strong>Status:</strong> 
+                      <strong>Status:</strong>
                       <span className={`status-badge ${booking.status}`}>
                         {booking.status || 'scheduled'}
                       </span>
@@ -321,6 +358,40 @@ const Booking = () => {
           )}
         </div>
       )}
+
+      {/* Success Dialog for new appointment */}
+      <SuccessDialog
+        isOpen={showSuccessDialog}
+        onClose={() => setShowSuccessDialog(false)}
+        appointmentId={newAppointmentId}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        isOpen={showDeleteDialog}
+        onClose={() => {
+          setShowDeleteDialog(false);
+          setDeleteBookingId('');
+        }}
+        onConfirm={confirmDeleteBooking}
+        title="Cancel Appointment"
+        message="Are you sure you want to cancel this booking? This action cannot be undone."
+        type="danger"
+        confirmText="Yes, Cancel"
+        cancelText="No, Keep It"
+      />
+
+      {/* Clear All Confirmation Dialog */}
+      <Dialog
+        isOpen={showClearDialog}
+        onClose={() => setShowClearDialog(false)}
+        onConfirm={confirmClearAllBookings}
+        title="Clear All Bookings"
+        message="Are you sure you want to clear all bookings from your local history? This will only remove them from your browser storage, not from the server."
+        type="warning"
+        confirmText="Yes, Clear All"
+        cancelText="Cancel"
+      />
     </div>
   );
 };

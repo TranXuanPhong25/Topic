@@ -59,8 +59,9 @@ class AppointmentHandler:
             return False, "Invalid time format. Please use HH:MM (e.g., 14:00 for 2 PM)"
     
     def validate_provider(self, provider: Optional[str]) -> tuple[bool, str]:
-        if provider and provider not in self.providers:
-            return False, f"Provider not found. Available: {', '.join(self.providers)}"
+        flatten_providers = [item["title"] for item in self.providers]
+        if provider and provider not in flatten_providers:
+            return False, f"Provider not found. Available: {', '.join(flatten_providers)}"
         return True, ""
     
     async def check_availability(self, date: str, time: str, provider: Optional[str] = None) -> tuple[bool, str]:
@@ -108,7 +109,8 @@ class AppointmentHandler:
             valid, error = self.validate_provider(provider)
             if not valid:
                 return {"success": False, "error": error}
-        
+        else:
+            provider = self.providers[0]["title"]
         # Check availability (async)
         available, error = await self.check_availability(date, time, provider)
         if not available:
@@ -122,7 +124,7 @@ class AppointmentHandler:
                 "date": date,
                 "time": time,
                 "reason": reason,
-                "provider": provider or self.providers[0],  # Default to first provider
+                "provider": provider ,  # Default to first provider
                 "phone": phone or "",
                 "email": email or "",
                 "status": "scheduled",
@@ -130,7 +132,6 @@ class AppointmentHandler:
                 "created_at": now,
                 "updated_at": now
             }
-            
             result = await self.collection.insert_one(appointment_doc)
             appointment_id = str(result.inserted_id)
             
@@ -219,6 +220,87 @@ class AppointmentHandler:
                 
         except Exception as e:
             return {"success": False, "error": f"Error cancelling appointment: {str(e)}"}
+    
+    async def reschedule_appointment(self, appointment_id: str, new_date: str, new_time: str) -> Dict[str, Any]:
+        """
+        Reschedule an existing appointment to a new date/time.
+        
+        Args:
+            appointment_id: The appointment ID
+            new_date: New date in YYYY-MM-DD format
+            new_time: New time in HH:MM format
+            
+        Returns:
+            Dict with success status and message or error
+        """
+        try:
+            # Validate ObjectId
+            try:
+                obj_id = ObjectId(appointment_id)
+            except Exception:
+                return {"success": False, "error": "Invalid appointment ID format"}
+            
+            # Find existing appointment
+            appointment = await self.collection.find_one({"_id": obj_id})
+            
+            if not appointment:
+                return {"success": False, "error": "Appointment not found"}
+            
+            if appointment.get("status") == "cancelled":
+                return {"success": False, "error": "Cannot reschedule a cancelled appointment"}
+            
+            # Validate new date
+            valid_date, date_error = self.validate_date(new_date)
+            if not valid_date:
+                return {"success": False, "error": date_error}
+            
+            # Validate new time
+            valid_time, time_error = self.validate_time(new_time)
+            if not valid_time:
+                return {"success": False, "error": time_error}
+            
+            # Check availability at new slot
+            available, message = await self.check_availability(
+                new_date, 
+                new_time, 
+                appointment.get("provider")
+            )
+            
+            if not available:
+                return {"success": False, "error": f"New slot not available: {message}"}
+            
+            # Update appointment
+            old_date = appointment["date"]
+            old_time = appointment["time"]
+            
+            await self.collection.update_one(
+                {"_id": obj_id},
+                {
+                    "$set": {
+                        "date": new_date,
+                        "time": new_time,
+                        "updated_at": datetime.utcnow()
+                    }
+                }
+            )
+            
+            return {
+                "success": True,
+                "message": f"Appointment rescheduled from {old_date} {old_time} to {new_date} {new_time}",
+                "appointment": {
+                    "id": appointment_id,
+                    "patient_name": appointment["patient_name"],
+                    "old_date": old_date,
+                    "old_time": old_time,
+                    "new_date": new_date,
+                    "new_time": new_time,
+                    "provider": appointment.get("provider", "Any available"),
+                    "reason": appointment["reason"]
+                }
+            }
+            
+        except Exception as e:
+            return {"success": False, "error": f"Error rescheduling appointment: {str(e)}"}
     
     async def get_available_slots(self, date: str, provider: Optional[str] = None) -> List[str]:
         # Generate all possible slots (15-minute intervals)

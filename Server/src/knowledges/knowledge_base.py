@@ -12,7 +12,7 @@ class FAQKnowledgeBase:
             "phone": CLINIC_CONFIG["phone"],
             "address": CLINIC_CONFIG["address"],
             "hours": CLINIC_CONFIG["hours"],
-            "doctors": CLINIC_CONFIG["doctors"],
+            "providers": CLINIC_CONFIG["providers"],
         }
         
         # FAQ Categories

@@ -1,0 +1,195 @@
+/* ========== Success Dialog Overlay ========== */
+.success-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(26, 26, 46, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ========== Success Dialog Container ========== */
+.success-dialog-container {
+  background-color: #FFFEF0;
+  border: 4px solid #1a1a2e;
+  border-radius: 12px;
+  box-shadow: 8px 8px 0px #1a1a2e;
+  max-width: 550px;
+  width: 90%;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ========== Success Dialog Header ========== */
+.success-dialog-header {
+  background-color: #95E1D3;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 4px solid #1a1a2e;
+  border-radius: 8px 8px 0 0;
+}
+
+.success-dialog-header h3 {
+  margin: 0;
+  color: #1a1a2e;
+  font-weight: 800;
+  font-size: 1.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ========== Success Dialog Body ========== */
+.success-dialog-body {
+  padding: 2rem 1.5rem;
+  background-color: #FFF8DC;
+}
+
+.success-message {
+  margin: 0 0 1.5rem 0;
+  color: #1a1a2e;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.appointment-id-section {
+  background-color: #FFFEF0;
+  border: 3px solid #1a1a2e;
+  border-radius: 8px;
+  padding: 1.25rem;
+  box-shadow: 3px 3px 0px #1a1a2e;
+}
+
+.important-label {
+  margin: 0 0 1rem 0;
+  color: #1a1a2e;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.id-display {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.appointment-id {
+  flex: 1;
+  padding: 12px 16px;
+  background-color: white;
+  border: 3px solid #1a1a2e;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  text-align: center;
+  box-shadow: 2px 2px 0px #1a1a2e;
+  word-break: break-all;
+}
+
+.copy-btn {
+  padding: 12px 18px;
+  background-color: #FFD93D;
+  color: #1a1a2e;
+  border: 3px solid #1a1a2e;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 3px 3px 0px #1a1a2e;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.copy-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px #1a1a2e;
+  background-color: #FFE566;
+}
+
+.copy-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #1a1a2e;
+}
+
+.copy-btn.copied {
+  background-color: #95E1D3;
+}
+
+.copy-btn.copied:hover {
+  background-color: #A8EBE0;
+}
+
+.id-note {
+  margin: 0;
+  color: #1a1a2e;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ========== Success Dialog Footer ========== */
+.success-dialog-footer {
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: center;
+  background-color: #FFFEF0;
+  border-radius: 0 0 8px 8px;
+}
+
+.success-dialog-btn {
+  padding: 12px 32px;
+  background-color: #4ECDC4;
+  color: #1a1a2e;
+  border: 3px solid #1a1a2e;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0px #1a1a2e;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.success-dialog-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px #1a1a2e;
+  background-color: #5FD9D0;
+}
+
+.success-dialog-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #1a1a2e;
+}

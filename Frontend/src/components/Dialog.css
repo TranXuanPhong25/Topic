@@ -1,0 +1,165 @@
+/* ========== Dialog Overlay ========== */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(26, 26, 46, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ========== Dialog Container ========== */
+.dialog-container {
+  background-color: #FFFEF0;
+  border: 4px solid #1a1a2e;
+  border-radius: 12px;
+  box-shadow: 8px 8px 0px #1a1a2e;
+  max-width: 500px;
+  width: 90%;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ========== Dialog Header ========== */
+.dialog-header {
+  background-color: #4ECDC4;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 4px solid #1a1a2e;
+  border-radius: 8px 8px 0 0;
+}
+
+.dialog-header.warning {
+  background-color: #FFD93D;
+}
+
+.dialog-header.danger {
+  background-color: #FF6B6B;
+}
+
+.dialog-header.success {
+  background-color: #95E1D3;
+}
+
+.dialog-header h3 {
+  margin: 0;
+  color: #1a1a2e;
+  font-weight: 800;
+  font-size: 1.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ========== Dialog Body ========== */
+.dialog-body {
+  padding: 2rem 1.5rem;
+  background-color: #FFF8DC;
+}
+
+.dialog-body p {
+  margin: 0;
+  color: #1a1a2e;
+  font-size: 1rem;
+  line-height: 1.6;
+  font-weight: 500;
+  white-space: pre-line;
+}
+
+/* ========== Dialog Footer ========== */
+.dialog-footer {
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  background-color: #FFFEF0;
+  border-radius: 0 0 8px 8px;
+}
+
+.dialog-btn {
+  padding: 12px 24px;
+  border: 3px solid #1a1a2e;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0px #1a1a2e;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.dialog-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px #1a1a2e;
+}
+
+.dialog-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #1a1a2e;
+}
+
+.dialog-btn-cancel {
+  background-color: #E0E0E0;
+  color: #1a1a2e;
+}
+
+.dialog-btn-cancel:hover {
+  background-color: #D0D0D0;
+}
+
+.dialog-btn-confirm {
+  background-color: #4ECDC4;
+  color: #1a1a2e;
+}
+
+.dialog-btn-confirm:hover {
+  background-color: #5FD9D0;
+}
+
+.dialog-btn-confirm.warning {
+  background-color: #FFD93D;
+}
+
+.dialog-btn-confirm.warning:hover {
+  background-color: #FFE566;
+}
+
+.dialog-btn-confirm.danger {
+  background-color: #FF6B6B;
+}
+
+.dialog-btn-confirm.danger:hover {
+  background-color: #FF8585;
+}
+
+.dialog-btn-confirm.success {
+  background-color: #95E1D3;
+}
+
+.dialog-btn-confirm.success:hover {
+  background-color: #A8EBE0;
+}

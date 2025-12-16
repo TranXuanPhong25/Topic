@@ -97,9 +97,10 @@ async def book_appointment(
 
     if result["success"]:
         appointment_data = result.get("appointment", {})
+        appointment_id = appointment_data.get("id", "PENDING")
         return json.dumps({
             "success": True,
-            "appointment_id": appointment_data.get("id", "PENDING"),
+            "appointment_id": appointment_id,
             "confirmation": {
                 "patient_name": patient_name,
                 "date": date,
@@ -108,7 +109,8 @@ async def book_appointment(
                 "provider": appointment_data.get("provider", "Will be assigned"),
                 "status": "confirmed"
             },
-            "message": result.get("message", f"Appointment successfully booked for {patient_name}")
+            "message": result.get("message", f"Appointment successfully booked for {patient_name}"),
+            "important_note": f"⚠️ IMPORTANT: Please save your Appointment ID: {appointment_id}. You will need this ID to reschedule or cancel your appointment. Save it in your notes or take a screenshot."
         })
     else:
         return json.dumps({
@@ -141,3 +143,50 @@ async def get_available_time_slots(date: str, limit: int = 5) -> str:
         "showing": len(limited_slots),
         "message": f"Found {len(all_slots)} available slots on {date}, showing {len(limited_slots)}"
     })
+
+
+@tool(description="Reschedule an existing appointment to a new date and time using the appointment ID. The patient must provide their appointment ID.")
+async def reschedule_appointment(
+        appointment_id: str,
+        new_date: str,
+        new_time: str
+) -> str:
+    """Reschedule an appointment using its ID.
+    
+    Args:
+        appointment_id: The unique appointment ID provided when booking
+        new_date: New date in YYYY-MM-DD format
+        new_time: New time in HH:MM format (24-hour)
+    
+    Returns:
+        JSON string with success status and details
+    """
+    handler = AppointmentHandler()
+    
+    result = await handler.reschedule_appointment(
+        appointment_id=appointment_id,
+        new_date=new_date,
+        new_time=new_time
+    )
+    
+    if result["success"]:
+        appointment_data = result.get("appointment", {})
+        return json.dumps({
+            "success": True,
+            "message": result["message"],
+            "appointment": {
+                "id": appointment_data.get("id"),
+                "patient_name": appointment_data.get("patient_name"),
+                "previous_datetime": f"{appointment_data.get('old_date')} at {appointment_data.get('old_time')}",
+                "new_datetime": f"{appointment_data.get('new_date')} at {appointment_data.get('new_time')}",
+                "provider": appointment_data.get("provider"),
+                "reason": appointment_data.get("reason")
+            },
+            "confirmation": f"✅ Successfully rescheduled to {appointment_data.get('new_date')} at {appointment_data.get('new_time')}"
+        })
+    else:
+        return json.dumps({
+            "success": False,
+            "error": result.get("error"),
+            "message": "Unable to reschedule. " + result.get("error", "Please check your appointment ID and try again.")
+        })
