@@ -32,4 +32,7 @@ dependencies = [
     "bson>=0.5.10",
     "motor>=3.7.1",
     "kaggle>=1.8.2",
+    "pypdf>=6.4.2",
+    "skops>=0.13.0",
+    "scikit-learn==1.5.1",
 ]

@@ -21,7 +21,7 @@ class DiagnosisCriticModelSingleton:
                 temperature=0.3,  # Conservative for medical diagnosis
                 top_p=0.9,
                 top_k=40,
-                max_tokens=4048,
+                max_tokens=6048,
             )
             print(f"Diagnosis model initialized: {GEMINI_MODEL_NAME}")
         return cls._instance
@@ -35,10 +35,3 @@ def get_diagnosis_critic_model():
     return DiagnosisCriticModelSingleton.get_instance()
 
 
-# Diagnosis-specific generation config
-DIAGNOSIS_GENERATION_CONFIG = {
-    "temperature": 0.3,
-    "top_p": 0.9,
-    "top_k": 40,
-    "max_output_tokens": 2048,
-}

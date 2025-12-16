@@ -33,7 +33,7 @@ def main() -> None:
     args = parser.parse_args()
 
     print("=" * 80)
-    print("📚  PDF Metadata Inspection")
+    print("PDF Metadata Inspection")
     print(f"Directory: {args.data_dir or DEFAULT_DATA_DIR}")
     print("=" * 80)
 
@@ -47,7 +47,7 @@ def main() -> None:
             for key, value in metadata.items():
                 print(f"{key}: {value}")
     except Exception as exc:
-        print(f"❌ Không thể đọc metadata: {exc}")
+        print(f"ERROR: Không thể đọc metadata: {exc}")
 
 
 if __name__ == "__main__":

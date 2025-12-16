@@ -33,12 +33,3 @@ class DiagnosisModelSingleton:
 
 def get_diagnosis_model():
     return DiagnosisModelSingleton.get_instance()
-
-
-# Diagnosis-specific generation config
-DIAGNOSIS_GENERATION_CONFIG = {
-    "temperature": 0.3,
-    "top_p": 0.9,
-    "top_k": 40,
-    "max_output_tokens": 2048,
-}

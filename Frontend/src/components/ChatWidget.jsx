@@ -343,13 +343,13 @@ const ChatWidget = ({ sessionId, isOpen, setIsOpen, onQuickMessage }, ref) => {
     try {
       const response = await fetch(`${API_BASE_URL}/health`);
       if (response.ok) {
-        console.log('✅ Connected to clinic API');
+        console.log('Connected to clinic API');
       } else {
-        console.warn('⚠️ API connection issue');
+        console.warn('API connection issue');
       }
     } catch (error) {
-      console.error('❌ Cannot connect to API:', error);
-      addMessage('⚠️ Note: I\'m currently in offline mode. Some features may be limited. Please call (555) 123-4567 for immediate assistance.', 'bot');
+      console.error('Cannot connect to API:', error);
+      addMessage('Note: I\'m currently in offline mode. Some features may be limited. Please call (555) 123-4567 for immediate assistance.', 'bot');
     }
   };
 

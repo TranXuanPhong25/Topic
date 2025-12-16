@@ -135,23 +135,23 @@ class GeminiVisionAnalyzer:
         Returns:
             Detailed visual description
         """
-        prompt = """Bạn là chuyên gia phân tích hình ảnh y tế. Hãy mô tả chi tiết những gì bạn thấy trong hình ảnh này.
+        prompt = """You are a medical image analysis expert. Please provide a detailed description of what you see in this image.
 
-                    **Nhiệm vụ:**
-                    Cung cấp mô tả khách quan, chi tiết về:
-                    1. Loại hình ảnh (da, vết thương, phần cơ thể, v.v.)
-                    2. Màu sắc và kết cấu quan sát được
-                    3. Kích thước và vị trí (nếu có thể xác định)
-                    4. Bất kỳ đặc điểm bất thường nào
-                    5. Các chi tiết có liên quan đến y tế
+                    **Task:**
+                    Provide an objective, detailed description of:
+                    1. Type of image (skin, wound, body part, etc.)
+                    2. Observable colors and textures
+                    3. Size and location (if identifiable)
+                    4. Any abnormal features
+                    5. Medically relevant details
 
-                    **Lưu ý:**
-                    - Chỉ mô tả những gì bạn thấy, KHÔNG chẩn đoán
-                    - Sử dụng thuật ngữ y tế khi thích hợp
-                    - Viết bằng tiếng Việt, rõ ràng và chính xác
-                    - Khoảng 4-6 câu
+                    **Important:**
+                    - Only describe what you see, do NOT diagnose
+                    - Use medical terminology when appropriate
+                    - Write clearly and accurately
+                    - Provide 4-6 sentences
 
-                    **Mô tả hình ảnh:**"""
+                    **Image Description:**"""
         
         try:
             # Generate content with image
@@ -170,7 +170,7 @@ class GeminiVisionAnalyzer:
             
         except Exception as e:
             print(f"Error generating visual description: {str(e)}")
-            return f"Không thể phân tích hình ảnh: {str(e)}"
+            return f"Unable to analyze image: {str(e)}"
     
     def _perform_visual_qa(
         self, 
@@ -193,19 +193,19 @@ class GeminiVisionAnalyzer:
         qa_results = {}
         
         for question in questions:
-            prompt = f"""Bạn là chuyên gia phân tích hình ảnh y tế. 
+            prompt = f"""You are a medical image analysis expert. 
 
-                        **Triệu chứng của bệnh nhân:** {symptoms_text}
+                        **Patient Symptoms:** {symptoms_text}
 
-                        **Câu hỏi:** {question}
+                        **Question:** {question}
 
-                        **Nhiệm vụ:**
-                        Trả lời câu hỏi dựa trên những gì bạn thấy trong hình ảnh.
-                        - Trả lời ngắn gọn, trực tiếp (1-2 câu)
-                        - Chỉ dựa trên hình ảnh, không đưa ra chẩn đoán
-                        - Viết bằng tiếng Việt
+                        **Task:**
+                        Answer the question based on what you see in the image.
+                        - Answer briefly and directly (1-2 sentences)
+                        - Based only on the image, no diagnosis
+                        - Write clearly and accurately
 
-                        **Trả lời:**"""
+                        **Answer:**"""
                                     
             try:
                 image_base64 = self._pil_image_to_base64(image)
@@ -222,7 +222,7 @@ class GeminiVisionAnalyzer:
                 
             except Exception as e:
                 print(f"Error in visual QA: {str(e)}")
-                qa_results[question] = f"Không thể trả lời: {str(e)}"
+                qa_results[question] = f"Unable to answer: {str(e)}"
         
         return qa_results
     
@@ -319,24 +319,24 @@ class GeminiVisionAnalyzer:
         try:
             image = self._decode_base64_image(image_data)
             
-            concern_text = f" về {specific_concern}" if specific_concern else ""
+            concern_text = f" regarding {specific_concern}" if specific_concern else ""
             
-            prompt = f"""Bạn là chuyên gia da liễu phân tích hình ảnh. Hãy phân tích tình trạng da trong hình ảnh{concern_text}.
+            prompt = f"""You are a dermatology image analysis expert. Please analyze the skin condition in this image{concern_text}.
 
-                        **Nhiệm vụ:** Cung cấp phân tích chi tiết về:
-                        1. **Loại tổn thương:** Mô tả loại tổn thương da (mụn, phát ban, nốt ruồi, v.v.)
-                        2. **Đặc điểm:** Màu sắc, kích thước, hình dạng, ranh giới
-                        3. **Phân bố:** Khu trú hoặc lan rộng, đối xứng hay không
-                        4. **Các dấu hiệu:** Sưng tấy, vảy, tiết dịch, v.v.
-                        5. **Mức độ nghiêm trọng:** Nhẹ/Trung bình/Nặng
+                        **Task:** Provide detailed analysis of:
+                        1. **Lesion Type:** Describe the type of skin lesion (acne, rash, mole, etc.)
+                        2. **Characteristics:** Color, size, shape, borders
+                        3. **Distribution:** Localized or widespread, symmetric or not
+                        4. **Signs:** Swelling, scaling, discharge, etc.
+                        5. **Severity:** Mild/Moderate/Severe
 
-                        **Lưu ý:**
-                        - Mô tả khách quan, không chẩn đoán chính xác
-                        - Sử dụng thuật ngữ da liễu
-                        - Viết bằng tiếng Việt
-                        - Khoảng 5-7 câu
+                        **Important:**
+                        - Objective description, no definitive diagnosis
+                        - Use dermatological terminology
+                        - Write clearly and accurately
+                        - Provide 5-7 sentences
 
-                        **Phân tích:**"""
+                        **Analysis:**"""
                                     
             image_base64 = self._pil_image_to_base64(image)
             message = HumanMessage(
@@ -380,23 +380,23 @@ class GeminiVisionAnalyzer:
         try:
             image = self._decode_base64_image(image_data)
             
-            prompt = """Bạn là chuyên gia chăm sóc vết thương phân tích hình ảnh. Hãy đánh giá vết thương trong hình ảnh.
+            prompt = """You are a wound care analysis expert. Please assess the wound in this image.
 
-                        **Nhiệm vụ:** Phân tích:
-                        1. **Loại vết thương:** Cắt, xước, bỏng, v.v.
-                        2. **Kích thước và độ sâu:** Ước tính nếu có thể
-                        3. **Tình trạng:** Sạch/nhiễm trùng, khô/ướt
-                        4. **Dấu hiệu nhiễm trùng:** Mủ, đỏ, sưng, nóng
-                        5. **Giai đoạn lành:** Mới/đang lành/đã lành
-                        6. **Cần chăm sóc y tế:** Có/Không và tại sao
+                        **Task:** Analyze:
+                        1. **Wound Type:** Cut, scratch, burn, etc.
+                        2. **Size and Depth:** Estimate if possible
+                        3. **Condition:** Clean/contaminated, dry/moist
+                        4. **Infection Signs:** Pus, redness, swelling, warmth
+                        5. **Healing Stage:** New/healing/healed
+                        6. **Medical Care Needed:** Yes/No and why
 
-                        **Lưu ý:**
-                        - Đánh giá khách quan
-                        - Tập trung vào các dấu hiệu quan trọng
-                        - Viết bằng tiếng Việt
-                        - Khoảng 6-8 câu
+                        **Important:**
+                        - Objective assessment
+                        - Focus on significant findings
+                        - Write clearly and accurately
+                        - Provide 6-8 sentences
 
-                        **Đánh giá vết thương:**"""
+                        **Wound Assessment:**"""
             
             image_base64 = self._pil_image_to_base64(image)
             message = HumanMessage(
@@ -448,47 +448,47 @@ class GeminiVisionAnalyzer:
             
             context_hint = f"\n**Ngữ cảnh từ người dùng:** {user_input}" if user_input else ""
             
-            prompt = f"""Bạn là chuyên gia phân loại hình ảnh y tế. Hãy xác định loại hình ảnh.
+            prompt = f"""You are a medical image classification expert. Please identify the image type.
 {context_hint}
 
-**QUAN TRỌNG - Phân loại hình ảnh thành MỘT trong các loại sau:**
+**IMPORTANT - Classify the image into ONE of the following types:**
 
-1. **document** - Tài liệu y tế bao gồm:
-   - Đơn thuốc (có tên thuốc, liều lượng, hướng dẫn sử dụng)
-   - Kết quả xét nghiệm (có số liệu, chỉ số, giá trị)
-   - Giấy khám bệnh, phiếu khám
-   - Hóa đơn y tế, biên lai
-   - Toa thuốc viết tay hoặc in
-   - Bất kỳ giấy tờ/văn bản nào liên quan y tế
-   - **DẤU HIỆU NHẬN BIẾT**: có chữ viết, bảng biểu, logo bệnh viện/phòng khám, format giấy tờ
+1. **document** - Medical documents including:
+   - Prescriptions (with medication names, dosages, instructions)
+   - Test results (with data, values, numbers)
+   - Medical exam forms, records
+   - Medical invoices, receipts
+   - Handwritten or printed prescriptions
+   - Any medical-related papers or documents
+   - **IDENTIFYING SIGNS**: contains text, tables, hospital/clinic logos, document format
 
-2. **medical** - Ảnh y tế để chẩn đoán:
-   - Ảnh da, vết thương, phát ban, mụn
-   - Vùng cơ thể bị đau, sưng, viêm
-   - Triệu chứng nhìn thấy được trên cơ thể
-   - **DẤU HIỆU NHẬN BIẾT**: ảnh chụp trực tiếp cơ thể người
+2. **medical** - Medical images for diagnosis:
+   - Skin photos, wounds, rashes, acne
+   - Affected body areas: swelling, inflammation, pain
+   - Visible symptoms on the body
+   - **IDENTIFYING SIGNS**: direct photos of human body/affected areas
 
-3. **general** - Ảnh chung không liên quan y tế:
-   - Ảnh chân dung, selfie bình thường
-   - Phong cảnh, đồ vật, thức ăn
-   - Ảnh không liên quan đến sức khỏe
+3. **general** - Non-medical images:
+   - Portrait photos, normal selfies
+   - Landscapes, objects, food
+   - Health-unrelated images
 
-4. **unclear** - CHỈ dùng khi THỰC SỰ không thể xác định
+4. **unclear** - ONLY use when TRULY unable to determine
 
-**⚠️ LƯU Ý QUAN TRỌNG:**
-- Nếu thấy CHỮ VIẾT hoặc FORMAT GIẤY TỜ → ưu tiên phân loại là **document**
-- Nếu người dùng hỏi về "đơn thuốc", "toa thuốc", "kết quả xét nghiệm" → phân loại là **document**
-- TRÁNH phân loại là "unclear" trừ khi thật sự không nhìn thấy gì
+**IMPORTANT NOTES:**
+- If you see TEXT or DOCUMENT FORMAT → prioritize classifying as **document**
+- If user asks about "prescription", "medication", "test results" → classify as **document**
+- AVOID using "unclear" unless truly unable to identify anything
 
-**Trả lời theo định dạng sau (CHÍNH XÁC):**
-LOẠI: [medical/document/general/unclear]
-CHẨN_ĐOÁN: [có/không]
-Ý_ĐỊNH: [mô tả ngắn gọn mục đích của người dùng khi gửi ảnh]
-ĐỘ_TIN_CẬY: [cao/trung bình/thấp]
+**Answer in the following format (EXACT):**
+TYPE: [medical/document/general/unclear]
+DIAGNOSTIC: [yes/no]
+PURPOSE: [brief description of user's intent in sending this image]
+CONFIDENCE: [high/medium/low]
 
-**Phân loại:**"""
+**Classification:**"""
             
-            print(f"🔍 Classifying image with user context: {user_input[:50] if user_input else 'None'}...")
+            print(f"Classifying image with user context: {user_input[:50] if user_input else 'None'}...")
             
             image_base64 = self._pil_image_to_base64(image)
             message = HumanMessage(
@@ -500,7 +500,7 @@ CHẨN_ĐOÁN: [có/không]
             response = self.model.invoke([message])
             result_text = response.content.strip()
             
-            print(f"🔍 Classification raw response: {result_text[:200]}...")
+            print(f"Classification raw response: {result_text[:200]}...")
             
             # Parse the response
             image_type = "unclear"
@@ -511,23 +511,23 @@ CHẨN_ĐOÁN: [có/không]
             lines = result_text.split("\n")
             for line in lines:
                 line_lower = line.lower().strip()
-                if line_lower.startswith("loại:"):
+                if line_lower.startswith("type:"):
                     type_value = line.split(":", 1)[1].strip().lower()
                     # Handle variations in response
-                    if "document" in type_value or "tài liệu" in type_value:
+                    if "document" in type_value:
                         image_type = "document"
-                    elif "medical" in type_value or "y tế" in type_value:
+                    elif "medical" in type_value:
                         image_type = "medical"
-                    elif "general" in type_value or "chung" in type_value:
+                    elif "general" in type_value:
                         image_type = "general"
                     elif type_value in ["medical", "document", "general", "unclear"]:
                         image_type = type_value
-                elif line_lower.startswith("chẩn_đoán:"):
+                elif line_lower.startswith("diagnostic:"):
                     diag_value = line.split(":", 1)[1].strip().lower()
-                    is_diagnostic = diag_value in ["có", "yes", "true", "1"]
-                elif line_lower.startswith("ý_định:"):
+                    is_diagnostic = diag_value in ["yes", "true", "1"]
+                elif line_lower.startswith("purpose:"):
                     intent = line.split(":", 1)[1].strip()
-                elif line_lower.startswith("độ_tin_cậy:"):
+                elif line_lower.startswith("confidence:"):
                     conf_value = line.split(":", 1)[1].strip().lower()
                     if conf_value == "cao" or "cao" in conf_value:
                         confidence = 0.9
@@ -540,7 +540,7 @@ CHẨN_ĐOÁN: [có/không]
             if image_type == "unclear":
                 result_lower = result_text.lower()
                 if any(kw in result_lower for kw in ["đơn thuốc", "toa thuốc", "prescription", "kết quả xét nghiệm", "test result", "giấy khám", "phiếu khám"]):
-                    print("🔍 Fallback: Detected document keywords in response, changing type to document")
+                    print("Fallback: Detected document keywords in response, changing type to document")
                     image_type = "document"
             
             # Force correct diagnostic status based on image type
@@ -552,7 +552,7 @@ CHẨN_ĐOÁN: [có/không]
                 is_diagnostic = False
             # For unclear, keep whatever LLM returned
             
-            print(f"🔍 Image classification: type={image_type}, diagnostic={is_diagnostic}, confidence={confidence}")
+            print(f"Image classification: type={image_type}, diagnostic={is_diagnostic}, confidence={confidence}")
             
             return {
                 "image_type": image_type,
@@ -591,45 +591,45 @@ CHẨN_ĐOÁN: [có/không]
         try:
             image = self._decode_base64_image(image_data)
             
-            context_hint = f"\n**Yêu cầu từ người dùng:** {user_input}" if user_input else ""
+            context_hint = f"\n**User Request:** {user_input}" if user_input else ""
             
-            prompt = f"""Bạn là chuyên gia đọc và trích xuất thông tin từ tài liệu y tế. Hãy phân tích CHI TIẾT hình ảnh tài liệu này.
+            prompt = f"""You are a medical document reading and information extraction expert. Please analyze this document image in DETAIL.
 {context_hint}
 
-**QUAN TRỌNG - Nhiệm vụ của bạn:**
-1. **Xác định loại tài liệu**: Đơn thuốc, kết quả xét nghiệm, giấy khám bệnh, hay loại khác?
+**IMPORTANT - Your Task:**
+1. **Identify Document Type**: Prescription, test results, medical exam form, or other?
 
-2. **Nếu là ĐƠN THUỐC - Trích xuất TỪNG THUỐC với format sau:**
-   - Tên thuốc: [tên đầy đủ]
-   - Liều lượng: [số lượng, mg/ml nếu có]
-   - Cách dùng: [ngày mấy lần, uống/bôi/tiêm...]
-   - Thời gian: [trước/sau ăn, sáng/trưa/tối]
-   - Số lượng: [bao nhiêu viên/lọ/...]
+2. **If PRESCRIPTION - Extract EACH MEDICATION with this format:**
+   - Medication Name: [full name]
+   - Dosage: [amount, mg/ml if present]
+   - Instructions: [times per day, oral/topical/injection...]
+   - Timing: [before/after meals, morning/afternoon/evening]
+   - Quantity: [number of pills/bottles/...]
 
-3. **Nếu là KẾT QUẢ XÉT NGHIỆM - Trích xuất từng chỉ số:**
-   - Tên xét nghiệm: [tên]
-   - Kết quả: [giá trị]
-   - Đơn vị: [đơn vị đo]
-   - Phạm vi bình thường: [nếu có]
+3. **If TEST RESULTS - Extract each test value:**
+   - Test Name: [name]
+   - Result: [value]
+   - Unit: [measurement unit]
+   - Normal Range: [if available]
 
-4. **Thông tin bổ sung:**
-   - Tên bệnh nhân (nếu có)
-   - Tên bác sĩ/cơ sở y tế (nếu có)
-   - Ngày kê đơn/xét nghiệm (nếu có)
-   - Chẩn đoán/ghi chú (nếu có)
+4. **Additional Information:**
+   - Patient Name (if present)
+   - Doctor/Clinic Name (if present)
+   - Prescription/Test Date (if present)
+   - Diagnosis/Notes (if present)
 
-**Lưu ý:**
-- Trích xuất TẤT CẢ thông tin có thể đọc được
-- Ghi rõ "[không đọc được]" cho phần mờ/không rõ
-- KHÔNG đưa ra lời khuyên y tế hay chẩn đoán
-- Viết CHI TIẾT và CỤ THỂ
+**Important:**
+- Extract ALL readable information
+- Mark "[unreadable]" for unclear/blurry sections
+- NO medical advice or diagnosis
+- Be DETAILED and SPECIFIC
 
-**Phân tích tài liệu:**"""
+**Document Analysis:**"""
             
             image_base64 = self._pil_image_to_base64(image)
             
-            print(f"📄 Sending document to LLM for analysis...")
-            print(f"📄 Image base64 length: {len(image_base64)} chars")
+            print(f"Sending document to LLM for analysis...")
+            print(f"Image base64 length: {len(image_base64)} chars")
             
             message = HumanMessage(
                 content=[
@@ -639,9 +639,9 @@ CHẨN_ĐOÁN: [có/không]
             )
             
             try:
-                response = self.model.invoke([message])
-                print(f"📄 Raw response type: {type(response)}")
-                print(f"📄 Raw response: {response}")
+                response = self.llm.invoke(messages)
+                print(f"Raw response type: {type(response)}")
+                print(f"Raw response: {response}")
                 
                 if hasattr(response, 'content'):
                     content = response.content.strip() if response.content else ""
@@ -649,16 +649,16 @@ CHẨN_ĐOÁN: [có/không]
                     content = str(response).strip()
                     
             except Exception as invoke_error:
-                print(f"❌ LLM invoke error: {invoke_error}")
+                print(f"ERROR: LLM invoke error: {invoke_error}")
                 import traceback
                 traceback.print_exc()
                 content = ""
             
-            print(f"📄 Document analysis response length: {len(content)} chars")
+            print(f"Document analysis response length: {len(content)} chars")
             if content:
-                print(f"📄 Document analysis preview: {content[:300]}...")
+                print(f"Document analysis preview: {content[:300]}...")
             else:
-                print("⚠️ Document analysis returned empty content!")
+                print("WARNING: Document analysis returned empty content!")
             
             # Try to detect document type from response
             doc_type = "unknown"
@@ -667,13 +667,13 @@ CHẨN_ĐOÁN: [có/không]
                 doc_type = "prescription"
             elif "xét nghiệm" in content_lower or "kết quả" in content_lower or "test" in content_lower:
                 doc_type = "test_result"
-            elif "giấy khám" in content_lower or "phiếu khám" in content_lower:
+            elif "exam" in content_lower or "record" in content_lower:
                 doc_type = "medical_record"
-            elif "hóa đơn" in content_lower:
+            elif "invoice" in content_lower or "bill" in content_lower:
                 doc_type = "invoice"
             
             return {
-                "description": "Phân tích tài liệu y tế",
+                "description": "Medical document analysis",
                 "content": content,
                 "type": doc_type,
                 "confidence": 0.8 if len(content) > 100 else 0.5,

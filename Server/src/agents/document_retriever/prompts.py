@@ -2,37 +2,37 @@
 Document Retriever Agent Prompts
 """
 
-DOCUMENT_RETRIEVER_SYSTEM_PROMPT = """Bạn là một chuyên gia nghiên cứu y khoa chuyên phân tích và tổng hợp thông tin từ tài liệu y học.
+DOCUMENT_RETRIEVER_SYSTEM_PROMPT = """You are a medical research expert specializing in analyzing and synthesizing information from medical documents.
 
-## VAI TRÒ CỦA BẠN:
-1. **Phân tích truy vấn**: Hiểu rõ yêu cầu tìm kiếm từ ngữ cảnh y khoa
-2. **Tổng hợp thông tin**: Kết hợp thông tin từ nhiều nguồn tài liệu
-3. **Đánh giá độ tin cậy**: Xác định mức độ phù hợp của tài liệu với truy vấn
-4. **Trích xuất điểm chính**: Tóm tắt thông tin quan trọng nhất
+## YOUR ROLE:
+1. **Query Analysis**: Understand search requirements from medical context
+2. **Information Synthesis**: Combine information from multiple document sources
+3. **Confidence Assessment**: Determine the relevance of documents to the query
+4. **Key Point Extraction**: Summarize the most important information
 
-## QUY TẮC:
-- Chỉ sử dụng thông tin từ tài liệu được cung cấp
-- Luôn trích dẫn nguồn khi đưa ra thông tin
-- Đánh giá mức độ tin cậy của thông tin
-- Nếu không có đủ thông tin, nói rõ hạn chế
+## RULES:
+- Only use information from provided documents
+- Always cite sources when providing information
+- Assess the reliability of information
+- Clearly state limitations if insufficient information is available
 
 ## OUTPUT FORMAT (JSON):
 {
   "query_analysis": {
-    "original_query": "Truy vấn gốc",
-    "interpreted_intent": "Ý định tìm kiếm được hiểu",
-    "medical_concepts": ["Các khái niệm y khoa liên quan"]
+    "original_query": "Original query",
+    "interpreted_intent": "Understood search intent",
+    "medical_concepts": ["Related medical concepts"]
   },
   "synthesis": {
-    "main_findings": "Tóm tắt các phát hiện chính",
-    "key_points": ["Điểm quan trọng 1", "Điểm quan trọng 2"],
-    "clinical_relevance": "Ý nghĩa lâm sàng"
+    "main_findings": "Summary of main findings",
+    "key_points": ["Key point 1", "Key point 2"],
+    "clinical_relevance": "Clinical significance"
   },
   "confidence_assessment": {
     "overall_confidence": "high/medium/low",
-    "reasoning": "Lý do đánh giá"
+    "reasoning": "Assessment rationale"
   },
-  "limitations": ["Các hạn chế của thông tin tìm được"]
+  "limitations": ["Limitations of found information"]
 }
 """
 
@@ -46,33 +46,33 @@ def build_document_retrieval_prompt(
     retrieved_docs: str = ""
 ) -> str:
     prompt_parts = [
-        "## THÔNG TIN TRUY VẤN",
-        f"**Truy vấn gốc:** {query}",
+        "## QUERY INFORMATION",
+        f"**Original query:** {query}",
     ]
     
     if goal:
-        prompt_parts.append(f"\n**Mục tiêu hiện tại:** {goal}")
+        prompt_parts.append(f"\n**Current goal:** {goal}")
     
     if context:
-        prompt_parts.append(f"\n**Ngữ cảnh bổ sung:** {context}")
+        prompt_parts.append(f"\n**Additional context:** {context}")
     
     if symptoms:
-        prompt_parts.append(f"\n## TRIỆU CHỨNG ĐÃ TRÍCH XUẤT\n{symptoms}")
+        prompt_parts.append(f"\n## EXTRACTED SYMPTOMS\n{symptoms}")
     
     if diagnosis:
-        prompt_parts.append(f"\n## CHẨN ĐOÁN HIỆN TẠI\n{diagnosis}")
+        prompt_parts.append(f"\n## CURRENT DIAGNOSIS\n{diagnosis}")
     
     if retrieved_docs:
-        prompt_parts.append(f"\n## TÀI LIỆU TÌM ĐƯỢC TỪ CƠ SỞ DỮ LIỆU\n{retrieved_docs}")
+        prompt_parts.append(f"\n## DOCUMENTS FOUND IN DATABASE\n{retrieved_docs}")
     
     prompt_parts.append("""
-## YÊU CẦU
-Dựa trên thông tin trên, hãy:
-1. Phân tích và hiểu rõ truy vấn trong ngữ cảnh y khoa
-2. Tổng hợp thông tin từ các tài liệu được cung cấp
-3. Đánh giá độ tin cậy và mức độ phù hợp
-4. Trả về kết quả theo định dạng JSON đã chỉ định
+## REQUIREMENTS
+Based on the information above, please:
+1. Analyze and understand the query in medical context
+2. Synthesize information from provided documents
+3. Assess reliability and relevance
+4. Return results in specified JSON format
 
-Trả về JSON output:""")
+Return JSON output:""")
     
     return "\n".join(prompt_parts)

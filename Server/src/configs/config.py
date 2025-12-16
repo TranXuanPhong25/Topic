@@ -82,3 +82,9 @@ CLINIC_CONFIG = {
         }
     ]
 }
+
+
+# Guardrail configuration flags
+GUARDRAILS_ENABLED: bool = os.getenv("GUARDRAILS_ENABLED", "true").lower() in {"1", "true", "yes", "on"}
+GUARDRAILS_CHECK_OUTPUT: bool = os.getenv("GUARDRAILS_CHECK_OUTPUT", "true").lower() in {"1", "true", "yes", "on"}
+

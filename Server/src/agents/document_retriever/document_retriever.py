@@ -1,13 +1,3 @@
-"""
-DocumentRetriever Agent: Performs information augmentation from knowledge sources using RAG pipeline.
-
-This agent:
-- Receives input queries from the supervisor
-- Refines and optimizes queries for medical document retrieval
-- Uses RAG pipeline to retrieve relevant documents
-- Synthesizes information from multiple sources
-- Returns structured results with citations and confidence assessments
-"""
 from typing import TYPE_CHECKING, Dict, Any, Optional
 import logging
 import json
@@ -34,45 +24,11 @@ class DocumentRetrieverNode:
         # Initialize RAG pipeline
         try:
             self.pipeline = RAGPipeline.from_existing_index()
-            print("DocumentRetriever: RAG pipeline initialized")
         except Exception as e:
             LOGGER.error(f"Failed to initialize RAG pipeline: {e}")
             self.pipeline = None
         
-        print("DocumentRetrieverNode initialized as agent")
     
-    def _get_current_goal(self, state: "GraphState") -> str:
-        plan = state.get("plan", [])
-        current_step_index = state.get("current_step", 0)
-        
-        if not plan or current_step_index >= len(plan):
-            return ""
-        
-        current_plan_step = plan[current_step_index]
-        goal = current_plan_step.get("goal", "")
-        
-        if goal:
-            print(f"Current Goal: {goal}")
-        
-        return goal
-    
-    def _get_current_context(self, state: "GraphState") -> dict:
-        plan = state.get("plan", [])
-        current_step_index = state.get("current_step", 0)
-        
-        if not plan or current_step_index >= len(plan):
-            return {"context": "", "user_context": ""}
-        
-        current_plan_step = plan[current_step_index]
-        context = current_plan_step.get("context", "")
-        user_context = current_plan_step.get("user_context", "")
-        
-        if context:
-            print(f"Context: {context[:100]}...")
-        if user_context:
-            print(f"User Context: {user_context[:100]}...")
-        
-        return {"context": context, "user_context": user_context}
     
     def _format_symptoms(self, symptoms: Dict[str, Any]) -> str:
         if not symptoms:
@@ -98,13 +54,13 @@ class DocumentRetrieverNode:
         parts = []
         primary = diagnosis.get("primary_diagnosis", "")
         if primary:
-            parts.append(f"Chẩn đoán chính: {primary}")
+            parts.append(f"Primary Diagnosis: {primary}")
         
         differentials = diagnosis.get("differential_diagnoses", [])
         if differentials:
             diff_names = [d.get("condition", "") for d in differentials[:3] if d.get("condition")]
             if diff_names:
-                parts.append(f"Chẩn đoán phân biệt: {', '.join(diff_names)}")
+                parts.append(f"Differential Diagnoses: {', '.join(diff_names)}")
         
         return "\n".join(parts)
     
@@ -120,11 +76,11 @@ class DocumentRetrieverNode:
             content = doc.get("content", "")
             
             formatted.append(
-                f"[Nguồn {idx}]\n"
-                f"- Tiêu đề: {source}\n"
-                f"- Tác giả: {author}\n"
-                f"- Trang: {page}\n"
-                f"- Nội dung: {content[:500]}..."
+                f"[Source {idx}]\n"
+                f"- Title: {source}\n"
+                f"- Author: {author}\n"
+                f"- Page: {page}\n"
+                f"- Content: {content[:500]}..."
             )
         
         return "\n\n---\n\n".join(formatted)
@@ -144,20 +100,20 @@ class DocumentRetrieverNode:
             if symptom_list:
                 symptom_text = ", ".join([s.get("name", "") for s in symptom_list if s.get("name")])
                 if symptom_text:
-                    parts.append(f"Triệu chứng: {symptom_text}")
+                    parts.append(f"Symptoms: {symptom_text}")
         
         # Add diagnosis if available
         diagnosis = state.get("diagnosis", {})
         if diagnosis:
             primary = diagnosis.get("primary_diagnosis", "")
             if primary:
-                parts.append(f"Chẩn đoán: {primary}")
+                parts.append(f"Diagnosis: {primary}")
             
             differentials = diagnosis.get("differential_diagnoses", [])
             if differentials:
                 diff_text = ", ".join([d.get("condition", "") for d in differentials[:3] if d.get("condition")])
                 if diff_text:
-                    parts.append(f"Chẩn đoán phân biệt: {diff_text}")
+                    parts.append(f"Differential Diagnoses: {diff_text}")
         
         return ". ".join(parts) if parts else "medical information"
     
@@ -183,8 +139,6 @@ class DocumentRetrieverNode:
         self,
         query: str,
         documents: list,
-        goal: str,
-        context: str,
         symptoms_str: str,
         diagnosis_str: str
     ) -> Dict[str, Any]:
@@ -196,8 +150,6 @@ class DocumentRetrieverNode:
             # Build prompt
             prompt = build_document_retrieval_prompt(
                 query=query,
-                context=context,
-                goal=goal,
                 symptoms=symptoms_str,
                 diagnosis=diagnosis_str,
                 retrieved_docs=docs_formatted
@@ -223,19 +175,16 @@ class DocumentRetrieverNode:
             return {}
 
     def __call__(self, state: "GraphState") -> "GraphState":
-        print("\n📚 === DOCUMENT RETRIEVER AGENT STARTED ===")
+        print("\n=== DOCUMENT RETRIEVER AGENT STARTED ===")
         
         # Get caller information
         caller = state.get("retriever_caller") or "supervisor"
         
         if caller not in ["supervisor", "diagnosis_engine", "diagnosis_critic", "recommender"]:
-            print(f"⚠️ Invalid caller '{caller}', defaulting to supervisor")
+            print(f"WARNING: Invalid caller '{caller}', defaulting to supervisor")
             caller = "supervisor"
             state["retriever_caller"] = caller
         
-        goal = self._get_current_goal(state)
-        context_data = self._get_current_context(state)
-        context = context_data.get("context", "")
         
         # Format available information
         symptoms = state.get("symptoms", {})
@@ -243,6 +192,12 @@ class DocumentRetrieverNode:
         symptoms_str = self._format_symptoms(symptoms)
         diagnosis_str = self._format_diagnosis(diagnosis)
         
+        if not self.pipeline:
+            print("ERROR: RAG pipeline not initialized")
+            state["retrieved_documents"] = []
+            state["rag_answer"] = ""
+            state["document_synthesis"] = {}
+            return state
         
         try:
             # Use retriever_query if provided, otherwise build from state
@@ -262,16 +217,16 @@ class DocumentRetrieverNode:
             # Ensure context_docs is not None and is iterable
             if not context_docs:
                 context_docs = []
-                print("⚠️ No context_docs found in RAG result")
+                print("WARNING: No context_docs found in RAG result")
             else:
-                print(f"📄 Found {len(context_docs)} context documents")
+                print(f"Found {len(context_docs)} context documents")
                 if context_docs and len(context_docs) > 0:
                     first_doc = context_docs[0]
-                    print(f"🔍 First doc type: {type(first_doc)}")
+                    print(f"First doc type: {type(first_doc)}")
                     if hasattr(first_doc, '__dict__'):
-                        print(f"🔍 First doc attributes: {list(first_doc.__dict__.keys())}")
+                        print(f"First doc attributes: {list(first_doc.__dict__.keys())}")
                     elif isinstance(first_doc, dict):
-                        print(f"🔍 First doc keys: {list(first_doc.keys())}")
+                        print(f"First doc keys: {list(first_doc.keys())}") 
             
             for doc in context_docs:
                 try:
@@ -286,7 +241,7 @@ class DocumentRetrieverNode:
                         content = doc.get("text", "")
                     else:
                         # Fallback for unknown structure
-                        print(f"⚠️ Unknown document structure: {type(doc)}")
+                        print(f"WARNING: Unknown document structure: {type(doc)}")
                         metadata = {}
                         content = str(doc)
                     
@@ -299,22 +254,20 @@ class DocumentRetrieverNode:
                     })
                 except Exception as doc_error:
                     LOGGER.warning(f"Error processing document: {doc_error}")
-                    print(f"⚠️ Error processing document: {doc_error}")
+                    print(f"WARNING: Error processing document: {doc_error}")
                     continue
             
             # Get RAG pipeline's answer
             rag_answer = result.get("answer", "")
             english_query = result.get("english_query", "")
             
-            print(f"✅ Retrieved {len(documents)} relevant documents")
-            print(f"📝 RAG answer generated ({len(str(rag_answer))} chars)")
+            print(f"Retrieved {len(documents)} relevant documents")
+            print(f"RAG answer generated ({len(str(rag_answer))} chars)")
             
             # Use LLM to synthesize information
             synthesis_result = self._synthesize_with_llm(
                 query=query,
                 documents=documents,
-                goal=goal,
-                context=context,
                 symptoms_str=symptoms_str,
                 diagnosis_str=diagnosis_str
             )
@@ -329,12 +282,11 @@ class DocumentRetrieverNode:
             if caller == "supervisor":
                 state["current_step"] += 1
             
-            # Clear query after processing, but keep caller for routing
             state["retriever_query"] = None
             
-            print(f"📊 Synthesis completed with confidence: {synthesis_result.get('confidence_assessment', {}).get('overall_confidence', 'N/A')}")
-            print(f"🔙 Returning to: {caller}")
-            print("✅ === DOCUMENT RETRIEVER AGENT COMPLETED ===\n")
+            print(f"Synthesis completed with confidence: {synthesis_result.get('confidence_assessment', {}).get('overall_confidence', 'N/A')}")
+            print(f"Returning to: {caller}")
+            print("=== DOCUMENT RETRIEVER AGENT COMPLETED ===\n")
             
             # Set next step for routing and clear caller after processing
             state["next_step"] = None  # Will be determined by conditional edge
@@ -344,21 +296,21 @@ class DocumentRetrieverNode:
                 pass
             
         except ValueError as e:
-            print(f"⚠️ No documents found: {e}")
+            print(f"WARNING: No documents found: {e}")
             state["retrieved_documents"] = []
             state["rag_answer"] = ""
             state["document_synthesis"] = {
                 "query_analysis": {"original_query": query, "interpreted_intent": ""},
-                "synthesis": {"main_findings": "Không tìm thấy tài liệu phù hợp"},
+                "synthesis": {"main_findings": "No suitable documents found"},
                 "confidence_assessment": {"overall_confidence": "low", "reasoning": str(e)},
-                "limitations": ["Không có tài liệu trong cơ sở dữ liệu phù hợp với truy vấn"]
+                "limitations": ["No documents in database match the query"]
             }
             if caller == "supervisor":
                 state["current_step"] += 1
             state["retriever_query"] = None
             
         except Exception as e:
-            print(f"❌ DocumentRetriever error: {str(e)}")
+            print(f"ERROR: DocumentRetriever error: {str(e)}")
             state["retrieved_documents"] = []
             state["rag_answer"] = ""
             state["document_synthesis"] = {}

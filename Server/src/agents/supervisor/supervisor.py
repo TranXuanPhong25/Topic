@@ -4,7 +4,6 @@ from typing import Any, List
 from src.models.state import GraphState
 from src.configs.agent_config import SystemMessage, HumanMessage, AIMessage, BaseMessage
 from src.agents.supervisor.prompts import (
-    COMPACT_SUPERVISOR_PROMPT,
     SUPERVISOR_RESPONSE_SCHEMA,
     SUPERVISOR_SYSTEM_PROMPT
 )
@@ -48,7 +47,7 @@ class SupervisorNode:
         # FAST PATH: Emergency keyword detection - skip LLM, route directly
         user_input = state.get("input", "")
         if _is_emergency_input(user_input) and not state.get("plan"):
-            print("🚨 EMERGENCY DETECTED - Fast-path routing to symptom_extractor → diagnosis_engine")
+            print("EMERGENCY DETECTED - Fast-path routing to symptom_extractor → diagnosis_engine")
             state["next_step"] = "symptom_extractor"
             state["plan"] = [
                 {"step": "symptom_extractor", "description": "Extract emergency symptoms", "status": "not_started", 
@@ -59,7 +58,7 @@ class SupervisorNode:
                  "goal": "Provide clear emergency instructions", "context": "EMERGENCY - include 115/911 guidance"}
             ]
             state["current_step"] = 0
-            print("🚨 Emergency plan created - bypassing LLM supervisor")
+            print("EMERGENCY plan created - bypassing LLM supervisor")
             return state
         
         try:
@@ -69,7 +68,7 @@ class SupervisorNode:
                 if current_step < len(state["plan"]):
                     state["plan"][current_step]["status"] = "completed"
                 else:
-                    print("⚠️  Current step exceeds plan length; cannot mark as completed.")
+                    print("WARNING: Current step exceeds plan length; cannot mark as completed.")
                     return state
                     
             supervisor_prompt = self.build_supervisor_prompt(state)
@@ -102,11 +101,21 @@ class SupervisorNode:
             try:
                 validate(instance=supervisor_decision, schema=SUPERVISOR_RESPONSE_SCHEMA)
             except ValidationError as ve:
-                print(f"⚠️  Validation warning: {ve.message}")
+                print(f"WARNING: Validation warning: {ve.message}")
                 # Continue with best effort
             
             # Extract decisions
             next_step = supervisor_decision.get("next_step", "END")
+            # Simple guard: Prevent redundant symptom extraction if symptoms already exist
+            # Note: LangGraph's recursion_limit=25 handles infinite loops at graph level
+            if next_step == "symptom_extractor":
+                extracted_symptoms = (state.get("symptoms", {}) or {}).get("extracted_symptoms", [])
+                if extracted_symptoms:
+                    # Symptoms already extracted - advance to diagnosis
+                    next_step = "diagnosis_engine"
+                    supervisor_decision["reasoning"] = (
+                        "Symptoms already extracted; proceeding to diagnosis_engine."
+                    )
             reasoning = supervisor_decision.get("reasoning", "No reasoning provided")
             updated_plan = supervisor_decision.get("plan", state.get("plan", []))
             symptom_extractor_input = supervisor_decision.get("symptom_extractor_input")
@@ -118,7 +127,7 @@ class SupervisorNode:
             # Update symptom_extractor_input if supervisor specified it
             if symptom_extractor_input:
                 state["symptom_extractor_input"] = symptom_extractor_input
-                print(f"📝 Symptom extractor input specified: {symptom_extractor_input[:100]}...")
+                print(f"Symptom extractor input specified: {symptom_extractor_input[:100]}...")
             
             # Add to messages for tracking
    
@@ -129,11 +138,11 @@ class SupervisorNode:
             print("*******************************************************************************************************")
             
         except json.JSONDecodeError as e:
-            print(f"❌ JSON Parse Error: {e}")
+            print(f"ERROR: JSON Parse Error: {e}")
             print(f"Response text: {response_text}")
             
         except Exception as e:
-            print(f"❌ Supervisor Error: {e}")
+            print(f"ERROR: Supervisor Error: {e}")
         return state
     
     def build_supervisor_prompt(self, state: GraphState) -> str:
@@ -191,12 +200,12 @@ class SupervisorNode:
             
             if image_type == "document":
                 context_parts.append(f"**Image Provided**: Yes (type=document, is_diagnostic={is_diagnostic})")
-                context_parts.append(f"**⚠️ IMPORTANT**: This is a DOCUMENT image (prescription/test result), NOT a medical image for diagnosis. Route to synthesis, NOT diagnosis_engine.")
+                context_parts.append(f"**IMPORTANT**: This is a DOCUMENT image (prescription/test result), NOT a medical image for diagnosis. Route to synthesis, NOT diagnosis_engine.")
                 if image_intent:
                     context_parts.append(f"**User intent**: {image_intent}")
             elif image_type == "general":
                 context_parts.append(f"**Image Provided**: Yes (type=general, is_diagnostic=False)")
-                context_parts.append(f"**⚠️ IMPORTANT**: This is a general non-medical image. Image analyzer already handled it. Consider routing to END.")
+                context_parts.append(f"**IMPORTANT**: This is a general non-medical image. Image analyzer already handled it. Consider routing to END.")
             elif image_type == "medical":
                 context_parts.append(f"**Image Provided**: Yes (type=medical, is_diagnostic=True - proceed with diagnosis workflow)")
             else:
@@ -240,7 +249,7 @@ class SupervisorNode:
     6. What is the next logical step in the workflow?
     7. If routing to symptom_extractor: Should I specify custom `symptom_extractor_input` to extract specific parts?
     
-    ## ⚠️ CRITICAL RULE: DO NOT REPLAN IF PLAN IS COMPLETE
+    ## CRITICAL RULE: DO NOT REPLAN IF PLAN IS COMPLETE
     - If current plan exists and ALL steps have status="completed"
     - AND you see "**Original Request** (already processed)" (NOT "Current User Input")
     - Then you MUST set next_step="END" and keep the existing completed plan

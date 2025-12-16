@@ -14,10 +14,10 @@ if not GOOGLE_API_KEY:
     )
 
 # Primary model for text-based reasoning and conversation
-GEMINI_MODEL_NAME = "gemini-2.5-pro"
+GEMINI_MODEL_NAME = "gemini-2.5-flash-lite"
 
 # Vision model for image analysis (can be same as primary)
-GEMINI_VISION_MODEL_NAME = "gemini-2.5-pro-vision"
+GEMINI_VISION_MODEL_NAME = "gemini-2.5-flash-lite"
 
 __all__ = [
     # API

@@ -1,5 +1,9 @@
 from . import chat_router
 from src.agents.medical_diagnostic_graph import MedicalDiagnosticGraph
+from src.middleware.guardrails import (
+    check_guardrail_simple,
+)
+from src.configs.config import GUARDRAILS_ENABLED, GUARDRAILS_CHECK_OUTPUT
 import uuid
 import json
 import asyncio
@@ -8,11 +12,8 @@ from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from src.models.chat import ChatRequest, ImageChatRequest, ChatResponse
 
-# Reuse a single graph instance to avoid re-initializing models every request
-# (Frequent reinitialization causes multiple concurrent Gemini calls and rate limits)
 diagnostic_graph = MedicalDiagnosticGraph()
 
-# Optional: draw once at startup (comment out if noisy in logs)
 try:
     print(diagnostic_graph.graph.get_graph().draw_ascii())
 except Exception:
@@ -38,13 +39,24 @@ async def ma_chat(request: ChatRequest):
 
         session_id = request.session_id or str(uuid.uuid4())
 
-        # Fast path: simple greeting -> lightweight response, avoid full graph
         if _is_simple_greeting(request.message):
             return {
                 "session_id": session_id,
                 "response": "Hello! I'm your virtual assistant. How can I help you today (appointments, symptoms, FAQs)?",
                 "timestamp": datetime.now().isoformat()
             }
+        
+        if GUARDRAILS_ENABLED:
+            # Use lightweight dedicated model for fast guardrail checking
+            should_block, action = check_guardrail_simple(request.message)
+            
+            if should_block and action is not None:
+                # Log guardrail decision for debugging/monitoring
+                return {
+                    "session_id": session_id,
+                    "response": "Your message was refused due to security policies.",
+                    "timestamp": datetime.now().isoformat()
+                }
          # Convert chat_history to dict format if provided
         chat_history = None
         if request.chat_history:
@@ -58,10 +70,13 @@ async def ma_chat(request: ChatRequest):
         
         # Run multi-agent diagnostic pipeline (single shared instance)
         result = await diagnostic_graph.analyze(user_input=request.message, chat_history=chat_history)
-    
+
+        final_response = result['final_response']
+
+        # Optional output guardrails: rewrite unsafe responses
         return {
             "session_id": session_id,
-            "response": result['final_response'],
+            "response": final_response,
             "timestamp": datetime.now().isoformat()
         }
     
@@ -85,6 +100,18 @@ async def ma_chat_with_image(request: ImageChatRequest):
             raise HTTPException(status_code=400, detail="Image data is required")
         
         session_id = request.session_id or str(uuid.uuid4())
+
+        if GUARDRAILS_ENABLED:
+            should_block, action = check_guardrail_simple(
+                request.message or ""
+            )
+            
+            if should_block and action is not None:
+                return {
+                    "session_id": session_id,
+                    "response": "Your message was refused due to security policies.",
+                    "timestamp": datetime.now().isoformat()
+                }
         chat_history = None
         if request.chat_history:
             chat_history = [
@@ -97,10 +124,12 @@ async def ma_chat_with_image(request: ImageChatRequest):
             print(f"Image chat history: {len(chat_history)} messages")
         
         result = await diagnostic_graph.analyze(request.message, request.image, chat_history=chat_history)
-        
+
+        final_response = result['final_response']
+
         return {
             "session_id": session_id,
-            "response": result['final_response'],
+            "response": final_response,
             "timestamp": datetime.now().isoformat()
         }
     
@@ -122,6 +151,19 @@ async def ma_chat_stream(request: ChatRequest):
     
     async def event_generator():
         try:
+            # Fast guardrail pre-check before starting streaming analysis
+            if GUARDRAILS_ENABLED:
+                should_block, action = check_guardrail_simple( request.message)
+                
+                if should_block and action is not None:
+                    event_data = json.dumps({
+                        "type": "final",
+                        "session_id": session_id,
+                        "content": "Your message was refused due to security policies.",
+                        "timestamp": datetime.now().isoformat(),
+                    })
+                    yield f"data: {event_data}\n\n"
+                    return
             # Convert chat_history
             chat_history = None
             if request.chat_history:

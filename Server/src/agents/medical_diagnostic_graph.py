@@ -1,6 +1,6 @@
 from langgraph.graph import StateGraph, END
 from typing import Dict, Any, Optional
-
+from typing import List
 from src.agents.diagnosis_critic import new_diagnosis_crictic_node
 from src.models.state import GraphState
 
@@ -8,6 +8,15 @@ from src.agents.supervisor import new_supervisor_node
 
 from src.knowledges.knowledge_base import FAQKnowledgeBase
 
+from src.agents.conversation_agent import ConversationAgentNode, new_conversation_agent_node
+from src.agents.appointment_scheduler import AppointmentSchedulerNode, new_appointment_scheduler_node
+from src.agents.image_analyzer import ImageAnalyzerNode, new_image_analyzer_node
+from src.agents.symptom_extractor import SymptomExtractorNode, new_symptom_extractor_node
+from src.agents.diagnosis_engine import DiagnosisEngineNode, new_diagnosis_engine_node
+from src.agents.investigation_generator import InvestigationGeneratorNode, new_investigation_generator_node
+from src.agents.document_retriever import DocumentRetrieverNode, new_document_retriever_node
+from src.agents.recommender import RecommenderNode, new_recommender_node
+from src.agents.synthesis import SynthesisNode, new_synthesis_node
 from src.agents.conversation_agent import new_conversation_agent_node
 from src.agents.appointment_scheduler import  new_appointment_scheduler_node
 from src.agents.image_analyzer import new_image_analyzer_node
@@ -64,7 +73,6 @@ class MedicalDiagnosticGraph:
                 "symptom_extractor": "symptom_extractor",
                 "diagnosis_engine": "diagnosis_engine",
                 "investigation_generator": "investigation_generator",
-                "document_retriever": "document_retriever",
                 "recommender": "recommender",
                 "synthesis": "synthesis",
                 "END" : END,
@@ -121,6 +129,10 @@ class MedicalDiagnosticGraph:
         )
         
         return workflow.compile()
+
+    # ========================================================================
+    # PUBLIC API
+    # ========================================================================
 
     async def analyze(
             self,
@@ -183,7 +195,7 @@ class MedicalDiagnosticGraph:
             print(f"Graph execution error: {str(e)}")
             return {
                 "success": False,
-                "final_response": "Xin lỗi, đã xảy ra lỗi khi xử lý yêu cầu của bạn. Vui lòng thử lại hoặc liên hệ phòng khám.",
+                "final_response": "Sorry, an error occurred processing your request. Please try again or contact the clinic.",
                 "error": str(e),
             }
 
@@ -242,7 +254,7 @@ class MedicalDiagnosticGraph:
             print(f"Graph execution error: {str(e)}")
             return {
                 "success": False,
-                "final_response": "Xin lỗi, đã xảy ra lỗi khi xử lý yêu cầu của bạn. Vui lòng thử lại hoặc liên hệ phòng khám.",
+                "final_response": "Sorry, an error occurred processing your request. Please try again or contact the clinic.",
                 "intermediate_messages": [],
                 "error": str(e),
             }

@@ -36,9 +36,9 @@ class DocumentReranker:
         try:
             self.ranker = Ranker(model_name=model_name)
             self.model_name = model_name
-            print(f"✓ Reranker initialized with model: {model_name}")
+            print(f"Reranker initialized with model: {model_name}")
         except Exception as e:
-            print(f"⚠️ Failed to initialize reranker: {e}")
+            print(f"WARNING: Failed to initialize reranker: {e}")
             print("   Continuing without reranking capability")
             self.ranker = None
     
@@ -96,7 +96,7 @@ class DocumentReranker:
             return reranked_docs
             
         except Exception as e:
-            print(f"⚠️ Reranking failed: {e}, returning original order")
+            print(f"WARNING: Reranking failed: {e}, returning original order")
             return documents
     
     def rerank_with_scores(
@@ -153,7 +153,7 @@ class DocumentReranker:
             return reranked_with_scores
             
         except Exception as e:
-            print(f"⚠️ Reranking failed: {e}, returning original order with zero scores")
+            print(f"WARNING: Reranking failed: {e}, returning original order with zero scores")
             return [(doc, 0.0) for doc in documents]
 
 

@@ -29,40 +29,40 @@ DEFAULT_LLM_MODEL = "gemini-2.0-flash"
 
 def _default_query_translator_prompt() -> ChatPromptTemplate:
     return ChatPromptTemplate.from_template(
-        """Bạn là một chuyên gia thuật ngữ y khoa. Nhiệm vụ của bạn là nhận một câu hỏi hoặc mô tả triệu chứng bằng tiếng Việt thông thường và biến đổi nó thành một câu truy vấn bằng tiếng Anh học thuật, súc tích, phù hợp để tìm kiếm trong cơ sở dữ liệu y văn.
-Dựa trên các triệu chứng, hãy đưa ra các chẩn đoán phân biệt (differential diagnoses) có khả năng nhất.
-Hãy kết hợp tất cả thành một chuỗi truy vấn duy nhất.
+        """You are a medical terminology expert. Your task is to take a question or symptom description in plain Vietnamese and transform it into a concise, academically rigorous English query suitable for searching medical literature databases.
+Based on the symptoms, provide the most likely differential diagnoses.
+Combine everything into a single query string.
 
-VÍ DỤ:
-- Câu hỏi tiếng Việt: "da của tôi nổi mẩn đỏ, ngứa và có vảy trắng"
-- Câu truy vấn tiếng Anh học thuật: "Clinical presentation and differential diagnosis for an erythematous, pruritic rash with white scales; consider psoriasis, atopic dermatitis, or tinea corporis."
+EXAMPLES:
+- Vietnamese question: "da của tôi nổi mẩn đỏ, ngứa và có vảy trắng"
+- Academic English query: "Clinical presentation and differential diagnosis for an erythematous, pruritic rash with white scales; consider psoriasis, atopic dermatitis, or tinea corporis."
 
-Câu hỏi tiếng Việt: {question}
-Câu truy vấn tiếng Anh học thuật:"""
+Vietnamese question: {question}
+Academic English query:"""
     )
 
 
 def _default_final_prompt() -> ChatPromptTemplate:
     return ChatPromptTemplate.from_template(
-        """Bạn là một Trợ lý Nghiên cứu Y khoa AI chuyên nghiệp.
+        """You are a professional AI Medical Research Assistant.
 
-NHIỆM VỤ: Phân tích các "NGUỒN THÔNG TIN" dưới đây để trả lời "Câu hỏi gốc bằng tiếng Việt" của người dùng. Câu trả lời của bạn phải chính xác, súc tích và hoàn toàn dựa trên bằng chứng được cung cấp.
+TASK: Analyze the "SOURCE INFORMATION" below to answer the "Original Question" from the user. Your answer must be accurate, concise, and based entirely on provided evidence.
 
-QUY TẮC BẮT BUỘC:
-1.  **DỰA VÀO NGỮ CẢNH:** Chỉ sử dụng thông tin trong "NGUỒN THÔNG TIN". Không suy diễn hay dùng kiến thức ngoài. Nếu không tìm thấy nội dung phù hợp trong nguồn, hãy trả lời rõ ràng rằng không có dữ liệu và KHÔNG tạo thêm thông tin hay trích dẫn giả.
-2.  **TRÍCH DẪN THÔNG MINH:** Viết mỗi đoạn như một khối thông tin hoàn chỉnh và chỉ đặt tối đa **một** cụm trích dẫn ở cuối đoạn đó. Nếu đoạn dựa trên nhiều nguồn, gộp chúng trong một cặp ngoặc duy nhất theo dạng `[Nguồn 1; Nguồn 3]`. Tuyệt đối không lặp lại cùng nguồn nhiều lần trong cùng đoạn. Các chỉ số nguồn bắt đầu từ 1.
-3.  **DANH SÁCH THAM KHẢO CHÍNH XÁC:**
-    *   Ở cuối câu trả lời, tạo một danh sách có tiêu đề "**Tài liệu tham khảo:**".
-    *   Trong danh sách này, **CHỈ LIỆT KÊ NHỮNG NGUỒN ĐÃ ĐƯỢC TRÍCH DẪN** trong câu trả lời.
-    *   Mỗi dòng chỉ trình bày **một nguồn với đúng một số trang** (nếu cần nhiều trang của cùng nguồn thì lặp lại dòng đó cho từng trang). Mỗi dòng phải gồm Tác giả, Tiêu đề, và Số trang cụ thể.
+MANDATORY RULES:
+1.  **RELY ON CONTEXT ONLY:** Use only information in "SOURCE INFORMATION". Do not infer or use outside knowledge. If you cannot find relevant content in the sources, clearly state no data is available and NEVER create additional information or fake citations.
+2.  **SMART CITATION:** Write each paragraph as a complete information block and place at most **one** citation group at the end of that paragraph. If a paragraph is based on multiple sources, combine them in a single pair of brackets as `[Source 1; Source 3]`. Absolutely do not repeat the same source multiple times in the same paragraph. Source indices start from 1.
+3.  **ACCURATE REFERENCE LIST:**
+    *   At the end of your answer, create a list titled "**References:**".
+    *   In this list, **ONLY LIST SOURCES THAT WERE CITED** in the answer.
+    *   Each line shows **one source with exactly one page number** (if multiple pages of the same source are needed, repeat the line for each page). Each line must include Author, Title, and specific page number.
 
-BÂY GIỜ, HÃY BẮT ĐẦU VỚI CÁC THÔNG TIN DƯỚI ĐÂY:
-- **Câu hỏi gốc bằng tiếng Việt:** {original_question}
-- **Câu truy vấn học thuật đã dùng:** {english_query}
-- **NGUỒN THÔNG TIN TIẾNG ANH TÌM ĐƯỢC:**
+NOW, START WITH THE INFORMATION BELOW:
+- **Original Question:** {original_question}
+- **Academic Query Used:** {english_query}
+- **ENGLISH SOURCE INFORMATION FOUND:**
 {context}
 
-Phân tích và trả lời bằng tiếng Việt (tuân thủ các quy tắc nêu trên):"""
+Analyze and answer in English (following the rules above):"""
     )
 
 
@@ -150,7 +150,7 @@ class RAGPipeline:
 
         documents = self._retrieve_with_routing(english_query, query_type, k=k)
         if not documents:
-            raise ValueError("Không tìm thấy tài liệu phù hợp.")
+            raise ValueError("No suitable documents found.")
 
         context_docs = self.reranker.rerank(english_query, documents, top_k=rerank_top_k) or documents
         answer = self.response_chain.invoke(
