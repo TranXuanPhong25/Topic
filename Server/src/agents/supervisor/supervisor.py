@@ -106,6 +106,16 @@ class SupervisorNode:
             
             # Extract decisions
             next_step = supervisor_decision.get("next_step", "END")
+            # Simple guard: Prevent redundant symptom extraction if symptoms already exist
+            # Note: LangGraph's recursion_limit=25 handles infinite loops at graph level
+            if next_step == "symptom_extractor":
+                extracted_symptoms = (state.get("symptoms", {}) or {}).get("extracted_symptoms", [])
+                if extracted_symptoms:
+                    # Symptoms already extracted - advance to diagnosis
+                    next_step = "diagnosis_engine"
+                    supervisor_decision["reasoning"] = (
+                        "Symptoms already extracted; proceeding to diagnosis_engine."
+                    )
             reasoning = supervisor_decision.get("reasoning", "No reasoning provided")
             updated_plan = supervisor_decision.get("plan", state.get("plan", []))
             symptom_extractor_input = supervisor_decision.get("symptom_extractor_input")

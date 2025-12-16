@@ -116,7 +116,7 @@ class SynthesisNode:
         # Emergency warning if high risk
         if severity in ["HIGH", "EMERGENCY"] or risk_assessment.get("requires_emergency_care"):
             response = "**URGENT MEDICAL ATTENTION MAY BE REQUIRED**\n\n" + response
-            response += "\nIf you experience severe symptoms, call 911 or go to the nearest emergency room immediately."
+            response += "\nIf you experience severe symptoms, call 115 or go to the nearest emergency room immediately."
         
         return response
     
