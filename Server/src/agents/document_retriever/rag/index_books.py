@@ -1,4 +1,5 @@
-from Server.src.rag import load_and_chunk_documents, index_documents
+from Load import load_and_chunk_documents
+from Embedding import index_documents
 
 def main():
     docs = load_and_chunk_documents()      # đọc + clean + chunk từ rag/Data
