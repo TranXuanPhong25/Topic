@@ -132,15 +132,20 @@ async def ma_chat_with_image(request: ImageChatRequest):
         
         session_id = request.session_id or str(uuid.uuid4())
 
-        # Fast guardrail pre-check for image chat
         if GUARDRAILS_ENABLED:
             from src.middleware.guardrail_config import get_guardrail_model
             model = get_guardrail_model()
-            should_block, action = check_guardrail_simple(model, request.message or "")
+            # Pass image data for content validation
+            should_block, action = check_guardrail_simple(
+                model, 
+                request.message or "", 
+                has_image=True,
+                image_data=request.image
+            )
             
             if should_block and action is not None:
                 print(f"🛡 Guardrail blocked image-chat input. Action={action}, text={request.message!r}")
-                msg = refusal_message_llm(model, action, text=request.message)
+                msg = refusal_message_llm(model, action, text=request.message or "ảnh không liên quan đến y tế")
                 return {
                     "session_id": session_id,
                     "response": msg,
