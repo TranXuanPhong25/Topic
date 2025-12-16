@@ -118,20 +118,20 @@ class AppointmentSchedulerNode:
                             if tool_result.get("available"):
                                 date = tool_result.get("date", "")
                                 time = tool_result.get("time", "")
-                                final_response = f"Tin tốt! Lịch hẹn vào ngày {date} lúc {time} vẫn còn trống. Để hoàn tất đặt lịch, tôi cần xác nhận thêm: tên đầy đủ của bạn, lý do khám, và số điện thoại liên hệ."
+                                final_response = f"Great! The appointment on {date} at {time} is available. To complete the booking, I need to confirm: your full name, reason for visit, and phone number."
                             else:
                                 error = tool_result.get("error", "")
                                 alternatives = tool_result.get("alternatives", [])
                                 if alternatives:
-                                    final_response = f"Xin lỗi, {error}. Bạn có thể chọn các khung giờ trống khác: {', '.join(alternatives[:3])}."
+                                    final_response = f"Sorry, {error}. You can choose from these available times: {', '.join(alternatives[:3])}."
                                 else:
-                                    final_response = f"Xin lỗi, {error}. Vui lòng chọn ngày hoặc giờ khác."
+                                    final_response = f"Sorry, {error}. Please choose a different date or time."
                         
                         # Handle book_appointment response
                         elif "success" in tool_result:
                             if tool_result.get("success"):
                                 confirmation = tool_result.get("confirmation", {})
-                                final_response = f"Đã đặt lịch thành công!\n\n**Chi tiết cuộc hẹn:**\n- Tên: {confirmation.get('patient_name', 'N/A')}\n- Ngày: {confirmation.get('date', 'N/A')}\n- Giờ: {confirmation.get('time', 'N/A')}\n- Lý do: {confirmation.get('reason', 'N/A')}\n\nChúng tôi sẽ liên hệ nhắc nhở trước ngày khám. Cảm ơn bạn!"
+                                final_response = f"Appointment booked successfully!\n\n**Appointment Details:**\n- Name: {confirmation.get('patient_name', 'N/A')}\n- Date: {confirmation.get('date', 'N/A')}\n- Time: {confirmation.get('time', 'N/A')}\n- Reason: {confirmation.get('reason', 'N/A')}\n\nWe will remind you before your visit. Thank you!"
                             else:
                                 error = tool_result.get("error", "Không thể đặt lịch")
                                 final_response = f"{error}. Vui lòng thử lại hoặc liên hệ phòng khám trực tiếp."
@@ -182,7 +182,7 @@ class AppointmentSchedulerNode:
             print(f"ERROR: AppointmentScheduler error: {str(e)}")
             import traceback
             traceback.print_exc()
-            state["final_response"] = "Xin lỗi, tôi gặp sự cố khi xử lý yêu cầu đặt lịch của bạn. Vui lòng cung cấp thông tin: tên, ngày, giờ, và lý do khám."
+            state["final_response"] = "Sorry, I encountered an issue processing your booking request. Please provide: your name, desired date, time, and reason for visit."
             state["intermediate_messages"] = intermediate_messages
         
         return state

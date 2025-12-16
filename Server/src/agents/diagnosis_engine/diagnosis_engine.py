@@ -109,7 +109,7 @@ class DiagnosisEngineNode:
                 # Build a specific query for document retrieval
                 primary_condition = diagnosis.get("primary_diagnosis", {}).get("condition", "")
                 diff_diagnoses = [d.get("condition", "") for d in diagnosis.get("differential_diagnoses", [])[:3]]
-                query = f"Chẩn đoán và điều trị {primary_condition}. Chẩn đoán phân biệt: {', '.join(diff_diagnoses)}"
+                query = f"Diagnosis and treatment of {primary_condition}. Differential diagnoses: {', '.join(diff_diagnoses)}"
                 
                 state, success = request_document_retrieval(state, "diagnosis_engine", query)
                 if success:
@@ -187,7 +187,7 @@ class DiagnosisEngineNode:
         
         return {
             "risk_level": risk_level,
-            "explanation": f"Dựa trên mức độ nghiêm trọng: {severity}",
+            "explanation": f"Based on severity level: {severity}",
             "requires_immediate_attention": risk_level in ["HIGH", "CRITICAL"]
         }
 

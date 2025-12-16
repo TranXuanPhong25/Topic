@@ -73,9 +73,9 @@ class ImageAnalyzerNode:
                         state["final_response"] = analysis_result["message"]
                 elif image_type == self.IMAGE_TYPE_GENERAL:
                     # General photo - acknowledge but don't analyze medically
-                    general_message = "Hình ảnh này không phải là ảnh y tế. Nếu bạn muốn được tư vấn về vấn đề sức khỏe, vui lòng gửi ảnh vùng da/bộ phận cơ thể cần kiểm tra."
+                    general_message = "This is not a medical image. If you need health advice, please send a photo of the skin or body area that needs examination."
                     analysis_result = {
-                        "visual_description": "Hình ảnh không phải là ảnh y tế để chẩn đoán.",
+                        "visual_description": "This is not a diagnostic medical image.",
                         "image_type": image_type,
                         "is_diagnostic": False,
                         "message": general_message,
@@ -174,7 +174,7 @@ class ImageAnalyzerNode:
                 print("WARNING: No document content extracted!")
             
             return {
-                "visual_description": doc_result.get("description", "Phân tích tài liệu y tế"),
+                "visual_description": doc_result.get("description", "Medical document analysis"),
                 "document_content": document_content,
                 "document_type": document_type,
                 "image_type": self.IMAGE_TYPE_DOCUMENT,
@@ -184,10 +184,10 @@ class ImageAnalyzerNode:
         except Exception as e:
             print(f"ERROR: Document analysis error: {str(e)}")
             return {
-                "visual_description": "Đây là hình ảnh tài liệu/đơn thuốc.",
+                "visual_description": "This is a document or prescription image.",
                 "image_type": self.IMAGE_TYPE_DOCUMENT,
                 "is_diagnostic": False,
-                "message": "Tôi nhận ra đây là hình ảnh tài liệu. Bạn có thể cho tôi biết bạn cần hỗ trợ gì với tài liệu này?",
+                "message": "I recognize this is a document image. Could you tell me what you need help with regarding this document?",
                 "confidence": 0.3,
                 "error": str(e)
             }

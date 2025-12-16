@@ -64,7 +64,6 @@ class MedicalDiagnosticGraph:
                 "symptom_extractor": "symptom_extractor",
                 "diagnosis_engine": "diagnosis_engine",
                 "investigation_generator": "investigation_generator",
-                "document_retriever": "document_retriever",
                 "recommender": "recommender",
                 "synthesis": "synthesis",
                 "END" : END,
@@ -183,7 +182,7 @@ class MedicalDiagnosticGraph:
             print(f"Graph execution error: {str(e)}")
             return {
                 "success": False,
-                "final_response": "Xin lỗi, đã xảy ra lỗi khi xử lý yêu cầu của bạn. Vui lòng thử lại hoặc liên hệ phòng khám.",
+                "final_response": "Sorry, an error occurred processing your request. Please try again or contact the clinic.",
                 "error": str(e),
             }
 
@@ -242,7 +241,7 @@ class MedicalDiagnosticGraph:
             print(f"Graph execution error: {str(e)}")
             return {
                 "success": False,
-                "final_response": "Xin lỗi, đã xảy ra lỗi khi xử lý yêu cầu của bạn. Vui lòng thử lại hoặc liên hệ phòng khám.",
+                "final_response": "Sorry, an error occurred processing your request. Please try again or contact the clinic.",
                 "intermediate_messages": [],
                 "error": str(e),
             }

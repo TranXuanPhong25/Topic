@@ -1,7 +1,3 @@
-"""
-Query Router for RAG System
-Classifies incoming queries and routes them to appropriate retrieval strategies.
-"""
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -32,23 +28,23 @@ class QueryRouter:
         """
         self.llm = llm
         self.router_prompt = ChatPromptTemplate.from_template(
-            """Bạn là một chuyên gia phân loại truy vấn y khoa. Nhiệm vụ của bạn là phân tích câu hỏi và xác định loại tìm kiếm phù hợp nhất.
+            """You are a medical query classification specialist. Your task is to analyze questions and determine the most appropriate search type.
 
-CÁC LOẠI TÌM KIẾM:
-1. **semantic** - Dùng cho câu hỏi phức tạp, mô tả triệu chứng, câu hỏi về nguyên nhân/cơ chế
-   Ví dụ: "Tại sao da tôi bị ngứa và nổi mẩn đỏ khi trời nóng?"
+SEARCH TYPES:
+1. **semantic** - Use for complex questions, symptom descriptions, questions about causes/mechanisms
+   Example: "Why does my skin itch and get red rashes when it's hot?"
    
-2. **keyword** - Dùng cho tra cứu thuật ngữ, định nghĩa, tên bệnh cụ thể
-   Ví dụ: "Psoriasis là gì?", "Định nghĩa herpes zoster"
+2. **keyword** - Use for terminology lookup, definitions, specific disease names
+   Example: "What is Psoriasis?", "Define herpes zoster"
    
-3. **hybrid** - Dùng cho câu hỏi kết hợp tra cứu thuật ngữ và giải thích
-   Ví dụ: "Atopic dermatitis và cách điều trị như thế nào?"
+3. **hybrid** - Use for questions combining terminology lookup and explanation
+   Example: "What is atopic dermatitis and how is it treated?"
 
-NHIỆM VỤ: Phân tích câu hỏi dưới đây và trả lời CHÍNH XÁC MỘT TRONG BA TỪ: semantic, keyword, hoặc hybrid
+TASK: Analyze the question below and answer with EXACTLY ONE OF THREE WORDS: semantic, keyword, or hybrid
 
-Câu hỏi: {question}
+Question: {question}
 
-Loại tìm kiếm (chỉ trả lời một từ):"""
+Search type (answer one word only):"""
         )
         
         self.router_chain = self.router_prompt | self.llm | StrOutputParser()

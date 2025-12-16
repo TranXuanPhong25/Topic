@@ -54,13 +54,13 @@ class DocumentRetrieverNode:
         parts = []
         primary = diagnosis.get("primary_diagnosis", "")
         if primary:
-            parts.append(f"Chẩn đoán chính: {primary}")
+            parts.append(f"Primary Diagnosis: {primary}")
         
         differentials = diagnosis.get("differential_diagnoses", [])
         if differentials:
             diff_names = [d.get("condition", "") for d in differentials[:3] if d.get("condition")]
             if diff_names:
-                parts.append(f"Chẩn đoán phân biệt: {', '.join(diff_names)}")
+                parts.append(f"Differential Diagnoses: {', '.join(diff_names)}")
         
         return "\n".join(parts)
     
@@ -76,11 +76,11 @@ class DocumentRetrieverNode:
             content = doc.get("content", "")
             
             formatted.append(
-                f"[Nguồn {idx}]\n"
-                f"- Tiêu đề: {source}\n"
-                f"- Tác giả: {author}\n"
-                f"- Trang: {page}\n"
-                f"- Nội dung: {content[:500]}..."
+                f"[Source {idx}]\n"
+                f"- Title: {source}\n"
+                f"- Author: {author}\n"
+                f"- Page: {page}\n"
+                f"- Content: {content[:500]}..."
             )
         
         return "\n\n---\n\n".join(formatted)
@@ -100,20 +100,20 @@ class DocumentRetrieverNode:
             if symptom_list:
                 symptom_text = ", ".join([s.get("name", "") for s in symptom_list if s.get("name")])
                 if symptom_text:
-                    parts.append(f"Triệu chứng: {symptom_text}")
+                    parts.append(f"Symptoms: {symptom_text}")
         
         # Add diagnosis if available
         diagnosis = state.get("diagnosis", {})
         if diagnosis:
             primary = diagnosis.get("primary_diagnosis", "")
             if primary:
-                parts.append(f"Chẩn đoán: {primary}")
+                parts.append(f"Diagnosis: {primary}")
             
             differentials = diagnosis.get("differential_diagnoses", [])
             if differentials:
                 diff_text = ", ".join([d.get("condition", "") for d in differentials[:3] if d.get("condition")])
                 if diff_text:
-                    parts.append(f"Chẩn đoán phân biệt: {diff_text}")
+                    parts.append(f"Differential Diagnoses: {diff_text}")
         
         return ". ".join(parts) if parts else "medical information"
     
@@ -301,9 +301,9 @@ class DocumentRetrieverNode:
             state["rag_answer"] = ""
             state["document_synthesis"] = {
                 "query_analysis": {"original_query": query, "interpreted_intent": ""},
-                "synthesis": {"main_findings": "Không tìm thấy tài liệu phù hợp"},
+                "synthesis": {"main_findings": "No suitable documents found"},
                 "confidence_assessment": {"overall_confidence": "low", "reasoning": str(e)},
-                "limitations": ["Không có tài liệu trong cơ sở dữ liệu phù hợp với truy vấn"]
+                "limitations": ["No documents in database match the query"]
             }
             if caller == "supervisor":
                 state["current_step"] += 1

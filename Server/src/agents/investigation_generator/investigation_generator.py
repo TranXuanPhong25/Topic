@@ -28,20 +28,20 @@ class InvestigationGeneratorNode:
             context_section = f"\n## CONVERSATION CONTEXT\n{context_data.get('context', '')}\n" if context_data.get('context') else ""
             user_context_section = f"\n## PATIENT'S CONCERNS\n{context_data.get('user_context', '')}\n" if context_data.get('user_context') else ""
             
-            investigation_prompt = f"""Dựa trên chẩn đoán, đề xuất các xét nghiệm/kiểm tra cần thiết.
+            investigation_prompt = f"""Based on the diagnosis, suggest necessary tests and investigations.
 {goal_section}{context_section}{user_context_section}
-**Chẩn đoán:**
+**Diagnosis:**
 {json.dumps(diagnosis, ensure_ascii=False, indent=2)}
 
-**Nhiệm vụ:** Đề xuất 3-5 xét nghiệm/kiểm tra phù hợp.
+**Task:** Suggest 3-5 appropriate tests/investigations.
 
-Trả về JSON array:
+Return JSON array:
 [
-    {{"test_name": "Tên xét nghiệm", "reason": "Lý do", "priority": "high/medium/low"}},
+    {{"test_name": "Test name", "reason": "Reason", "priority": "high/medium/low"}},
     ...
 ]
 
-Chỉ trả về JSON:"""
+Return only JSON:"""
             messages = [
                 SystemMessage(content=INVESTIGATION_SYSTEM_PROMPT),
                 HumanMessage(content=investigation_prompt)

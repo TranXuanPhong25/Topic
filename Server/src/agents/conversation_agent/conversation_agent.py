@@ -60,6 +60,6 @@ class ConversationAgentNode:
             
         except Exception as e:
             print(f"ConversationAgent error: {str(e)}")
-            state["final_response"] = "Xin lỗi, tôi đang gặp sự cố. Vui lòng gọi phòng khám để được hỗ trợ."
+            state["final_response"] = "Sorry, I encountered an issue. Please call the clinic for assistance."
         
         return state

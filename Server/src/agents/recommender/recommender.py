@@ -49,9 +49,9 @@ class RecommenderNode:
                 main_findings = document_synthesis.get("synthesis", {}).get("main_findings", "")
                 key_points = document_synthesis.get("synthesis", {}).get("key_points", [])
                 if main_findings or key_points:
-                    synthesis_info = f"\n\nThông tin từ tài liệu y khoa:\n{main_findings}"
+                    synthesis_info = f"\n\nInformation from medical documents:\n{main_findings}"
                     if key_points:
-                        synthesis_info += f"\nĐiểm chính: {', '.join(key_points)}"
+                        synthesis_info += f"\nKey Points: {', '.join(key_points)}"
             
             recommendation_prompt = build_recommender_prompt(
                 diagnosis, 

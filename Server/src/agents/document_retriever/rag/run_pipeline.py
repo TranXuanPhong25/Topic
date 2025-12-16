@@ -14,8 +14,8 @@ LOGGER = logging.getLogger(__name__)
 def _print_header() -> None:
     print("=" * 70)
     print("🤖  RAG Assistant CLI")
-    print("Nhập câu hỏi y khoa bằng tiếng Việt để truy xuất tài liệu.")
-    print("Gõ 'exit' hoặc 'quit' để thoát.")
+    print("Enter a medical question in English to retrieve documents.")
+    print("Type 'exit' or 'quit' to exit.")
     print("=" * 70)
 
 
@@ -30,26 +30,26 @@ def main() -> None:
 
     while True:
         try:
-            question = input("\nCâu hỏi: ").strip()
+            question = input("\nQuestion: ").strip()
         except (EOFError, KeyboardInterrupt):
-            print("\nTạm biệt!")
+            print("\nGoodbye!")
             break
 
         if not question:
             continue
         if question.lower() in {"exit", "quit"}:
-            print("Tạm biệt!")
+            print("Goodbye!")
             break
 
         try:
             result = pipeline.invoke(question)
-            print("\nPhản hồi học thuật\n")
+            print("\nAcademic Response\n")
             print(result["answer"])
         except ValueError as exc:
             print(f"ERROR: {exc}")
         except Exception as exc:
-            LOGGER.exception("Lỗi khi tạo câu trả lời: %s", exc)
-            print("ERROR: Đã xảy ra lỗi. Vui lòng thử lại.")
+            LOGGER.exception("Error generating answer: %s", exc)
+            print("ERROR: An error occurred. Please try again.")
 
 
 if __name__ == "__main__":
