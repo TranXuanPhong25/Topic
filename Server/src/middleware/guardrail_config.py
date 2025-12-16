@@ -13,18 +13,17 @@ class GuardrailModelSingleton:
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            print("🛡 Initializing lightweight Guardrail model...")
 
             cls._instance = ChatGoogleGenerativeAI(
-                model="gemini-2.5-flash",  
+                model="gemini-2.5-flash-lite",  
                 google_api_key=GOOGLE_API_KEY,
                 temperature=0.1,  
                 top_p=0.8,
                 top_k=20,
-                max_tokens=1024,
+                max_tokens=4024,
             )
             
-            print(f"✅ Guardrail model initialized: gemini-2.5-flash")
+            print(f"Guardrail model initialized: gemini-2.5-flash")
         return cls._instance
     
     @classmethod
