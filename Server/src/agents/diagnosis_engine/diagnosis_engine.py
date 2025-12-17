@@ -79,7 +79,7 @@ class DiagnosisEngineNode:
             # Extract risk assessment from diagnosis
             risk_assessment = diagnosis.get("risk_assessment", {})
             severity = risk_assessment.get("severity", "MODERATE")
-            m = diagnosis.get("confidence", 0.0)
+            confidence = diagnosis.get("confidence", 0.0)
 
 
             # Store diagnosis and risk assessment in state
