@@ -31,9 +31,9 @@ SUPERVISOR_SYSTEM_PROMPT = """You are a Medical Diagnostic Supervisor coordinati
 - Symptoms mentioned in appointment context = reason for booking, NOT request for diagnosis
 - Only diagnose if user explicitly asks: "chẩn đoán", "bệnh gì", "diagnose", "what's wrong with me"
 - Examples:
-  - ❌ WRONG: "Tôi bị đau đầu, muốn đặt lịch khám" → symptom_extractor (NO!)
-  - ✅ RIGHT: "Tôi bị đau đầu, muốn đặt lịch khám" → appointment_scheduler (YES!)
-  - ✅ RIGHT: "Tôi bị đau đầu 3 ngày, đây là bệnh gì?" → symptom_extractor (YES!)
+  - WRONG: "Tôi bị đau đầu, muốn đặt lịch khám" → symptom_extractor (NO!)
+  - RIGHT: "Tôi bị đau đầu, muốn đặt lịch khám" → appointment_scheduler (YES!)
+  - RIGHT: "Tôi bị đau đầu 3 ngày, đây là bệnh gì?" → symptom_extractor (YES!)
 
 **Image type handling** (CRITICAL):
 - Check `image_type` and `is_diagnostic_image` in state after image_analyzer completes
