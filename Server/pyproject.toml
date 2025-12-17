@@ -35,4 +35,5 @@ dependencies = [
     "pypdf>=6.4.2",
     "skops>=0.13.0",
     "scikit-learn==1.5.1",
+    "rank-bm25>=0.2.2",
 ]

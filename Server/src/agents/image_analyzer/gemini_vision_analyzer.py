@@ -639,7 +639,7 @@ CONFIDENCE: [high/medium/low]
             )
             
             try:
-                response = self.model.invoke(messages)
+                response = self.model.invoke(message)
                 print(f"Raw response type: {type(response)}")
                 print(f"Raw response: {response}")
                 

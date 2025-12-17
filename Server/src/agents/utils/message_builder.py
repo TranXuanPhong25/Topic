@@ -5,10 +5,12 @@ from src.configs.agent_config import BaseMessage, SystemMessage, HumanMessage, A
 def build_messages_with_history(
     system_prompt: str,
     current_prompt: str,
-    chat_history: Optional[List[Dict[str, Any]]] = None
+    chat_history: Optional[List[Dict[str, Any]]] = None,
+    image_base64: Optional[str] = None
 ) -> List[BaseMessage]:
     """
     Build a list of messages including system prompt, chat history, and current prompt.
+    Supports images via image_base64 parameter.
     """
     messages: List[BaseMessage] = [SystemMessage(content=system_prompt)] if system_prompt else []
     
@@ -27,8 +29,16 @@ def build_messages_with_history(
             elif role in ("model", "assistant"):
                 messages.append(AIMessage(content=text))
     
-    # Add current prompt
-    messages.append(HumanMessage(content=current_prompt))
+    # Add current prompt with optional image
+    if image_base64:
+        # Build multi-part content with text and image
+        content = [
+            {"type": "text", "text": current_prompt},
+            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
+        ]
+        messages.append(HumanMessage(content=content))
+    else:
+        messages.append(HumanMessage(content=current_prompt))
     
     return messages
 

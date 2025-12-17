@@ -40,7 +40,7 @@ class AppointmentSchedulerNode:
             datetime_context = f"\n[CONTEXT: Current datetime is {now.strftime('%A, %B %d, %Y')} at {now.strftime('%H:%M')} ({now.strftime('%Y-%m-%d %H:%M:%S')})]"
             enriched_user_input = user_input + datetime_context
 
-            messages = build_messages_with_history("", enriched_user_input, state.get("chat_history", []))
+            messages = build_messages_with_history("", enriched_user_input, state.get("chat_history", []), image_base64=state.get("image"))
             
 
             result = await self.agent.ainvoke({"messages": messages})

@@ -1,5 +1,6 @@
 from typing import List, Dict, Any, Optional
 from src.configs.config import CLINIC_CONFIG
+from rank_bm25 import BM25Okapi
 
 
 class FAQKnowledgeBase:
@@ -147,37 +148,35 @@ class FAQKnowledgeBase:
             for faq in questions:
                 faq["category"] = category
                 self.all_faqs.append(faq)
+        
+        # Build BM25 index
+        self._build_bm25_index()
+    
+    def _build_bm25_index(self):
+        """Build BM25 index from FAQ data."""
+        self.tokenized_corpus = []
+        for faq in self.all_faqs:
+            # Combine question, answer, and keywords for indexing
+            text = f"{faq['question']} {faq['answer']} {' '.join(faq['keywords'])}"
+            tokens = text.lower().split()
+            self.tokenized_corpus.append(tokens)
+        
+        self.bm25 = BM25Okapi(self.tokenized_corpus)
     
     def search_faqs(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
-
-        query_lower = query.lower()
-        results = []
+        """Search FAQs using BM25 algorithm."""
+        # Tokenize query
+        query_tokens = query.lower().split()
         
-        for faq in self.all_faqs:
-            score = 0
-            
-            # Check if query matches keywords
-            for keyword in faq["keywords"]:
-                if keyword in query_lower:
-                    score += 10
-            
-            # Check if query words appear in question
-            question_lower = faq["question"].lower()
-            for word in query_lower.split():
-                if len(word) > 3 and word in question_lower:
-                    score += 5
-            
-            # Check if query words appear in answer
-            answer_lower = faq["answer"].lower()
-            for word in query_lower.split():
-                if len(word) > 3 and word in answer_lower:
-                    score += 2
-            
-            if score > 0:
-                results.append({
-                    "faq": faq,
-                    "score": score,
-                })
+        # Get BM25 scores
+        scores = self.bm25.get_scores(query_tokens)
+        
+        # Create results with scores
+        results = [
+            {"faq": faq, "score": score}
+            for faq, score in zip(self.all_faqs, scores)
+            if score > 0
+        ]
         
         # Sort by score (highest first) and return top results
         results.sort(key=lambda x: x["score"], reverse=True)

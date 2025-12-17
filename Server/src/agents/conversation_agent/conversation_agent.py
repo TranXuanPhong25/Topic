@@ -62,7 +62,8 @@ class ConversationAgentNode:
             messages = build_messages_with_history(
                 system_prompt="",  # System prompt is in agent
                 current_prompt=conversation_prompt,
-                chat_history=state.get("chat_history", [])
+                chat_history=state.get("chat_history", []),
+                image_base64=state.get("image")
             )
             
             # Use agent instead of direct model call
@@ -76,17 +77,14 @@ class ConversationAgentNode:
             from langchain_core.messages import AIMessage as LangChainAIMessage, ToolMessage
             
             conversation_output = ""
-            for msg in agent_messages:
+            for msg in agent_messages.reversed():
                 if isinstance(msg, LangChainAIMessage):
                     content = extract_text_from_content(msg.content)
                     if content:
-                        print(f"  AI: {content[:150]}...")
                         conversation_output = content  # Keep last AI message
-                        
+                        break
                         # Add to intermediate messages for streaming
                         # intermediate_messages.append(content)
-                            
-            print("=" * 80)
             
             state["final_response"] = conversation_output
             state["intermediate_messages"] = intermediate_messages
