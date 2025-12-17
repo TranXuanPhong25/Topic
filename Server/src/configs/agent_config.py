@@ -17,7 +17,7 @@ if not GOOGLE_API_KEY:
 GEMINI_MODEL_NAME = "gemini-2.5-pro"
 
 # Vision model for image analysis (can be same as primary)
-GEMINI_VISION_MODEL_NAME = "gemini-2.5-flash"
+GEMINI_VISION_MODEL_NAME = "gemini-2.5-pro"
 
 __all__ = [
     # API
