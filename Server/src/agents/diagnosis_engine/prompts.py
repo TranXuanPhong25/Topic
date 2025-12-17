@@ -3,7 +3,7 @@ Diagnosis Engine System Prompts
 Specialized prompts for medical diagnosis
 """
 import json
-from typing import Any
+from typing import Any, List
 
 DIAGNOSIS_SYSTEM_PROMPT = """You are **Gemidical**, an expert AI Medical Diagnostic Assistant.
 
@@ -214,14 +214,14 @@ COMPACT_DIAGNOSIS_PROMPT = """**ROLE:** Expert Medical Diagnostic AI.
 def build_diagnosis_prompt(
     symptoms: str, 
     image_analysis: str = "",
-    revision_requirements :dict[str, Any]=None,
-    detailed_review: dict[str, Any] = None,
+    revision_requirements :List[dict[str, Any]]|None = None,
+    detailed_review: dict[str, Any]|None = None,
     goal: str = "",
     context: str = "",
     user_context: str = ""
 ) -> str:
     if revision_requirements is None:
-        revision_requirements = {}
+        revision_requirements = []
 
     img_section = f"\n## IMAGE ANALYSIS FINDINGS\n{image_analysis}\n" if image_analysis else ""
     goal_section = f"\n## YOUR SPECIFIC GOAL FOR THIS STEP\n{goal}\n" if goal else ""

@@ -14,9 +14,9 @@ class AppointmentModelSingleton:
     @classmethod
     def get_instance(cls) -> Any:
         if cls._instance is None:
-            model = init_chat_model(GEMINI_MODEL_NAME, model_provider="google_genai")
+            model = init_chat_model("gemini-2.5-pro", model_provider="google_genai")
             cls._instance = model
-            print(f"Appointment model initialized: {GEMINI_MODEL_NAME}")
+            print(f"Appointment model initialized: gemini-2.5-pro")
         return cls._instance
     
     @classmethod

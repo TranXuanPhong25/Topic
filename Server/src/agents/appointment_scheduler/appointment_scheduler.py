@@ -4,6 +4,7 @@ from langchain_core.language_models import BaseChatModel
 
 from .prompts import APPOINTMENT_SCHEDULER_SYSTEM_PROMPT
 from .tools import check_appointment_availability, book_appointment, get_available_time_slots, get_current_datetime, reschedule_appointment
+from src.agents.utils.shared_tools import get_providers_info, get_provider_availability
 from ..medical_diagnostic_graph import GraphState
 from ..utils.message_builder import build_messages_with_history, extract_text_from_gemini_message, extract_text_from_content
 from ..utils import get_current_context, get_current_goal
@@ -22,7 +23,9 @@ class AppointmentSchedulerNode:
                 check_appointment_availability,
                 book_appointment,
                 get_available_time_slots,
-                reschedule_appointment
+                reschedule_appointment,
+                get_providers_info,
+                get_provider_availability
             ]
         )
     
@@ -121,7 +124,7 @@ class AppointmentSchedulerNode:
             if booking_claimed and not tool_called:
                 print("WARNING: HALLUCINATION DETECTED: LLM claimed booking success without calling tool!")
                 # Override the hallucinated response
-                final_response = "Tôi gặp vấn đề khi xử lý yêu cầu của bạn. Vui lòng thử lại sau."
+                final_response = "Sorry, I encountered an issue processing your booking request"
         
             state["final_response"] = final_response
             state["intermediate_messages"] = intermediate_messages

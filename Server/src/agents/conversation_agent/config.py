@@ -16,7 +16,7 @@ class ConversationModelSingleton:
             print("Initializing Conversation LLM model...")
             
             cls._instance = ChatGoogleGenerativeAI(
-                model=GEMINI_MODEL_NAME,
+                model="gemini-2.5-flash",
                 google_api_key=GOOGLE_API_KEY,
                 temperature=0.6,  # More natural and friendly
                 top_p=0.95,

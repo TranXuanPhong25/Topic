@@ -10,7 +10,12 @@ class AppointmentHandler:
         self.clinic_hours_start = "09:00"
         self.clinic_hours_end = "17:00"
         self.appointment_duration = CLINIC_CONFIG.get("appointment_duration", 30)
-        self.providers = CLINIC_CONFIG.get("providers", [])
+        providers = CLINIC_CONFIG.get("providers", [])
+        flatten_providers = []
+        for item in providers:
+            flatten_providers.append(item["title"])
+            flatten_providers.append(item["name"])
+        self.providers = flatten_providers
         self.collection = get_collection("appointments")
     
     def validate_date(self, date_str: str) -> tuple[bool, str]:
@@ -59,9 +64,8 @@ class AppointmentHandler:
             return False, "Invalid time format. Please use HH:MM (e.g., 14:00 for 2 PM)"
     
     def validate_provider(self, provider: Optional[str]) -> tuple[bool, str]:
-        flatten_providers = [item["title"] for item in self.providers]
-        if provider and provider not in flatten_providers:
-            return False, f"Provider not found. Available: {', '.join(flatten_providers)}"
+        if provider and provider not in self.providers:
+            return False, f"Provider not found. Available: {', '.join(self.providers)}"
         return True, ""
     
     async def check_availability(self, date: str, time: str, provider: Optional[str] = None) -> tuple[bool, str]:

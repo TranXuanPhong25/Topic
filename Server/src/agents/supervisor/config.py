@@ -13,7 +13,7 @@ class SupervisorModelSingleton:
         if cls._instance is None:
             
             cls._instance = ChatGoogleGenerativeAI(
-                model="gemini-2.5-flash-lite",
+                model="gemini-2.0-flash",
                 google_api_key=GOOGLE_API_KEY,
                 temperature=0.2,  # Very precise for classification
                 top_p=0.9,

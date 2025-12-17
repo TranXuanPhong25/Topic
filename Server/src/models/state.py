@@ -23,8 +23,8 @@ class GraphState(TypedDict):
     # Revision tracking (to prevent infinite loops)
     revision_count: int  # Number of revision attempts for current diagnosis
     max_revisions: int  # Maximum allowed revisions (default: 2)
-    revision_requirements: Optional[str]  # Feedback from DiagnosisCritic
-    detailed_review: Optional[str]  # Detailed review from DiagnosisCritic
+    revision_requirements: Optional[List[Dict[str, Any]]]  # Feedback from DiagnosisCritic
+    detailed_review: Optional[Dict[str, Any]]  # Detailed review from DiagnosisCritic
     
     # Investigation and retrieval
     investigation_plan: List[Dict[str, Any]]  # Generated list of investigations

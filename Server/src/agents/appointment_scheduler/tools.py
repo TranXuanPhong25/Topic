@@ -4,6 +4,7 @@ from datetime import datetime
 from langchain_core.tools import tool
 
 from src.handlers.appointment import AppointmentHandler
+from src.agents.utils.shared_tools import get_providers_info, get_provider_availability
 from datetime import timedelta
 
 
@@ -51,7 +52,13 @@ async def check_appointment_availability(date: str, time: str, provider: str | N
             "error": time_error,
             "suggestion": "Please choose a time between 09:00-17:00 on 15-minute intervals"
         })
-
+    valid_provider, provider_error = handler.validate_provider(provider)
+    if not valid_provider:
+        return json.dumps({
+            "available": False,
+            "error": provider_error,
+            "suggestion": "Please choose a valid provider or leave it blank for any available"
+        })
     # Check availability (async)
     available, message = await handler.check_availability(date, time, provider)
 
