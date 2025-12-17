@@ -74,6 +74,23 @@ docker-compose up -d
 
 This will start MongoDB on `localhost:27017`.
 
+#### Ingest RAG Documents (First Time Only)
+
+Before running the system for the first time, you need to ingest medical documents into the vector database:
+
+```bash
+cd Server/src/agents/document_retriever/rag
+source ../../../.venv/bin/activate  # if not already activated
+python index_books.py
+```
+
+This will:
+- Load medical documents from `Server/src/agents/document_retriever/rag/Data/`
+- Chunk and embed the documents
+- Index them in Pinecone vector database
+
+**Note:** You only need to run this once, or whenever you add new documents to the `Data/` folder.
+
 ### 3. Frontend Setup
 
 ```bash
@@ -233,6 +250,5 @@ pnpm install
 
 ## Documentation
 
-- **Architecture Report**: `/Server/docs/ARCHITECTURE_REPORT.md`
 - **API Documentation**: `http://localhost:8000/docs` (when server running)
 
