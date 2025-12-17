@@ -12,9 +12,7 @@ class InvestigationModelSingleton:
     
     @classmethod
     def get_instance(cls):
-        if cls._instance is None:
-            print("Initializing Investigation Generator LLM model...")
-            
+        if cls._instance is None:            
             cls._instance = ChatGoogleGenerativeAI(
                 model="gemini-2.5-flash-lite",
                 google_api_key=GOOGLE_API_KEY,
@@ -23,7 +21,6 @@ class InvestigationModelSingleton:
                 top_k=40,
                 max_tokens=5536,
             )
-            print(f"Investigation model initialized: {GEMINI_MODEL_NAME}")
         return cls._instance
     
     @classmethod

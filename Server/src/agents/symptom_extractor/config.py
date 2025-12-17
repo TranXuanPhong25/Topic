@@ -13,10 +13,9 @@ class SymptomExtractorModelSingleton:
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            print("Initializing Symptom Extractor LLM model...")
             
             cls._instance = ChatGoogleGenerativeAI(
-                model="gemini-2.5-flash",
+                model="gemini-2.5-flash-lite",
                 google_api_key=GOOGLE_API_KEY,
                 temperature=0.2,  # Very conservative for accurate extraction
                 top_p=0.85,
@@ -24,7 +23,6 @@ class SymptomExtractorModelSingleton:
                 max_tokens=5048,  # Larger for detailed structured output
                 model_kwargs={"response_mime_type": "application/json"}  # Force JSON output
             )
-            print(f"Symptom Extractor model initialized: {GEMINI_MODEL_NAME}")
         return cls._instance
     
     @classmethod

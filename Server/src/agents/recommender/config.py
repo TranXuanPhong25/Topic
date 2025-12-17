@@ -12,9 +12,7 @@ class RecommenderModelSingleton:
     
     @classmethod
     def get_instance(cls):
-        if cls._instance is None:
-            print("Initializing Recommender LLM model...")
-            
+        if cls._instance is None:            
             cls._instance = ChatGoogleGenerativeAI(
                 model="gemini-2.5-flash",
                 google_api_key=GOOGLE_API_KEY,
@@ -23,7 +21,6 @@ class RecommenderModelSingleton:
                 top_k=40,
                 max_tokens=5536,
             )
-            print(f"Recommender model initialized: {GEMINI_MODEL_NAME}")
         return cls._instance
     
     @classmethod
