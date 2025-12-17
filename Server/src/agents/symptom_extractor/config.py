@@ -16,7 +16,7 @@ class SymptomExtractorModelSingleton:
             print("Initializing Symptom Extractor LLM model...")
             
             cls._instance = ChatGoogleGenerativeAI(
-                model=GEMINI_MODEL_NAME,
+                model="gemini-2.5-flash",
                 google_api_key=GOOGLE_API_KEY,
                 temperature=0.2,  # Very conservative for accurate extraction
                 top_p=0.85,

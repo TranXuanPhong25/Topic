@@ -16,7 +16,7 @@ class InvestigationModelSingleton:
             print("Initializing Investigation Generator LLM model...")
             
             cls._instance = ChatGoogleGenerativeAI(
-                model=GEMINI_MODEL_NAME,
+                model="gemini-2.5-flash-lite",
                 google_api_key=GOOGLE_API_KEY,
                 temperature=0.3,  # Conservative for medical tests
                 top_p=0.9,

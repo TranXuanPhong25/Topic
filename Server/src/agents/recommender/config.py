@@ -16,7 +16,7 @@ class RecommenderModelSingleton:
             print("Initializing Recommender LLM model...")
             
             cls._instance = ChatGoogleGenerativeAI(
-                model=GEMINI_MODEL_NAME,
+                model="gemini-2.5-flash",
                 google_api_key=GOOGLE_API_KEY,
                 temperature=0.4,  # Balanced for recommendations
                 top_p=0.95,

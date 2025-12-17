@@ -14,7 +14,7 @@ class DocumentRetrieverModelSingleton:
         if cls._instance is None:
             
             cls._instance = ChatGoogleGenerativeAI(
-                model=GEMINI_MODEL_NAME,
+                model="gemini-2.5-flash",
                 google_api_key=GOOGLE_API_KEY,
                 temperature=0.3,  # Balanced for information synthesis
                 top_p=0.9,
